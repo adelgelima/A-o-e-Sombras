@@ -7632,8 +7632,10 @@ function dateHash(str){let h=0;for(const ch of str)h=(h*31+ch.charCodeAt(0))|0;r
 function rollQuests(){const td=todayStr();
   if(meta.quests&&meta.quests.date===td&&meta.quests.list.length)return;
   const keys=Object.keys(QDEFS);const h=dateHash(td);
-  const pick=[];let i=h%keys.length;
-  while(pick.length<3){const k=keys[i%keys.length];if(!pick.includes(k))pick.push(k);i+=1+(h%5);}
+  const pick=[];let i=h%keys.length;let _g=0;
+  while(pick.length<Math.min(3,keys.length)&&_g++<keys.length*6){const k=keys[i%keys.length];if(!pick.includes(k))pick.push(k);i+=1+(h%5);}
+  /* garante 3 quests distintas mesmo quando o passo (1+h%5) cicla num subconjunto dos indices — antes travava em ~datas onde h%5==4 */
+  for(let j=0;pick.length<Math.min(3,keys.length)&&j<keys.length;j++){if(!pick.includes(keys[j]))pick.push(keys[j]);}
   meta.quests={date:td,list:pick.map(id=>({id,prog:0,claimed:false}))};}
 function qProg(ev,amt=1){if(!meta.quests||!meta.quests.list)return;
   const map={kill:'kill15',orb:'orb6',elite:'elite1',gold:'gold250',cave:'cave8',cure:'cure1',snow:'snow',ash:'ash',croc:'croc',leech:'leech'};
