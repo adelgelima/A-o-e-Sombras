@@ -654,7 +654,7 @@ const I18N={
     set_label:'Conjunto', set_active:'Conjunto {name} ativo ({n}/3)',
     wfx_burn:'Inc\u00eandio', wfx_burn_d:'Ataques incendeiam o alvo', wfx_chain:'Corrente', wfx_chain_d:'Raios saltam para inimigos pr\u00f3ximos', wfx_quake:'Onda de Choque', wfx_quake_d:'Golpes atingem inimigos ao redor', wfx_exec:'Carrasco', wfx_exec_d:'Dano massivo em alvos feridos', wfx_pierce:'Perfurante', wfx_pierce_d:'Flechas atravessam os inimigos',
     you_here:'Voc\u00ea', leg_fields:'Campos', leg_forest:'Floresta', leg_sand:'Areia', leg_water:'\u00c1gua', leg_mud:'Lodo', leg_rock:'Rocha', leg_cave:'Caverna', leg_crypt:'Cripta', leg_lava:'Lava', leg_npc:'NPC',
-    poi_cave_sealed:'Uma entrada de caverna, selada por agora.',
+    poi_cave_sealed:'Uma entrada de caverna, selada por agora.', dng_enter:'Voc\u00ea desceu \u00e0 masmorra (profundidade {d}). Volte \u00e0 entrada para subir.', dng_deeper:'Voc\u00ea desce mais fundo \u2014 profundidade {d}.', dng_leave:'Voc\u00ea emerge \u00e0 superf\u00edcie.',
     save_now:'Guardar agora', save_now_sub:'Grava o teu progresso neste instante', export_save:'Exportar progresso', export_save_sub:'Backup num ficheiro (protege de limpeza de cache)', import_save:'Importar progresso', import_save_sub:'Restaura a partir de um backup', toast_saved:'Jogo Guardado com Sucesso', toast_exported:'Backup exportado', toast_imported:'Progresso importado', toast_bad_save:'Save inv\u00e1lido ou corrompido', toast_no_save:'Nenhum jogo para guardar',
     del_yes:'Excluir', del_no:'N\u00e3o',
     bless_hint:'Suba de n\u00edvel para receber B\u00ean\u00e7\u00e3os de Cindra.', ach_locked:'bloqueada',
@@ -703,7 +703,7 @@ const I18N={
     set_label:'Set', set_active:'{name} set active ({n}/3)',
     wfx_burn:'Ignite', wfx_burn_d:'Attacks set the target ablaze', wfx_chain:'Chain', wfx_chain_d:'Lightning leaps to nearby foes', wfx_quake:'Shockwave', wfx_quake_d:'Blows strike surrounding foes', wfx_exec:'Executioner', wfx_exec_d:'Massive damage to wounded targets', wfx_pierce:'Piercing', wfx_pierce_d:'Arrows pass through enemies',
     you_here:'You', leg_fields:'Fields', leg_forest:'Forest', leg_sand:'Sand', leg_water:'Water', leg_mud:'Mud', leg_rock:'Rock', leg_cave:'Cave', leg_crypt:'Crypt', leg_lava:'Lava', leg_npc:'NPC',
-    poi_cave_sealed:'A cave entrance, sealed for now.',
+    poi_cave_sealed:'A cave entrance, sealed for now.', dng_enter:'You descend into the dungeon (depth {d}). Return to the entrance to climb out.', dng_deeper:'You descend deeper \u2014 depth {d}.', dng_leave:'You emerge onto the surface.',
     save_now:'Save now', save_now_sub:'Save your progress right now', export_save:'Export progress', export_save_sub:'Back up to a file (survives cache clears)', import_save:'Import progress', import_save_sub:'Restore from a backup file', toast_saved:'Game saved', toast_exported:'Backup exported', toast_imported:'Progress imported', toast_bad_save:'Invalid or corrupted save', toast_no_save:'No game to save',
     del_yes:'Delete', del_no:'No',
     bless_hint:'Level up to receive Blessings of Cindra.', ach_locked:'locked',
@@ -752,7 +752,7 @@ const I18N={
     set_label:'Conjunto', set_active:'Conjunto {name} activo ({n}/3)',
     wfx_burn:'Incendio', wfx_burn_d:'Los ataques incendian al objetivo', wfx_chain:'Cadena', wfx_chain_d:'Rayos saltan a enemigos cercanos', wfx_quake:'Onda de Choque', wfx_quake_d:'Los golpes alcanzan enemigos cercanos', wfx_exec:'Verdugo', wfx_exec_d:'Da\u00f1o masivo a objetivos heridos', wfx_pierce:'Perforante', wfx_pierce_d:'Las flechas atraviesan enemigos',
     you_here:'T\u00fa', leg_fields:'Campos', leg_forest:'Bosque', leg_sand:'Arena', leg_water:'Agua', leg_mud:'Cieno', leg_rock:'Roca', leg_cave:'Cueva', leg_crypt:'Cripta', leg_lava:'Lava', leg_npc:'NPC',
-    poi_cave_sealed:'Una entrada de cueva, sellada por ahora.',
+    poi_cave_sealed:'Una entrada de cueva, sellada por ahora.', dng_enter:'Bajaste a la mazmorra (profundidad {d}). Vuelve a la entrada para subir.', dng_deeper:'Bajas m\u00e1s hondo \u2014 profundidad {d}.', dng_leave:'Emerges a la superficie.',
     save_now:'Guardar ahora', save_now_sub:'Guarda tu progreso ahora', export_save:'Exportar progreso', export_save_sub:'Copia a un archivo (sobrevive al borrado de cach\u00e9)', import_save:'Importar progreso', import_save_sub:'Restaura desde un backup', toast_saved:'Juego guardado', toast_exported:'Copia exportada', toast_imported:'Progreso importado', toast_bad_save:'Save inv\u00e1lido o corrupto', toast_no_save:'No hay partida para guardar',
     del_yes:'Eliminar', del_no:'No',
     bless_hint:'Sube de nivel para recibir Bendiciones de Cindra.', ach_locked:'bloqueada',
@@ -801,7 +801,7 @@ const I18N={
     set_label:'Ensemble', set_active:'Ensemble {name} actif ({n}/3)',
     wfx_burn:'Embrasement', wfx_burn_d:'Les attaques enflamment la cible', wfx_chain:'Cha\u00eene', wfx_chain_d:'La foudre bondit vers les ennemis proches', wfx_quake:'Onde de Choc', wfx_quake_d:'Les coups frappent les ennemis autour', wfx_exec:'Bourreau', wfx_exec_d:'D\u00e9g\u00e2ts massifs sur cibles bless\u00e9es', wfx_pierce:'Perforant', wfx_pierce_d:'Les fl\u00e8ches transpercent les ennemis',
     you_here:'Vous', leg_fields:'Champs', leg_forest:'For\u00eat', leg_sand:'Sable', leg_water:'Eau', leg_mud:'Boue', leg_rock:'Roche', leg_cave:'Grotte', leg_crypt:'Crypte', leg_lava:'Lave', leg_npc:'PNJ',
-    poi_cave_sealed:'Une entr\u00e9e de grotte, scell\u00e9e pour l\u2019instant.',
+    poi_cave_sealed:'Une entr\u00e9e de grotte, scell\u00e9e pour l\u2019instant.', dng_enter:'Vous descendez dans le donjon (profondeur {d}). Revenez \u00e0 l\u2019entr\u00e9e pour remonter.', dng_deeper:'Vous descendez plus profond \u2014 profondeur {d}.', dng_leave:'Vous \u00e9mergez \u00e0 la surface.',
     save_now:'Sauvegarder', save_now_sub:'Sauvegarde ta progression', export_save:'Exporter la progression', export_save_sub:'Sauvegarde dans un fichier', import_save:'Importer la progression', import_save_sub:'Restaure depuis un fichier', toast_saved:'Partie sauvegard\u00e9e', toast_exported:'Sauvegarde export\u00e9e', toast_imported:'Progression import\u00e9e', toast_bad_save:'Sauvegarde invalide ou corrompue', toast_no_save:'Aucune partie \u00e0 sauvegarder',
     del_yes:'Supprimer', del_no:'Non',
     bless_hint:'Montez de niveau pour recevoir des B\u00e9n\u00e9dictions de Cindra.', ach_locked:'verrouill\u00e9e',
@@ -1965,8 +1965,8 @@ const POIManager = {
       if (nearCurated(x, y, 4)) continue;              // não colar em baús/NPCs/portais
       if (hash2(x * 13 + 1, y * 17 + 5) > 0.04) continue; // ~4% das células viáveis viram POI (esparso)
       const dgr = dangerAt(x, y);
-      // caverna: RARA e especial (só em maciço rochoso), senão baú de tesouro
-      const cave = this._rockCount(x, y) >= 4 && hash2(x * 3, y * 9) < 0.18;
+      // caverna (entrada de masmorra): em maciço rochoso, espalhada pelo mundo
+      const cave = this._rockCount(x, y) >= 1 && hash2(x * 3, y * 9) < 0.35;
       const p = cave
         ? { id: this.key(x, y), x, y, type: 'cave' }
         : { id: this.key(x, y), x, y, type: 'cache', rar: this._rollRarity(x, y, dgr) };
@@ -2030,10 +2030,8 @@ const POIManager = {
       const id = this._lootFor(p.x, p.y, p.rar || 'common');
       if (id) { pushBag(id, 1); addMessage(t('m_treasure') + ' ' + itemName(itemById(id)), 'good'); }
       SFX.gold(); shake(3); buzz(30); saveGame();       // persiste imediatamente
-    } else {                                            // 'cave': ponto p/ sub-mapas FUTUROS
-      this.state()[p.id] = { used: true };
-      addMessage(t('poi_cave_sealed'), 'sys');          // placeholder até existirem sub-mapas
-      SFX.pickup(); saveGame();
+    } else {                                            // 'cave': entra na masmorra (camada vertical)
+      DungeonLayer.enter(p);                            // gera sub-mapa, troca o estado do mundo
     }
   },
 
@@ -3754,6 +3752,7 @@ function die(src){player.dead=true;buzz([60,60,120]);
 function respawn(){const fl=xpFloor();const lost=Math.floor((player.xp-fl)*0.1);
   player.xp=Math.max(fl,player.xp-lost);
   player.dead=false;player.hp=player.maxhp;player.target=null;player.path=[];player.invuln=1.2;player.dash=0;
+  if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)DungeonLayer.forceExit();  // morreu na masmorra: volta pra superfície antes do templo
   placeAt(temple.x,temple.y);document.getElementById('death').classList.add('hidden');
   addMessage(tf('msg_respawn',{lost:lost}),'sys');}
 function placeAt(tx,ty){player.tx=tx;player.ty=ty;player.px=tx*TILE+TILE/2;player.py=ty*TILE+TILE/2;player.moving=false;cam.x=player.px-W/2;cam.y=player.py-H/2;}
@@ -4402,6 +4401,7 @@ function updateLoot(dt){for(const L of loots){L.t+=dt;
   if(!player.dead&&cheby(L.tx,L.ty,player.tx,player.ty)<=1){pickupLoot(L);L.dead=true;}}
   if(!player.dead&&!player.moving){
     POIManager.tryInteract();
+    if(typeof DungeonLayer!=='undefined')DungeonLayer.update();  // detecta escada de subida/descida
     const pt=PORTALS.find(q=>q.x===player.tx&&q.y===player.ty);
     if(pt){placeAt(pt.tx,pt.ty);SFX.pickup();showZone(pt.lb);}
     const chO=(meta.stats&&meta.stats.chestsOpen)||[];
@@ -7486,6 +7486,100 @@ function loop(ts){requestAnimationFrame(loop);if(!running)return;
   battleTimer+=dt;if(battleTimer>0.3){battleTimer=0;renderBattle();}}
 let battleTimer=0;
 
+/* ============================================================
+   SISTEMA DE MASMORRAS (M1) — camada vertical descendente
+   ------------------------------------------------------------
+   • genDungeon      gerador procedural (testado: 1200 masmorras 100% conectadas)
+   • DUNGEON_MOBS    tabelas de spawn por profundidade (usa MTYPES existentes)
+   • DungeonLayer    troca o estado do mundo (superfície <-> masmorra) e restaura
+   Entradas: os POIs 'cave' já existentes no mundo (antes exibiam "selada").
+   Iluminação: automática — darkness() já escurece dfloor(0.78)/cfloor(0.85).
+   ============================================================ */
+function _dmul32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function genDungeon(opts){
+  const w=opts.w||44,h=opts.h||40,depth=opts.depth||1;
+  const rng=_dmul32((opts.seed||1)*2654435761>>>0);
+  const ri2=(a,b)=>a+Math.floor(rng()*(b-a+1));
+  const FLOOR=depth>=4?T.cfloor:T.dfloor,WALL=depth>=4?T.cwall:T.dwall;
+  const g=new Uint8Array(w*h).fill(WALL);
+  const at=(x,y)=>g[y*w+x],st=(x,y,v)=>{if(x>=0&&y>=0&&x<w&&y<h)g[y*w+x]=v;};
+  const rooms=[];const target=opts.rooms||(6+Math.min(depth,4));let tries=0;
+  while(rooms.length<target&&tries++<target*30){
+    const rw=ri2(5,9),rh=ri2(4,7),rx=ri2(1,w-rw-2),ry=ri2(1,h-rh-2),pad={x:rx-1,y:ry-1,w:rw+2,h:rh+2};
+    if(rooms.some(r=>pad.x<r.x+r.w+1&&pad.x+pad.w+1>r.x&&pad.y<r.y+r.h+1&&pad.y+pad.h+1>r.y))continue;
+    rooms.push({x:rx,y:ry,w:rw,h:rh,cx:rx+(rw>>1),cy:ry+(rh>>1)});
+  }
+  if(rooms.length<2)return genDungeon(Object.assign({},opts,{seed:(opts.seed||1)+1}));
+  for(const r of rooms)for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)st(x,y,FLOOR);
+  const order=[rooms[0]],rest=rooms.slice(1);
+  while(rest.length){const last=order[order.length-1];let bi=0,bd=1e9;rest.forEach((r,i)=>{const d=Math.abs(r.cx-last.cx)+Math.abs(r.cy-last.cy);if(d<bd){bd=d;bi=i;}});order.push(rest.splice(bi,1)[0]);}
+  const cHl=(x0,x1,y)=>{for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)st(x,y,FLOOR);};
+  const cVl=(y0,y1,x)=>{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)st(x,y,FLOOR);};
+  for(let i=1;i<order.length;i++){const a=order[i-1],b=order[i];if(rng()<0.5){cHl(a.cx,b.cx,a.cy);cVl(a.cy,b.cy,b.cx);}else{cVl(a.cy,b.cy,a.cx);cHl(a.cx,b.cx,b.cy);}}
+  const entrance=order[0];let boss=order[0],bmax=-1;
+  for(const r of order){const d=Math.abs(r.cx-entrance.cx)+Math.abs(r.cy-entrance.cy);if(d>bmax){bmax=d;boss=r;}}
+  const mids=order.filter(r=>r!==entrance&&r!==boss);const treasure=mids.length?mids[Math.floor(mids.length/2)]:boss;
+  const upPos={x:entrance.cx,y:entrance.cy},downPos={x:boss.cx,y:boss.cy};
+  st(upPos.x,upPos.y,FLOOR);st(downPos.x,downPos.y,FLOOR);
+  for(const r of order){if(r.w>=7&&r.h>=5){st(r.x+1,r.y+1,T.pillar);st(r.x+r.w-2,r.y+1,T.pillar);st(r.x+1,r.y+r.h-2,T.pillar);st(r.x+r.w-2,r.y+r.h-2,T.pillar);}}
+  const dspawns=[];const density=0.05+depth*0.01;
+  for(const r of order){if(r===entrance)continue;for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)if(at(x,y)===FLOOR&&rng()<density&&(Math.abs(x-upPos.x)+Math.abs(y-upPos.y))>6)dspawns.push({x,y,room:r===boss?'boss':r===treasure?'treasure':'normal'});}
+  return {grid:g,w,h,depth,FLOOR,WALL,up:upPos,down:downPos,treasure:{x:treasure.cx,y:treasure.cy},spawns:dspawns};
+}
+
+const DUNGEON_MOBS={
+  1:{normal:['spider','bat','boneling','skeleton','gcobra'],boss:['gruntorc','bonewarden'],treasure:['orc']},
+  2:{normal:['skeleton','orc','slime','leech','gargoyle'],boss:['cavescorp','bonewarden'],treasure:['bear']},
+  3:{normal:['bonewarden','gargoyle','cavescorp','ashimp','flameimp'],boss:['minotaur','mummy'],treasure:['scorp']},
+  4:{normal:['mummy','scorp','naga','salamander','troll'],boss:['cyclops','golem'],treasure:['obsidiangolem']},
+  5:{normal:['golem','sentinel','wendigo','volcyclops'],boss:['reaper','magmademon'],treasure:['irontitan']},
+  6:{normal:['reaper','magmademon','irontitan','runegolem'],boss:['eldragon'],treasure:['runegolem']}
+};
+function dmobFor(depth,room){const d=DUNGEON_MOBS[Math.max(1,Math.min(6,depth))];const pool=(d&&d[room])||(d&&d.normal)||['skeleton'];return pool[Math.floor(Math.random()*pool.length)];}
+
+const DungeonLayer={
+  active:false,_surf:null,_poi:null,depth:0,off:{x:2,y:2},up:null,down:null,upReady:false,downReady:true,
+  _seed(depth){const x=this._poi?this._poi.x:0,y=this._poi?this._poi.y:0;return((Math.imul(x,73856093)^Math.imul(y,19349663)^Math.imul(depth,83492791))>>>0);},
+  _clearFx(){for(const a of [projectiles,particles,floaters,slashes,rings,beams,orbs,aoes,zaps])if(a)a.length=0;},
+  _build(depth){
+    const dg=genDungeon({seed:this._seed(depth),depth});
+    const OX=this.off.x,OY=this.off.y;
+    const nMap=new Uint8Array(MAPW*MAPH).fill(dg.WALL);
+    const nZone=new Uint8Array(MAPW*MAPH),nElev=new Float32Array(MAPW*MAPH),nShade=new Float32Array(MAPW*MAPH);
+    for(let y=0;y<dg.h;y++)for(let x=0;x<dg.w;x++)nMap[(y+OY)*MAPW+(x+OX)]=dg.grid[y*dg.w+x];
+    map=nMap;zoneA=nZone;elevA=nElev;shadeA=nShade;
+    monsters=[];npcs=[];loots=[];spawns=[];this._clearFx();
+    for(const s of dg.spawns)spawns.push({x:s.x+OX,y:s.y+OY,type:dmobFor(depth,s.room),cd:rnd(5,2)*1000,timer:rnd(2500,0),alive:null});
+    this.up={x:dg.up.x+OX,y:dg.up.y+OY};this.down={x:dg.down.x+OX,y:dg.down.y+OY};
+    this.depth=depth;this.upReady=false;this.downReady=true;
+    buildMinimapBase();
+    placeAt(this.up.x,this.up.y);
+  },
+  enter(poi){
+    if(this.active)return;
+    this._poi=poi;
+    this._surf={map:map,zoneA:zoneA,elevA:elevA,shadeA:shadeA,monsters:monsters,spawns:spawns,npcs:npcs,loots:loots,px:poi?poi.x:player.tx,py:poi?poi.y:player.ty};
+    const depth=Math.max(1,Math.min(6,(dangerAt(poi.x,poi.y)|0)||1));
+    this.active=true;this._build(depth);
+    addMessage(t('dng_enter').replace('{d}',this.depth),'sys');shake(4);buzz(30);if(SFX.pickup)SFX.pickup();saveGame();
+  },
+  descend(){if(!this.active)return;this._build(Math.min(6,this.depth+1));addMessage(t('dng_deeper').replace('{d}',this.depth),'dmg');shake(5);buzz(40);saveGame();},
+  _restoreSurface(){const s=this._surf;if(!s)return;map=s.map;zoneA=s.zoneA;elevA=s.elevA;shadeA=s.shadeA;monsters=s.monsters;spawns=s.spawns;npcs=s.npcs;loots=s.loots;this._clearFx();buildMinimapBase();this.active=false;},
+  leave(){
+    if(!this.active)return;const s=this._surf;this._restoreSurface();
+    let ex=s.px,ey=s.py;  /* emerge ADJACENTE à boca da caverna (evita re-entrar no mesmo tile) */
+    for(const d of [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,-1],[1,-1],[-1,1]]){const nx=s.px+d[0],ny=s.py+d[1];if(walkable(nx,ny)&&!POIManager._byTile.get(nx+','+ny)){ex=nx;ey=ny;break;}}
+    placeAt(ex,ey);this._surf=null;
+    addMessage(t('dng_leave'),'good');shake(3);if(SFX.pickup)SFX.pickup();saveGame();
+  },
+  forceExit(){this._restoreSurface();this._surf=null;},  /* morte na masmorra: restaura superfície sem posicionar (respawn cuida disso) */
+  update(){
+    if(!this.active||player.dead||player.moving)return;
+    if(!(player.tx===this.up.x&&player.ty===this.up.y))this.upReady=true;else if(this.upReady){this.leave();return;}
+    if(!(player.tx===this.down.x&&player.ty===this.down.y))this.downReady=true;else if(this.downReady){this.descend();return;}
+  }
+};
+
 /*
  * 08-save-quests-bootstrap.js
  * Persistencia, saves, missoes, conquistas e bootstrap legado.
@@ -7525,9 +7619,11 @@ function freshMeta(){return{streak:0,lastDaily:'',quests:{date:'',list:[]},ach:{
   stats:{kills:0,elites:0,vorrak:0,thief:0,legend:0,zones:[]},bless:{},rested:0};}
 let meta=freshMeta(),_saveT=0,hasSave=false,killStreak=0,lastKillAt=-99;
 function saveGame(){if(!running)return;
+  const _dl=(typeof DungeonLayer!=='undefined'&&DungeonLayer.active&&DungeonLayer._surf);
+  const _stx=_dl?DungeonLayer._surf.px:player.tx,_sty=_dl?DungeonLayer._surf.py:player.ty;  // na masmorra: grava a boca da caverna (masmorras não persistem no M1)
   const d={v:1,wv:2,cls:player.cls,gender:player.gender,name:player.name,lvl:player.lvl,xp:player.xp,gold:player.gold,loadout:(player.loadout||null),
     skill:player.skill,skillXp:player.skillXp,hp:Math.ceil(player.hp),
-    bag:player.bag,equip:player.equip,tx:player.tx,ty:player.ty,custom:player.custom||null,meta};
+    bag:player.bag,equip:player.equip,tx:_stx,ty:_sty,custom:player.custom||null,meta};
   const db=loadSlots();db.slots[activeSlot]=d;db.active=activeSlot;saveSlots(db);}
 function loadSave(slot){const db=loadSlots();const i=(slot==null)?db.active:slot;
   const d=db.slots[i];return(d&&d.v===1)?d:null;}
