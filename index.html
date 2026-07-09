@@ -4620,6 +4620,11 @@ function render(){
     B.globalCompositeOperation='source-over';}
   B.globalAlpha=1;
   renderLighting(ox,oy,x0,y0,x1,y1);
+  /* POIs (baús, cavernas) e escadas: desenhados no buffer ANTES do blit — senão eram apagados
+     no frame seguinte e nunca apareciam. Por cima da luz pra ficarem bem visíveis. */
+  B.setTransform(1/PIX,0,0,1/PIX,0,0);
+  POIManager.drawWorld(B,ox,oy);
+  if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)DungeonLayer.drawStairs(B,ox,oy);
   /* --- passo 2: blit escalado (nearest) + overlays nítidos --- */
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.imageSmoothingEnabled=false;
@@ -5558,8 +5563,6 @@ function drawOverlays(ox,oy){
      B.fillStyle='#413d36';B.fillRect(sx+16,sy+9,10,20);
      B.fillStyle=rd?'#6a6252':'#8fb0d8';                          /* runas (azul se não lida) */
      for(let ry=0;ry<3;ry++){B.globalAlpha=rd?0.5:(0.55+0.35*Math.sin(gameTime*2.5+ry+p.x));B.fillRect(sx+18,sy+12+ry*5,6,2);}B.globalAlpha=1;}}
-  POIManager.drawWorld(B,ox,oy);
-  if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)DungeonLayer.drawStairs(B,ox,oy);  // escadas subir/descer na masmorra
   for(const n of npcs){const cx=n.x*TILE+TILE/2-ox,cy=n.y*TILE+TILE/2-oy;
     if(cx<-40||cy<-40||cx>W+40||cy>H+40)continue;
     ctx.font="600 11px 'Segoe UI',sans-serif";
@@ -5796,7 +5799,7 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
   g.fillStyle='#dff4ff';g.fillText(you,jx,jy+26+(FS+10)/2);
   /* etiqueta de build (pequena, canto) — útil pra diagnosticar cache no futuro */
   g.textAlign='left';g.textBaseline='bottom';g.font="700 30px 'Segoe UI',system-ui,sans-serif";
-  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 12',16,c.height-14);
+  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 13',16,c.height-14);
   g.textAlign='left';g.textBaseline='alphabetic';
   const LG=[['#55704d',t('leg_fields')],['#3a5340',t('leg_forest')],['#b3a276',t('leg_sand')],['#24405e',t('leg_water')],['#574f3d',t('leg_mud')],['#626670',t('leg_rock')],['#181720',t('leg_cave')],['#34302a',t('leg_crypt')],['#cc4a1f',t('leg_lava')],['#ffe28a','\u25cf '+t('leg_npc')],['#4fd1ff','\u25cf '+t('you_here')]];
   $('bmLegend').innerHTML=LG.map(l=>`<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:10px;height:10px;background:${l[0]};display:inline-block;border-radius:2px"></i>${l[1]}</span>`).join('');}
