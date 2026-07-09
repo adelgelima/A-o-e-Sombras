@@ -4323,7 +4323,8 @@ function updateMonsters(dt){
       else{m.wander-=dt;if(m.wander<=0){m.wander=rnd(1.4,0.6);
         const dd=[[1,0],[-1,0],[0,1],[0,-1]][ri(0,3)];startStep(m,dd[0],dd[1],m);}}
       continue;}
-    if(dP<=m.d.aggro){
+    if(dP<=m.d.aggro+3)m._hunt=4;else if(m._hunt>0)m._hunt=Math.max(0,m._hunt-dt);  /* nota o herói a partir de aggro+3 (cobre a distância de spawn ~7) e persegue por ~4s mesmo se ele se afastar — antes nasciam fora do aggro e só vagavam */
+    if(m._hunt>0){
       const _b=m.d.beh;
       if(_b==='skittish'&&m.hp<m.maxhp*0.4&&dP<=4){
         const fx=Math.sign(m.tx-player.tx)||[1,-1][ri(0,1)],fy=Math.sign(m.ty-player.ty)||[1,-1][ri(0,1)];
