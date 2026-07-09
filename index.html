@@ -1973,7 +1973,34 @@ const POIManager = {
       this.pois.push(p);
       this._byTile.set(x + ',' + y, p);
     }
+    this._pruneUnreachableCaves();       // remove cavernas inacessíveis a pé (bolsões isolados)
     return this.pois;
+  },
+
+  /* Remove cavernas em bolsões isolados (visíveis no mapa mas inacessíveis a pé).
+     BFS único a partir do templo pela terra caminhável; mantém só o alcançável. */
+  _pruneUnreachableCaves() {
+    if (typeof temple === 'undefined' || !temple) return;
+    let sx = temple.x, sy = temple.y;
+    for (let r = 0; r < 10 && !walkable(sx, sy); r++) sx = temple.x + r;
+    if (!walkable(sx, sy)) return;
+    const seen = new Uint8Array(MAPW * MAPH);
+    const qx = new Int32Array(MAPW * MAPH), qy = new Int32Array(MAPW * MAPH);
+    let head = 0, tail = 0; qx[0] = sx; qy[0] = sy; tail = 1; seen[sy * MAPW + sx] = 1;
+    const NB = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    while (head < tail) {
+      const x = qx[head], y = qy[head]; head++;
+      for (let i = 0; i < 4; i++) {
+        const nx = x + NB[i][0], ny = y + NB[i][1];
+        if (nx < 0 || ny < 0 || nx >= MAPW || ny >= MAPH) continue;
+        const k = ny * MAPW + nx;
+        if (seen[k] || !walkable(nx, ny)) continue;
+        seen[k] = 1; qx[tail] = nx; qy[tail] = ny; tail++;
+      }
+    }
+    this.pois = this.pois.filter(p => p.type !== 'cave' || seen[p.y * MAPW + p.x]);
+    this._byTile.clear();
+    for (const p of this.pois) this._byTile.set(p.x + ',' + p.y, p);
   },
 
   _rockCount(x, y) {
@@ -2052,11 +2079,22 @@ const POIManager = {
         B.fillStyle = '#a8763a'; B.fillRect(sx + 12, sy + 18, 20, 5);
         B.fillStyle = '#e8c25a'; B.fillRect(sx + 20, sy + 22, 4, 6);
         B.fillStyle = '#fff0b8'; B.fillRect(sx + 13, sy + 19, 6, 1);
-      } else {                                            // caverna
+      } else {                                            // caverna (entrada de masmorra — destacada)
+        const ccx = sx + TILE / 2, gt = (typeof gameTime !== 'undefined' ? gameTime : 0);
+        const pul = 0.5 + 0.5 * Math.sin(gt * 3);
+        B.save();
+        B.globalAlpha = 0.22 + pul * 0.28;                // halo lilás pulsante (combina com o ponto do mapa)
+        B.fillStyle = '#9b8cff';
+        B.beginPath(); B.arc(ccx, sy + TILE / 2 + 4, TILE * 0.75, 0, 7); B.fill();
+        B.globalAlpha = 1;
         B.fillStyle = '#3a3f4a'; B.fillRect(sx + 8, sy + 13, 28, 23);
         B.fillStyle = '#52596a'; B.fillRect(sx + 8, sy + 13, 28, 5);
         B.fillStyle = '#0e1218'; B.fillRect(sx + 11, sy + 21, 22, 15);
         B.fillStyle = '#07090d'; B.fillRect(sx + 14, sy + 24, 16, 12);
+        B.fillStyle = '#c9baff'; B.globalAlpha = 0.7 + pul * 0.3;       // seta indicadora
+        B.font = "bold 15px 'Segoe UI',sans-serif"; B.textAlign = 'center'; B.textBaseline = 'alphabetic';
+        B.fillText('\u25BC', ccx, sy + 8);
+        B.restore();
       }
     }
   },
@@ -5710,13 +5748,9 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
   g.fillStyle='rgba(16,54,72,.92)';roundRect(g,jx-yw/2-11,jy+26,yw+22,FS+10,9);g.fill();
   g.strokeStyle='#4fd1ff';g.globalAlpha=.7;g.lineWidth=2;g.stroke();g.globalAlpha=1;
   g.fillStyle='#dff4ff';g.fillText(you,jx,jy+26+(FS+10)/2);
-  /* DIAGNÓSTICO (temporário): confirma versão + quantas cavernas existem no mundo */
-  {const _nc=POIManager.pois.filter(p=>p.type==='cave').length;
-   g.textAlign='left';g.textBaseline='top';
-   g.fillStyle='rgba(10,6,20,.88)';roundRect(g,28,28,880,104,16);g.fill();
-   g.strokeStyle='#9b8cff';g.lineWidth=4;g.stroke();
-   g.fillStyle='#c9baff';g.font="800 66px 'Segoe UI',system-ui,sans-serif";
-   g.fillText(_nc+' cavernas \u00b7 build 6',52,54);}
+  /* etiqueta de build (pequena, canto) — útil pra diagnosticar cache no futuro */
+  g.textAlign='left';g.textBaseline='bottom';g.font="700 30px 'Segoe UI',system-ui,sans-serif";
+  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 8',16,c.height-14);
   g.textAlign='left';g.textBaseline='alphabetic';
   const LG=[['#55704d',t('leg_fields')],['#3a5340',t('leg_forest')],['#b3a276',t('leg_sand')],['#24405e',t('leg_water')],['#574f3d',t('leg_mud')],['#626670',t('leg_rock')],['#181720',t('leg_cave')],['#34302a',t('leg_crypt')],['#cc4a1f',t('leg_lava')],['#ffe28a','\u25cf '+t('leg_npc')],['#4fd1ff','\u25cf '+t('you_here')]];
   $('bmLegend').innerHTML=LG.map(l=>`<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:10px;height:10px;background:${l[0]};display:inline-block;border-radius:2px"></i>${l[1]}</span>`).join('');}
