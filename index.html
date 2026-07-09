@@ -5689,6 +5689,17 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
     g.fillStyle='#eef2f8';g.fillText(label,x,ly);
     g.fillStyle=mk.c;g.beginPath();g.arc(x,y,7,0,7);g.fill();
     g.strokeStyle='rgba(0,0,0,.7)';g.lineWidth=3;g.stroke();}
+  /* --- entradas de masmorra (cavernas): marcadores lilás rotulados --- */
+  g.font="700 20px 'Segoe UI',system-ui,sans-serif";
+  for(const p of POIManager.pois){if(p.type!=='cave'||POIManager.isDone(p))continue;
+    const x=p.x*SC,y=p.y*SC;
+    g.fillStyle='#9b8cff';g.beginPath();g.arc(x,y,10,0,7);g.fill();
+    g.lineWidth=4;g.strokeStyle='#efeaff';g.stroke();
+    g.lineWidth=2;g.strokeStyle='rgba(10,6,20,.8)';g.stroke();
+    const lb=t('leg_cave'),w=g.measureText(lb).width,ly=y+26;
+    g.fillStyle='rgba(20,14,32,.85)';roundRect(g,x-w/2-8,ly-12,w+16,23,7);g.fill();
+    g.strokeStyle='#9b8cff';g.globalAlpha=.6;g.lineWidth=2;g.stroke();g.globalAlpha=1;
+    g.fillStyle='#e8e0ff';g.fillText(lb,x,ly);}
   /* --- marcador do jogador: proeminente, pulsante e rotulado --- */
   const jx=player.tx*SC,jy=player.ty*SC,pp=1+Math.sin(gameTime*4)*0.18;
   g.strokeStyle='rgba(79,209,255,.5)';g.lineWidth=5;g.beginPath();g.arc(jx,jy,26*pp,0,7);g.stroke();
@@ -5699,6 +5710,13 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
   g.fillStyle='rgba(16,54,72,.92)';roundRect(g,jx-yw/2-11,jy+26,yw+22,FS+10,9);g.fill();
   g.strokeStyle='#4fd1ff';g.globalAlpha=.7;g.lineWidth=2;g.stroke();g.globalAlpha=1;
   g.fillStyle='#dff4ff';g.fillText(you,jx,jy+26+(FS+10)/2);
+  /* DIAGNÓSTICO (temporário): confirma versão + quantas cavernas existem no mundo */
+  {const _nc=POIManager.pois.filter(p=>p.type==='cave').length;
+   g.textAlign='left';g.textBaseline='top';
+   g.fillStyle='rgba(10,6,20,.88)';roundRect(g,28,28,880,104,16);g.fill();
+   g.strokeStyle='#9b8cff';g.lineWidth=4;g.stroke();
+   g.fillStyle='#c9baff';g.font="800 66px 'Segoe UI',system-ui,sans-serif";
+   g.fillText(_nc+' cavernas \u00b7 build 6',52,54);}
   g.textAlign='left';g.textBaseline='alphabetic';
   const LG=[['#55704d',t('leg_fields')],['#3a5340',t('leg_forest')],['#b3a276',t('leg_sand')],['#24405e',t('leg_water')],['#574f3d',t('leg_mud')],['#626670',t('leg_rock')],['#181720',t('leg_cave')],['#34302a',t('leg_crypt')],['#cc4a1f',t('leg_lava')],['#ffe28a','\u25cf '+t('leg_npc')],['#4fd1ff','\u25cf '+t('you_here')]];
   $('bmLegend').innerHTML=LG.map(l=>`<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:10px;height:10px;background:${l[0]};display:inline-block;border-radius:2px"></i>${l[1]}</span>`).join('');}
