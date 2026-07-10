@@ -472,6 +472,8 @@
         <div class="slot" data-eq="weapon"><span class="lab" data-i18n="weapon">Arma</span></div>
         <div class="slot" data-eq="shield"><span class="lab" id="offLab" data-i18n="off_shield">Escudo</span></div>
         <div class="slot" data-eq="armor"><span class="lab" data-i18n="armor">Armadura</span></div>
+        <div class="slot" data-eq="head"><span class="lab" id="headLab" data-i18n="slot_head">Cabeça</span></div>
+        <div class="slot" data-eq="legs"><span class="lab" id="legsLab" data-i18n="slot_legs">Pernas</span></div>
       </div>
       <h2 data-i18n="backpack">Mochila</h2>
       <div id="bag" class="grid"></div>
@@ -629,6 +631,7 @@
     <div class="card panel" style="text-align:center">
       <h1 style="color:var(--danger)" data-i18n="you_died">VOCÊ TOMBOU</h1>
       <p id="deathMsg" data-i18n="death_shadows">As sombras o levaram.</p>
+      <button class="btn wide" id="reviveBtn" style="background:linear-gradient(180deg,#3a2e14,#241c0c);border-color:#ffcf5a">Reviver aqui</button>
       <button class="btn wide" id="respawnBtn" data-i18n="respawn">Renascer no Templo</button>
     </div>
   </div>
@@ -654,14 +657,14 @@ const I18N={
     set_label:'Conjunto', set_active:'Conjunto {name} ativo ({n}/3)',
     wfx_burn:'Inc\u00eandio', wfx_burn_d:'Ataques incendeiam o alvo', wfx_chain:'Corrente', wfx_chain_d:'Raios saltam para inimigos pr\u00f3ximos', wfx_quake:'Onda de Choque', wfx_quake_d:'Golpes atingem inimigos ao redor', wfx_exec:'Carrasco', wfx_exec_d:'Dano massivo em alvos feridos', wfx_pierce:'Perfurante', wfx_pierce_d:'Flechas atravessam os inimigos',
     you_here:'Voc\u00ea', leg_fields:'Campos', leg_forest:'Floresta', leg_sand:'Areia', leg_water:'\u00c1gua', leg_mud:'Lodo', leg_rock:'Rocha', leg_cave:'Caverna', leg_crypt:'Cripta', leg_lava:'Lava', leg_npc:'NPC',
-    poi_cave_sealed:'Uma entrada de caverna, selada por agora.', dng_enter:'Voc\u00ea desceu \u00e0 masmorra (profundidade {d}). Volte \u00e0 entrada para subir.', dng_deeper:'Voc\u00ea desce mais fundo \u2014 profundidade {d}.', dng_leave:'Voc\u00ea emerge \u00e0 superf\u00edcie.', dng_up:'Subir (sair)', dng_down:'Descer (mais fundo)', dng_secret:'Voc\u00ea encontrou uma passagem secreta!', dng_chest:'Ba\u00fa: {i}', dng_floor:'\u26cf N\u00edvel {n}',
+    poi_cave_sealed:'Uma entrada de caverna, selada por agora.', dng_enter:'Voc\u00ea desceu \u00e0 masmorra (profundidade {d}). Volte \u00e0 entrada para subir.', dng_deeper:'Voc\u00ea desce mais fundo \u2014 profundidade {d}.', dng_leave:'Voc\u00ea emerge \u00e0 superf\u00edcie.', dng_up:'Subir (sair)', dng_down:'Descer (mais fundo)', dng_secret:'Voc\u00ea encontrou uma passagem secreta!', dng_chest:'Ba\u00fa: {i}', dng_floor:'\u26cf N\u00edvel {n}', dng_up_floor:'Subiu ao n\u00edvel {n}.', dng_teleport:'Teleportado ao primeiro andar.', dng_tp:'Portal \u2192 n\u00edvel 1', revive_btn:'Reviver aqui ({g} ouro)', revive_no:'Ouro insuficiente para reviver',
     save_now:'Guardar agora', save_now_sub:'Grava o teu progresso neste instante', export_save:'Exportar progresso', export_save_sub:'Backup num ficheiro (protege de limpeza de cache)', import_save:'Importar progresso', import_save_sub:'Restaura a partir de um backup', toast_saved:'Jogo Guardado com Sucesso', toast_exported:'Backup exportado', toast_imported:'Progresso importado', toast_bad_save:'Save inv\u00e1lido ou corrompido', toast_no_save:'Nenhum jogo para guardar',
     del_yes:'Excluir', del_no:'N\u00e3o',
     bless_hint:'Suba de n\u00edvel para receber B\u00ean\u00e7\u00e3os de Cindra.', ach_locked:'bloqueada',
     elem_fire:'Fogo', elem_ice:'Gelo', elem_poison:'Veneno', elem_holy:'Radiante', tip_attack:'Ataque', tip_atkspd:'Vel. ataque', tip_tiles:'casas', tip_tile:'casa', tip_defense:'Defesa', tip_element:'Elemento', tip_reqlvl:'N\u00edvel req.', tip_block:'Bloqueio', tip_cdr:'Recarga', tip_fireres:'Resist. fogo', tip_armor:'Armadura', tip_restores:'Restaura {n} de vida', tip_purge:'Purga o veneno das veias', lbl_kills:'abates', lbl_stage_of:'etapa {n}/3',
     pip_range:'Alcance', pip_magic:'Magia', lvl_word:'N\u00edvel', gold_low:'ouro', claimed_lbl:'resgatada', locked_lbl:'bloqueada', danger_lv1:'Nv 1-4', danger_lv2:'Nv 5-8', danger_lv3:'Nv 9-13', danger_lv4:'Nv 14-18', danger_lv5:'Nv 19+',
     rar_common:'Comum', rar_uncommon:'Incomum', rar_rare:'Raro', rar_epic:'\u00c9pico', rar_legendary:'Lend\u00e1rio', kind_consumable:'Consum\u00edvel', fl_combo:'Sequ\u00eancia x{n}', fl_block:'bloqueou', fl_purified:'purificado', inv_empty:'Mochila vazia. Cace criaturas para coletar itens.', list_empty:'\u2014 vazio \u2014',
-    equipment_title:'Equipamento', off_shield:'Escudo', close_i:'Fechar (I)', inv_hint:'Toque num item para equipar / usar. Toque e segure (ou mouse) para ver os atributos.', bless_cindra:'\u2726 B\u00ean\u00e7\u00e3o de Cindra \u2726', bless_choose:'Escolha um dom para esta jornada', quests_title:'Miss\u00f5es Di\u00e1rias', daily_reward:'\u2726 Recompensa Di\u00e1ria \u2726', death_shadows:'As sombras o levaram.', death_by:'{src} desferiu o golpe final.', msg_old_removed:'Itens antigos removidos da mochila: {list}', msg_hunt_reward:'Ca\u00e7ada de {name}: +{gold} ouro, +{xp} XP.', msg_hunt_trophy:'Trof\u00e9u de ca\u00e7a: {name} \u2713', msg_hunt_max:'M\u00e1ximo de 2 ca\u00e7adas ativas.', msg_skill_up:'Per\u00edcia de {skill} agora \u00e9 {val}!', msg_thief_appear:'Um {name} apareceu! Alcance-o antes que fuja!', msg_defeated:'Voc\u00ea derrotou {name}. +{xp} XP', msg_lvlup:'Voc\u00ea subiu para o n\u00edvel {lvl}!', msg_poisoned:'Voc\u00ea foi envenenado! Use um Ant\u00eddoto.', msg_respawn:'Voc\u00ea renasceu no templo. \u2212{lost} XP.', msg_swirl_miss:'Rodopio n\u00e3o atingiu ningu\u00e9m.', msg_nova_miss:'Nova n\u00e3o atingiu ningu\u00e9m.', msg_skill_locked:'Desbloqueia no n\u00edvel {lv}.', msg_no_ray:'Sem alvo pr\u00f3ximo para o Raio.', msg_cure_purge:'O ant\u00eddoto purga o veneno.', msg_inn_heal:'Mira serve um caldo quente. Vida restaurada (-30 ouro).', msg_inn_full:'Mira: \u201cVolte quando precisar de uma cama.\u201d', msg_inn_need:'Mira: \u201cS\u00e3o 30 moedas pelo caldo, viajante.\u201d', msg_priest_heal:'O sacerdote o curou por 20 de ouro.', msg_priest_full:'\u201cEst\u00e1s inteiro, her\u00f3i.\u201d', msg_priest_need:'\u201cPreciso de 20 de ouro para curar-te.\u201d', msg_ferry_go:'{name} te leva pelas \u00e1guas (-50 ouro).', msg_ferry_need:'{name}: \u201cS\u00e3o 50 moedas a travessia.\u201d', msg_sage:'Velho Nel: \u201c{lore}\u201d', msg_tut_map:'Toque no minimapa para mover; use o bot\u00e3o M para o mapa do Vale.', msg_map_zoom:'Coloque o minimapa no zoom normal para se mover por ele.', msg_map_blocked:'N\u00e3o h\u00e1 caminho livre at\u00e9 ali.', msg_thief_escaped:'O {name} escapou...', msg_cls_no_use:'{cls} n\u00e3o usa: {name}.', msg_item_req:'{name} requer n\u00edvel {req} (voc\u00ea tem {lvl}).', msg_equipped:'Equipou: {name}', msg_hp_full:'Vida j\u00e1 est\u00e1 cheia.', msg_bought:'Comprou: {name}', msg_sold:'Vendeu: {name} (+{g} ouro)', msg_bless_recv:'B\u00ean\u00e7\u00e3o recebida: {name}.', msg_quest_done:'Miss\u00e3o completa: {name}!', msg_quest_reward:'Recompensa da miss\u00e3o: +{g} de ouro.', msg_ach:'Conquista: {name}! +{g} de ouro.', msg_daily_claimed:'Recompensa di\u00e1ria resgatada (+{g} de ouro).', msg_rest_bonus:'B\u00f4nus de descanso: +30% de XP nos pr\u00f3ximos {n} abates.', msg_welcome_back:'Bem-vindo de volta, {name}.', msg_welcome:'Bem-vindo, {name}. o ataque \u00e9 autom\u00e1tico. O Vale de Cindra o aguarda.', msg_slots_full:'Todos os 3 espa\u00e7os est\u00e3o ocupados. Exclua um her\u00f3i primeiro.', msg_controls_lefty:'Controles para canhotos (ataque \u00e0 esquerda).', msg_controls_right:'Controles padr\u00e3o (ataque \u00e0 direita).', msg_quality:'Qualidade: {q}', q_high:'Alta', q_perf:'Desempenho', c_hunt_done:'CA\u00c7ADA CONCLU\u00cdDA!', c_thief:'FURTIVO DOURADO!', c_fell:'{name} CAIU!', c_gold_rain:'CHUVA DE OURO!', c_lvl:'SUBIU PARA N\u00cdVEL {lvl}', c_new_skill:'NOVA HABILIDADE: {name}!', c_fury:'F\u00daRIA DE A\u00c7O!', c_storm:'TEMPESTADE ARCANA!', c_vorrak:'VORRAK DESPERTA SUA F\u00daRIA!', c_cls_no_use:'CLASSE N\u00c3O USA ESTE ITEM', c_req_lvl:'REQUER N\u00cdVEL {req}', c_ach:'CONQUISTA: {name}', shop_smith:'Forja de Torvo', shop_psmith:'Armeiro Galdu', shop_alch:'Alquimia de Vessa', shop_merchant:'Mercador Odo',
+    equipment_title:'Equipamento', off_shield:'Escudo', slot_head:'Cabe\u00e7a', slot_legs:'Pernas', close_i:'Fechar (I)', inv_hint:'Toque num item para equipar / usar. Toque e segure (ou mouse) para ver os atributos.', bless_cindra:'\u2726 B\u00ean\u00e7\u00e3o de Cindra \u2726', bless_choose:'Escolha um dom para esta jornada', quests_title:'Miss\u00f5es Di\u00e1rias', daily_reward:'\u2726 Recompensa Di\u00e1ria \u2726', death_shadows:'As sombras o levaram.', death_by:'{src} desferiu o golpe final.', msg_old_removed:'Itens antigos removidos da mochila: {list}', msg_hunt_reward:'Ca\u00e7ada de {name}: +{gold} ouro, +{xp} XP.', msg_hunt_trophy:'Trof\u00e9u de ca\u00e7a: {name} \u2713', msg_hunt_max:'M\u00e1ximo de 2 ca\u00e7adas ativas.', msg_skill_up:'Per\u00edcia de {skill} agora \u00e9 {val}!', msg_thief_appear:'Um {name} apareceu! Alcance-o antes que fuja!', msg_defeated:'Voc\u00ea derrotou {name}. +{xp} XP', msg_lvlup:'Voc\u00ea subiu para o n\u00edvel {lvl}!', msg_poisoned:'Voc\u00ea foi envenenado! Use um Ant\u00eddoto.', msg_respawn:'Voc\u00ea renasceu no templo. \u2212{lost} XP.', msg_swirl_miss:'Rodopio n\u00e3o atingiu ningu\u00e9m.', msg_nova_miss:'Nova n\u00e3o atingiu ningu\u00e9m.', msg_skill_locked:'Desbloqueia no n\u00edvel {lv}.', msg_no_ray:'Sem alvo pr\u00f3ximo para o Raio.', msg_cure_purge:'O ant\u00eddoto purga o veneno.', msg_inn_heal:'Mira serve um caldo quente. Vida restaurada (-30 ouro).', msg_inn_full:'Mira: \u201cVolte quando precisar de uma cama.\u201d', msg_inn_need:'Mira: \u201cS\u00e3o 30 moedas pelo caldo, viajante.\u201d', msg_priest_heal:'O sacerdote o curou por 20 de ouro.', msg_priest_full:'\u201cEst\u00e1s inteiro, her\u00f3i.\u201d', msg_priest_need:'\u201cPreciso de 20 de ouro para curar-te.\u201d', msg_ferry_go:'{name} te leva pelas \u00e1guas (-50 ouro).', msg_ferry_need:'{name}: \u201cS\u00e3o 50 moedas a travessia.\u201d', msg_sage:'Velho Nel: \u201c{lore}\u201d', msg_tut_map:'Toque no minimapa para mover; use o bot\u00e3o M para o mapa do Vale.', msg_map_zoom:'Coloque o minimapa no zoom normal para se mover por ele.', msg_map_blocked:'N\u00e3o h\u00e1 caminho livre at\u00e9 ali.', msg_thief_escaped:'O {name} escapou...', msg_cls_no_use:'{cls} n\u00e3o usa: {name}.', msg_item_req:'{name} requer n\u00edvel {req} (voc\u00ea tem {lvl}).', msg_equipped:'Equipou: {name}', msg_hp_full:'Vida j\u00e1 est\u00e1 cheia.', msg_bought:'Comprou: {name}', msg_sold:'Vendeu: {name} (+{g} ouro)', msg_bless_recv:'B\u00ean\u00e7\u00e3o recebida: {name}.', msg_quest_done:'Miss\u00e3o completa: {name}!', msg_quest_reward:'Recompensa da miss\u00e3o: +{g} de ouro.', msg_ach:'Conquista: {name}! +{g} de ouro.', msg_daily_claimed:'Recompensa di\u00e1ria resgatada (+{g} de ouro).', msg_rest_bonus:'B\u00f4nus de descanso: +30% de XP nos pr\u00f3ximos {n} abates.', msg_welcome_back:'Bem-vindo de volta, {name}.', msg_welcome:'Bem-vindo, {name}. o ataque \u00e9 autom\u00e1tico. O Vale de Cindra o aguarda.', msg_slots_full:'Todos os 3 espa\u00e7os est\u00e3o ocupados. Exclua um her\u00f3i primeiro.', msg_controls_lefty:'Controles para canhotos (ataque \u00e0 esquerda).', msg_controls_right:'Controles padr\u00e3o (ataque \u00e0 direita).', msg_quality:'Qualidade: {q}', q_high:'Alta', q_perf:'Desempenho', c_hunt_done:'CA\u00c7ADA CONCLU\u00cdDA!', c_thief:'FURTIVO DOURADO!', c_fell:'{name} CAIU!', c_gold_rain:'CHUVA DE OURO!', c_lvl:'SUBIU PARA N\u00cdVEL {lvl}', c_new_skill:'NOVA HABILIDADE: {name}!', c_fury:'F\u00daRIA DE A\u00c7O!', c_storm:'TEMPESTADE ARCANA!', c_vorrak:'VORRAK DESPERTA SUA F\u00daRIA!', c_cls_no_use:'CLASSE N\u00c3O USA ESTE ITEM', c_req_lvl:'REQUER N\u00cdVEL {req}', c_ach:'CONQUISTA: {name}', shop_smith:'Forja de Torvo', shop_psmith:'Armeiro Galdu', shop_alch:'Alquimia de Vessa', shop_merchant:'Mercador Odo',
     game_sub:'um RPG de bolso no Vale de Cindra', target_btn:'ALVO',
   your_heroes:'Seus her\u00f3is', create_hero:'+ Criar novo her\u00f3i', new_hero:'novo her\u00f3i',
   choose_class:'Escolha sua classe', new_hero_class:'Novo her\u00f3i \u2014 escolha a classe', skin:'Pele', outfit:'Traje', detail:'Detalhe',
@@ -703,14 +706,14 @@ const I18N={
     set_label:'Set', set_active:'{name} set active ({n}/3)',
     wfx_burn:'Ignite', wfx_burn_d:'Attacks set the target ablaze', wfx_chain:'Chain', wfx_chain_d:'Lightning leaps to nearby foes', wfx_quake:'Shockwave', wfx_quake_d:'Blows strike surrounding foes', wfx_exec:'Executioner', wfx_exec_d:'Massive damage to wounded targets', wfx_pierce:'Piercing', wfx_pierce_d:'Arrows pass through enemies',
     you_here:'You', leg_fields:'Fields', leg_forest:'Forest', leg_sand:'Sand', leg_water:'Water', leg_mud:'Mud', leg_rock:'Rock', leg_cave:'Cave', leg_crypt:'Crypt', leg_lava:'Lava', leg_npc:'NPC',
-    poi_cave_sealed:'A cave entrance, sealed for now.', dng_enter:'You descend into the dungeon (depth {d}). Return to the entrance to climb out.', dng_deeper:'You descend deeper \u2014 depth {d}.', dng_leave:'You emerge onto the surface.', dng_up:'Ascend (exit)', dng_down:'Descend (deeper)', dng_secret:'You found a secret passage!', dng_chest:'Chest: {i}', dng_floor:'\u26cf Floor {n}',
+    poi_cave_sealed:'A cave entrance, sealed for now.', dng_enter:'You descend into the dungeon (depth {d}). Return to the entrance to climb out.', dng_deeper:'You descend deeper \u2014 depth {d}.', dng_leave:'You emerge onto the surface.', dng_up:'Ascend (exit)', dng_down:'Descend (deeper)', dng_secret:'You found a secret passage!', dng_chest:'Chest: {i}', dng_floor:'\u26cf Floor {n}', dng_up_floor:'Ascended to floor {n}.', dng_teleport:'Teleported to the first floor.', dng_tp:'Portal \u2192 floor 1', revive_btn:'Revive here ({g} gold)', revive_no:'Not enough gold to revive',
     save_now:'Save now', save_now_sub:'Save your progress right now', export_save:'Export progress', export_save_sub:'Back up to a file (survives cache clears)', import_save:'Import progress', import_save_sub:'Restore from a backup file', toast_saved:'Game saved', toast_exported:'Backup exported', toast_imported:'Progress imported', toast_bad_save:'Invalid or corrupted save', toast_no_save:'No game to save',
     del_yes:'Delete', del_no:'No',
     bless_hint:'Level up to receive Blessings of Cindra.', ach_locked:'locked',
     elem_fire:'Fire', elem_ice:'Ice', elem_poison:'Poison', elem_holy:'Radiant', tip_attack:'Attack', tip_atkspd:'Atk speed', tip_tiles:'tiles', tip_tile:'tile', tip_defense:'Defense', tip_element:'Element', tip_reqlvl:'Req. level', tip_block:'Block', tip_cdr:'Cooldown', tip_fireres:'Fire res.', tip_armor:'Armor', tip_restores:'Restores {n} health', tip_purge:'Purges poison from the veins', lbl_kills:'kills', lbl_stage_of:'stage {n}/3',
     pip_range:'Range', pip_magic:'Magic', lvl_word:'Level', gold_low:'gold', claimed_lbl:'claimed', locked_lbl:'locked', danger_lv1:'Lv 1-4', danger_lv2:'Lv 5-8', danger_lv3:'Lv 9-13', danger_lv4:'Lv 14-18', danger_lv5:'Lv 19+',
     rar_common:'Common', rar_uncommon:'Uncommon', rar_rare:'Rare', rar_epic:'Epic', rar_legendary:'Legendary', kind_consumable:'Consumable', fl_combo:'Streak x{n}', fl_block:'blocked', fl_purified:'purified', inv_empty:'Backpack empty. Hunt creatures to collect items.', list_empty:'\u2014 empty \u2014',
-    equipment_title:'Equipment', off_shield:'Shield', close_i:'Close (I)', inv_hint:'Tap an item to equip / use. Tap and hold (or mouse) to see stats.', bless_cindra:'\u2726 Blessing of Cindra \u2726', bless_choose:'Choose a gift for this journey', quests_title:'Daily Quests', daily_reward:'\u2726 Daily Reward \u2726', death_shadows:'The shadows took you.', death_by:'{src} struck the final blow.', msg_old_removed:'Old items removed from your backpack: {list}', msg_hunt_reward:'Hunt of {name}: +{gold} gold, +{xp} XP.', msg_hunt_trophy:'Hunt trophy: {name} \u2713', msg_hunt_max:'Maximum of 2 active hunts.', msg_skill_up:'{skill} skill is now {val}!', msg_thief_appear:'A {name} appeared! Catch it before it flees!', msg_defeated:'You defeated {name}. +{xp} XP', msg_lvlup:'You reached level {lvl}!', msg_poisoned:'You are poisoned! Use an Antidote.', msg_respawn:'You respawned at the temple. \u2212{lost} XP.', msg_swirl_miss:'Whirlwind hit nothing.', msg_nova_miss:'Nova hit nothing.', msg_skill_locked:'Unlocks at level {lv}.', msg_no_ray:'No target nearby for the Bolt.', msg_cure_purge:'The antidote purges the poison.', msg_inn_heal:'Mira serves a hot broth. Health restored (-30 gold).', msg_inn_full:'Mira: \u201cCome back when you need a bed.\u201d', msg_inn_need:'Mira: \u201cThat\u2019s 30 coins for the broth, traveler.\u201d', msg_priest_heal:'The priest healed you for 20 gold.', msg_priest_full:'\u201cYou are whole, hero.\u201d', msg_priest_need:'\u201cI need 20 gold to heal you.\u201d', msg_ferry_go:'{name} ferries you across the waters (-50 gold).', msg_ferry_need:'{name}: \u201cThe crossing is 50 coins.\u201d', msg_sage:'Old Nel: \u201c{lore}\u201d', msg_tut_map:'Tap the minimap to move; use the M button for the Vale map.', msg_map_zoom:'Set the minimap to normal zoom to move by tapping it.', msg_map_blocked:'No clear path there.', msg_thief_escaped:'The {name} escaped...', msg_cls_no_use:'{cls} can\u2019t use: {name}.', msg_item_req:'{name} requires level {req} (you have {lvl}).', msg_equipped:'Equipped: {name}', msg_hp_full:'Health is already full.', msg_bought:'Bought: {name}', msg_sold:'Sold: {name} (+{g} gold)', msg_bless_recv:'Blessing received: {name}.', msg_quest_done:'Quest complete: {name}!', msg_quest_reward:'Quest reward: +{g} gold.', msg_ach:'Achievement: {name}! +{g} gold.', msg_daily_claimed:'Daily reward claimed (+{g} gold).', msg_rest_bonus:'Rest bonus: +30% XP for the next {n} kills.', msg_welcome_back:'Welcome back, {name}.', msg_welcome:'Welcome, {name}. Attacking is automatic. The Cindra Vale awaits you.', msg_slots_full:'All 3 slots are taken. Delete a hero first.', msg_controls_lefty:'Left-handed controls (attack on the left).', msg_controls_right:'Standard controls (attack on the right).', msg_quality:'Graphics: {q}', q_high:'High', q_perf:'Performance', c_hunt_done:'HUNT COMPLETE!', c_thief:'GILDED THIEF!', c_fell:'{name} FELL!', c_gold_rain:'GOLD RAIN!', c_lvl:'REACHED LEVEL {lvl}', c_new_skill:'NEW SKILL: {name}!', c_fury:'STEEL FURY!', c_storm:'ARCANE STORM!', c_vorrak:'VORRAK UNLEASHES ITS FURY!', c_cls_no_use:'CLASS CAN\u2019T USE THIS ITEM', c_req_lvl:'REQUIRES LEVEL {req}', c_ach:'ACHIEVEMENT: {name}', shop_smith:'Torvo\u2019s Forge', shop_psmith:'Galdu the Armorer', shop_alch:'Vessa\u2019s Alchemy', shop_merchant:'Merchant Odo',
+    equipment_title:'Equipment', off_shield:'Shield', slot_head:'Head', slot_legs:'Legs', close_i:'Close (I)', inv_hint:'Tap an item to equip / use. Tap and hold (or mouse) to see stats.', bless_cindra:'\u2726 Blessing of Cindra \u2726', bless_choose:'Choose a gift for this journey', quests_title:'Daily Quests', daily_reward:'\u2726 Daily Reward \u2726', death_shadows:'The shadows took you.', death_by:'{src} struck the final blow.', msg_old_removed:'Old items removed from your backpack: {list}', msg_hunt_reward:'Hunt of {name}: +{gold} gold, +{xp} XP.', msg_hunt_trophy:'Hunt trophy: {name} \u2713', msg_hunt_max:'Maximum of 2 active hunts.', msg_skill_up:'{skill} skill is now {val}!', msg_thief_appear:'A {name} appeared! Catch it before it flees!', msg_defeated:'You defeated {name}. +{xp} XP', msg_lvlup:'You reached level {lvl}!', msg_poisoned:'You are poisoned! Use an Antidote.', msg_respawn:'You respawned at the temple. \u2212{lost} XP.', msg_swirl_miss:'Whirlwind hit nothing.', msg_nova_miss:'Nova hit nothing.', msg_skill_locked:'Unlocks at level {lv}.', msg_no_ray:'No target nearby for the Bolt.', msg_cure_purge:'The antidote purges the poison.', msg_inn_heal:'Mira serves a hot broth. Health restored (-30 gold).', msg_inn_full:'Mira: \u201cCome back when you need a bed.\u201d', msg_inn_need:'Mira: \u201cThat\u2019s 30 coins for the broth, traveler.\u201d', msg_priest_heal:'The priest healed you for 20 gold.', msg_priest_full:'\u201cYou are whole, hero.\u201d', msg_priest_need:'\u201cI need 20 gold to heal you.\u201d', msg_ferry_go:'{name} ferries you across the waters (-50 gold).', msg_ferry_need:'{name}: \u201cThe crossing is 50 coins.\u201d', msg_sage:'Old Nel: \u201c{lore}\u201d', msg_tut_map:'Tap the minimap to move; use the M button for the Vale map.', msg_map_zoom:'Set the minimap to normal zoom to move by tapping it.', msg_map_blocked:'No clear path there.', msg_thief_escaped:'The {name} escaped...', msg_cls_no_use:'{cls} can\u2019t use: {name}.', msg_item_req:'{name} requires level {req} (you have {lvl}).', msg_equipped:'Equipped: {name}', msg_hp_full:'Health is already full.', msg_bought:'Bought: {name}', msg_sold:'Sold: {name} (+{g} gold)', msg_bless_recv:'Blessing received: {name}.', msg_quest_done:'Quest complete: {name}!', msg_quest_reward:'Quest reward: +{g} gold.', msg_ach:'Achievement: {name}! +{g} gold.', msg_daily_claimed:'Daily reward claimed (+{g} gold).', msg_rest_bonus:'Rest bonus: +30% XP for the next {n} kills.', msg_welcome_back:'Welcome back, {name}.', msg_welcome:'Welcome, {name}. Attacking is automatic. The Cindra Vale awaits you.', msg_slots_full:'All 3 slots are taken. Delete a hero first.', msg_controls_lefty:'Left-handed controls (attack on the left).', msg_controls_right:'Standard controls (attack on the right).', msg_quality:'Graphics: {q}', q_high:'High', q_perf:'Performance', c_hunt_done:'HUNT COMPLETE!', c_thief:'GILDED THIEF!', c_fell:'{name} FELL!', c_gold_rain:'GOLD RAIN!', c_lvl:'REACHED LEVEL {lvl}', c_new_skill:'NEW SKILL: {name}!', c_fury:'STEEL FURY!', c_storm:'ARCANE STORM!', c_vorrak:'VORRAK UNLEASHES ITS FURY!', c_cls_no_use:'CLASS CAN\u2019T USE THIS ITEM', c_req_lvl:'REQUIRES LEVEL {req}', c_ach:'ACHIEVEMENT: {name}', shop_smith:'Torvo\u2019s Forge', shop_psmith:'Galdu the Armorer', shop_alch:'Vessa\u2019s Alchemy', shop_merchant:'Merchant Odo',
     game_sub:'a pocket RPG in the Cindra Vale', target_btn:'TARGET',
   your_heroes:'Your heroes', create_hero:'+ Create new hero', new_hero:'new hero',
   choose_class:'Choose your class', new_hero_class:'New hero \u2014 choose a class', skin:'Skin', outfit:'Outfit', detail:'Detail',
@@ -752,14 +755,14 @@ const I18N={
     set_label:'Conjunto', set_active:'Conjunto {name} activo ({n}/3)',
     wfx_burn:'Incendio', wfx_burn_d:'Los ataques incendian al objetivo', wfx_chain:'Cadena', wfx_chain_d:'Rayos saltan a enemigos cercanos', wfx_quake:'Onda de Choque', wfx_quake_d:'Los golpes alcanzan enemigos cercanos', wfx_exec:'Verdugo', wfx_exec_d:'Da\u00f1o masivo a objetivos heridos', wfx_pierce:'Perforante', wfx_pierce_d:'Las flechas atraviesan enemigos',
     you_here:'T\u00fa', leg_fields:'Campos', leg_forest:'Bosque', leg_sand:'Arena', leg_water:'Agua', leg_mud:'Cieno', leg_rock:'Roca', leg_cave:'Cueva', leg_crypt:'Cripta', leg_lava:'Lava', leg_npc:'NPC',
-    poi_cave_sealed:'Una entrada de cueva, sellada por ahora.', dng_enter:'Bajaste a la mazmorra (profundidad {d}). Vuelve a la entrada para subir.', dng_deeper:'Bajas m\u00e1s hondo \u2014 profundidad {d}.', dng_leave:'Emerges a la superficie.', dng_up:'Subir (salir)', dng_down:'Bajar (m\u00e1s hondo)', dng_secret:'\u00a1Encontraste un pasaje secreto!', dng_chest:'Cofre: {i}', dng_floor:'\u26cf Nivel {n}',
+    poi_cave_sealed:'Una entrada de cueva, sellada por ahora.', dng_enter:'Bajaste a la mazmorra (profundidad {d}). Vuelve a la entrada para subir.', dng_deeper:'Bajas m\u00e1s hondo \u2014 profundidad {d}.', dng_leave:'Emerges a la superficie.', dng_up:'Subir (salir)', dng_down:'Bajar (m\u00e1s hondo)', dng_secret:'\u00a1Encontraste un pasaje secreto!', dng_chest:'Cofre: {i}', dng_floor:'\u26cf Nivel {n}', dng_up_floor:'Subiste al nivel {n}.', dng_teleport:'Teletransportado al primer piso.', dng_tp:'Portal \u2192 nivel 1', revive_btn:'Revivir aqu\u00ed ({g} oro)', revive_no:'Oro insuficiente para revivir',
     save_now:'Guardar ahora', save_now_sub:'Guarda tu progreso ahora', export_save:'Exportar progreso', export_save_sub:'Copia a un archivo (sobrevive al borrado de cach\u00e9)', import_save:'Importar progreso', import_save_sub:'Restaura desde un backup', toast_saved:'Juego guardado', toast_exported:'Copia exportada', toast_imported:'Progreso importado', toast_bad_save:'Save inv\u00e1lido o corrupto', toast_no_save:'No hay partida para guardar',
     del_yes:'Eliminar', del_no:'No',
     bless_hint:'Sube de nivel para recibir Bendiciones de Cindra.', ach_locked:'bloqueada',
     elem_fire:'Fuego', elem_ice:'Hielo', elem_poison:'Veneno', elem_holy:'Radiante', tip_attack:'Ataque', tip_atkspd:'Vel. ataque', tip_tiles:'casillas', tip_tile:'casilla', tip_defense:'Defensa', tip_element:'Elemento', tip_reqlvl:'Nivel req.', tip_block:'Bloqueo', tip_cdr:'Recarga', tip_fireres:'Res. fuego', tip_armor:'Armadura', tip_restores:'Restaura {n} de vida', tip_purge:'Purga el veneno de las venas', lbl_kills:'bajas', lbl_stage_of:'etapa {n}/3',
     pip_range:'Alcance', pip_magic:'Magia', lvl_word:'Nivel', gold_low:'oro', claimed_lbl:'reclamada', locked_lbl:'bloqueada', danger_lv1:'Nv 1-4', danger_lv2:'Nv 5-8', danger_lv3:'Nv 9-13', danger_lv4:'Nv 14-18', danger_lv5:'Nv 19+',
     rar_common:'Com\u00fan', rar_uncommon:'Poco com\u00fan', rar_rare:'Raro', rar_epic:'\u00c9pico', rar_legendary:'Legendario', kind_consumable:'Consumible', fl_combo:'Racha x{n}', fl_block:'bloque\u00f3', fl_purified:'purificado', inv_empty:'Mochila vac\u00eda. Caza criaturas para conseguir objetos.', list_empty:'\u2014 vac\u00edo \u2014',
-    equipment_title:'Equipo', off_shield:'Escudo', close_i:'Cerrar (I)', inv_hint:'Toca un objeto para equipar / usar. Mant\u00e9n pulsado (o rat\u00f3n) para ver los atributos.', bless_cindra:'\u2726 Bendici\u00f3n de Cindra \u2726', bless_choose:'Elige un don para este viaje', quests_title:'Misiones Diarias', daily_reward:'\u2726 Recompensa Diaria \u2726', death_shadows:'Las sombras te llevaron.', death_by:'{src} asest\u00f3 el golpe final.', msg_old_removed:'Objetos antiguos retirados de la mochila: {list}', msg_hunt_reward:'Cacer\u00eda de {name}: +{gold} oro, +{xp} XP.', msg_hunt_trophy:'Trofeo de caza: {name} \u2713', msg_hunt_max:'M\u00e1ximo de 2 cacer\u00edas activas.', msg_skill_up:'\u00a1Pericia de {skill} ahora es {val}!', msg_thief_appear:'\u00a1Apareci\u00f3 un {name}! \u00a1Alc\u00e1nzalo antes de que huya!', msg_defeated:'Derrotaste a {name}. +{xp} XP', msg_lvlup:'\u00a1Subiste al nivel {lvl}!', msg_poisoned:'\u00a1Est\u00e1s envenenado! Usa un Ant\u00eddoto.', msg_respawn:'Renaciste en el templo. \u2212{lost} XP.', msg_swirl_miss:'El Torbellino no golpe\u00f3 a nadie.', msg_nova_miss:'La Nova no golpe\u00f3 a nadie.', msg_skill_locked:'Se desbloquea en el nivel {lv}.', msg_no_ray:'Sin objetivo cercano para el Rayo.', msg_cure_purge:'El ant\u00eddoto purga el veneno.', msg_inn_heal:'Mira sirve un caldo caliente. Vida restaurada (-30 oro).', msg_inn_full:'Mira: \u201cVuelve cuando necesites una cama.\u201d', msg_inn_need:'Mira: \u201cSon 30 monedas por el caldo, viajero.\u201d', msg_priest_heal:'El sacerdote te cur\u00f3 por 20 de oro.', msg_priest_full:'\u201cEst\u00e1s entero, h\u00e9roe.\u201d', msg_priest_need:'\u201cNecesito 20 de oro para curarte.\u201d', msg_ferry_go:'{name} te lleva por las aguas (-50 oro).', msg_ferry_need:'{name}: \u201cLa traves\u00eda cuesta 50 monedas.\u201d', msg_sage:'Viejo Nel: \u201c{lore}\u201d', msg_tut_map:'Toca el minimapa para moverte; usa el bot\u00f3n M para el mapa del Valle.', msg_map_zoom:'Pon el minimapa en zoom normal para moverte toc\u00e1ndolo.', msg_map_blocked:'No hay camino libre hasta all\u00ed.', msg_thief_escaped:'El {name} escap\u00f3...', msg_cls_no_use:'{cls} no usa: {name}.', msg_item_req:'{name} requiere nivel {req} (tienes {lvl}).', msg_equipped:'Equipado: {name}', msg_hp_full:'La vida ya est\u00e1 llena.', msg_bought:'Comprado: {name}', msg_sold:'Vendido: {name} (+{g} oro)', msg_bless_recv:'Bendici\u00f3n recibida: {name}.', msg_quest_done:'\u00a1Misi\u00f3n completada: {name}!', msg_quest_reward:'Recompensa de misi\u00f3n: +{g} de oro.', msg_ach:'\u00a1Logro: {name}! +{g} de oro.', msg_daily_claimed:'Recompensa diaria reclamada (+{g} de oro).', msg_rest_bonus:'Bono de descanso: +30% de XP en las pr\u00f3ximas {n} bajas.', msg_welcome_back:'Bienvenido de nuevo, {name}.', msg_welcome:'Bienvenido, {name}. El ataque es autom\u00e1tico. El Valle de Cindra te espera.', msg_slots_full:'Los 3 espacios est\u00e1n ocupados. Elimina un h\u00e9roe primero.', msg_controls_lefty:'Controles para zurdos (ataque a la izquierda).', msg_controls_right:'Controles est\u00e1ndar (ataque a la derecha).', msg_quality:'Calidad: {q}', q_high:'Alta', q_perf:'Rendimiento', c_hunt_done:'\u00a1CACER\u00cdA COMPLETADA!', c_thief:'\u00a1LADR\u00d3N DORADO!', c_fell:'\u00a1{name} CAY\u00d3!', c_gold_rain:'\u00a1LLUVIA DE ORO!', c_lvl:'\u00a1NIVEL {lvl}!', c_new_skill:'\u00a1NUEVA HABILIDAD: {name}!', c_fury:'\u00a1FURIA DE ACERO!', c_storm:'\u00a1TORMENTA ARCANA!', c_vorrak:'\u00a1VORRAK DESATA SU FURIA!', c_cls_no_use:'LA CLASE NO USA ESTE OBJETO', c_req_lvl:'REQUIERE NIVEL {req}', c_ach:'LOGRO: {name}', shop_smith:'Forja de Torvo', shop_psmith:'Armero Galdu', shop_alch:'Alquimia de Vessa', shop_merchant:'Mercader Odo',
+    equipment_title:'Equipo', off_shield:'Escudo', slot_head:'Cabeza', slot_legs:'Piernas', close_i:'Cerrar (I)', inv_hint:'Toca un objeto para equipar / usar. Mant\u00e9n pulsado (o rat\u00f3n) para ver los atributos.', bless_cindra:'\u2726 Bendici\u00f3n de Cindra \u2726', bless_choose:'Elige un don para este viaje', quests_title:'Misiones Diarias', daily_reward:'\u2726 Recompensa Diaria \u2726', death_shadows:'Las sombras te llevaron.', death_by:'{src} asest\u00f3 el golpe final.', msg_old_removed:'Objetos antiguos retirados de la mochila: {list}', msg_hunt_reward:'Cacer\u00eda de {name}: +{gold} oro, +{xp} XP.', msg_hunt_trophy:'Trofeo de caza: {name} \u2713', msg_hunt_max:'M\u00e1ximo de 2 cacer\u00edas activas.', msg_skill_up:'\u00a1Pericia de {skill} ahora es {val}!', msg_thief_appear:'\u00a1Apareci\u00f3 un {name}! \u00a1Alc\u00e1nzalo antes de que huya!', msg_defeated:'Derrotaste a {name}. +{xp} XP', msg_lvlup:'\u00a1Subiste al nivel {lvl}!', msg_poisoned:'\u00a1Est\u00e1s envenenado! Usa un Ant\u00eddoto.', msg_respawn:'Renaciste en el templo. \u2212{lost} XP.', msg_swirl_miss:'El Torbellino no golpe\u00f3 a nadie.', msg_nova_miss:'La Nova no golpe\u00f3 a nadie.', msg_skill_locked:'Se desbloquea en el nivel {lv}.', msg_no_ray:'Sin objetivo cercano para el Rayo.', msg_cure_purge:'El ant\u00eddoto purga el veneno.', msg_inn_heal:'Mira sirve un caldo caliente. Vida restaurada (-30 oro).', msg_inn_full:'Mira: \u201cVuelve cuando necesites una cama.\u201d', msg_inn_need:'Mira: \u201cSon 30 monedas por el caldo, viajero.\u201d', msg_priest_heal:'El sacerdote te cur\u00f3 por 20 de oro.', msg_priest_full:'\u201cEst\u00e1s entero, h\u00e9roe.\u201d', msg_priest_need:'\u201cNecesito 20 de oro para curarte.\u201d', msg_ferry_go:'{name} te lleva por las aguas (-50 oro).', msg_ferry_need:'{name}: \u201cLa traves\u00eda cuesta 50 monedas.\u201d', msg_sage:'Viejo Nel: \u201c{lore}\u201d', msg_tut_map:'Toca el minimapa para moverte; usa el bot\u00f3n M para el mapa del Valle.', msg_map_zoom:'Pon el minimapa en zoom normal para moverte toc\u00e1ndolo.', msg_map_blocked:'No hay camino libre hasta all\u00ed.', msg_thief_escaped:'El {name} escap\u00f3...', msg_cls_no_use:'{cls} no usa: {name}.', msg_item_req:'{name} requiere nivel {req} (tienes {lvl}).', msg_equipped:'Equipado: {name}', msg_hp_full:'La vida ya est\u00e1 llena.', msg_bought:'Comprado: {name}', msg_sold:'Vendido: {name} (+{g} oro)', msg_bless_recv:'Bendici\u00f3n recibida: {name}.', msg_quest_done:'\u00a1Misi\u00f3n completada: {name}!', msg_quest_reward:'Recompensa de misi\u00f3n: +{g} de oro.', msg_ach:'\u00a1Logro: {name}! +{g} de oro.', msg_daily_claimed:'Recompensa diaria reclamada (+{g} de oro).', msg_rest_bonus:'Bono de descanso: +30% de XP en las pr\u00f3ximas {n} bajas.', msg_welcome_back:'Bienvenido de nuevo, {name}.', msg_welcome:'Bienvenido, {name}. El ataque es autom\u00e1tico. El Valle de Cindra te espera.', msg_slots_full:'Los 3 espacios est\u00e1n ocupados. Elimina un h\u00e9roe primero.', msg_controls_lefty:'Controles para zurdos (ataque a la izquierda).', msg_controls_right:'Controles est\u00e1ndar (ataque a la derecha).', msg_quality:'Calidad: {q}', q_high:'Alta', q_perf:'Rendimiento', c_hunt_done:'\u00a1CACER\u00cdA COMPLETADA!', c_thief:'\u00a1LADR\u00d3N DORADO!', c_fell:'\u00a1{name} CAY\u00d3!', c_gold_rain:'\u00a1LLUVIA DE ORO!', c_lvl:'\u00a1NIVEL {lvl}!', c_new_skill:'\u00a1NUEVA HABILIDAD: {name}!', c_fury:'\u00a1FURIA DE ACERO!', c_storm:'\u00a1TORMENTA ARCANA!', c_vorrak:'\u00a1VORRAK DESATA SU FURIA!', c_cls_no_use:'LA CLASE NO USA ESTE OBJETO', c_req_lvl:'REQUIERE NIVEL {req}', c_ach:'LOGRO: {name}', shop_smith:'Forja de Torvo', shop_psmith:'Armero Galdu', shop_alch:'Alquimia de Vessa', shop_merchant:'Mercader Odo',
     game_sub:'un RPG de bolsillo en el Valle de Cindra', target_btn:'OBJETIVO',
   your_heroes:'Tus h\u00e9roes', create_hero:'+ Crear nuevo h\u00e9roe', new_hero:'nuevo h\u00e9roe',
   choose_class:'Elige tu clase', new_hero_class:'Nuevo h\u00e9roe \u2014 elige una clase', skin:'Piel', outfit:'Traje', detail:'Detalle',
@@ -801,14 +804,14 @@ const I18N={
     set_label:'Ensemble', set_active:'Ensemble {name} actif ({n}/3)',
     wfx_burn:'Embrasement', wfx_burn_d:'Les attaques enflamment la cible', wfx_chain:'Cha\u00eene', wfx_chain_d:'La foudre bondit vers les ennemis proches', wfx_quake:'Onde de Choc', wfx_quake_d:'Les coups frappent les ennemis autour', wfx_exec:'Bourreau', wfx_exec_d:'D\u00e9g\u00e2ts massifs sur cibles bless\u00e9es', wfx_pierce:'Perforant', wfx_pierce_d:'Les fl\u00e8ches transpercent les ennemis',
     you_here:'Vous', leg_fields:'Champs', leg_forest:'For\u00eat', leg_sand:'Sable', leg_water:'Eau', leg_mud:'Boue', leg_rock:'Roche', leg_cave:'Grotte', leg_crypt:'Crypte', leg_lava:'Lave', leg_npc:'PNJ',
-    poi_cave_sealed:'Une entr\u00e9e de grotte, scell\u00e9e pour l\u2019instant.', dng_enter:'Vous descendez dans le donjon (profondeur {d}). Revenez \u00e0 l\u2019entr\u00e9e pour remonter.', dng_deeper:'Vous descendez plus profond \u2014 profondeur {d}.', dng_leave:'Vous \u00e9mergez \u00e0 la surface.', dng_up:'Monter (sortie)', dng_down:'Descendre (plus bas)', dng_secret:'Vous avez trouv\u00e9 un passage secret\u00a0!', dng_chest:'Coffre\u00a0: {i}', dng_floor:'\u26cf Niveau {n}',
+    poi_cave_sealed:'Une entr\u00e9e de grotte, scell\u00e9e pour l\u2019instant.', dng_enter:'Vous descendez dans le donjon (profondeur {d}). Revenez \u00e0 l\u2019entr\u00e9e pour remonter.', dng_deeper:'Vous descendez plus profond \u2014 profondeur {d}.', dng_leave:'Vous \u00e9mergez \u00e0 la surface.', dng_up:'Monter (sortie)', dng_down:'Descendre (plus bas)', dng_secret:'Vous avez trouv\u00e9 un passage secret\u00a0!', dng_chest:'Coffre\u00a0: {i}', dng_floor:'\u26cf Niveau {n}', dng_up_floor:'Mont\u00e9 au niveau {n}.', dng_teleport:'T\u00e9l\u00e9port\u00e9 au premier \u00e9tage.', dng_tp:'Portail \u2192 niveau 1', revive_btn:'Revivre ici ({g} or)', revive_no:'Pas assez d\u2019or pour revivre',
     save_now:'Sauvegarder', save_now_sub:'Sauvegarde ta progression', export_save:'Exporter la progression', export_save_sub:'Sauvegarde dans un fichier', import_save:'Importer la progression', import_save_sub:'Restaure depuis un fichier', toast_saved:'Partie sauvegard\u00e9e', toast_exported:'Sauvegarde export\u00e9e', toast_imported:'Progression import\u00e9e', toast_bad_save:'Sauvegarde invalide ou corrompue', toast_no_save:'Aucune partie \u00e0 sauvegarder',
     del_yes:'Supprimer', del_no:'Non',
     bless_hint:'Montez de niveau pour recevoir des B\u00e9n\u00e9dictions de Cindra.', ach_locked:'verrouill\u00e9e',
     elem_fire:'Feu', elem_ice:'Glace', elem_poison:'Poison', elem_holy:'Radiant', tip_attack:'Attaque', tip_atkspd:'Vit. attaque', tip_tiles:'cases', tip_tile:'case', tip_defense:'D\u00e9fense', tip_element:'\u00c9l\u00e9ment', tip_reqlvl:'Niveau req.', tip_block:'Blocage', tip_cdr:'Recharge', tip_fireres:'R\u00e9s. feu', tip_armor:'Armure', tip_restores:'Restaure {n} de vie', tip_purge:'Purge le poison des veines', lbl_kills:'victimes', lbl_stage_of:'\u00e9tape {n}/3',
     pip_range:'Port\u00e9e', pip_magic:'Magie', lvl_word:'Niveau', gold_low:'or', claimed_lbl:'r\u00e9clam\u00e9e', locked_lbl:'verrouill\u00e9e', danger_lv1:'Niv 1-4', danger_lv2:'Niv 5-8', danger_lv3:'Niv 9-13', danger_lv4:'Niv 14-18', danger_lv5:'Niv 19+',
     rar_common:'Commun', rar_uncommon:'Peu commun', rar_rare:'Rare', rar_epic:'\u00c9pique', rar_legendary:'L\u00e9gendaire', kind_consumable:'Consommable', fl_combo:'Combo x{n}', fl_block:'bloqu\u00e9', fl_purified:'purifi\u00e9', inv_empty:'Sac vide. Chassez des cr\u00e9atures pour obtenir des objets.', list_empty:'\u2014 vide \u2014',
-    equipment_title:'\u00c9quipement', off_shield:'Bouclier', close_i:'Fermer (I)', inv_hint:'Touchez un objet pour \u00e9quiper / utiliser. Appuyez longuement (ou souris) pour voir les stats.', bless_cindra:'\u2726 B\u00e9n\u00e9diction de Cindra \u2726', bless_choose:'Choisissez un don pour ce voyage', quests_title:'Qu\u00eates Quotidiennes', daily_reward:'\u2726 R\u00e9compense Quotidienne \u2726', death_shadows:'Les ombres t\u2019ont emport\u00e9.', death_by:'{src} a port\u00e9 le coup fatal.', msg_old_removed:'Anciens objets retir\u00e9s du sac : {list}', msg_hunt_reward:'Chasse de {name} : +{gold} or, +{xp} XP.', msg_hunt_trophy:'Troph\u00e9e de chasse : {name} \u2713', msg_hunt_max:'Maximum de 2 chasses actives.', msg_skill_up:'Comp\u00e9tence {skill} est maintenant {val} !', msg_thief_appear:'Un {name} est apparu ! Rattrapez-le avant qu\u2019il ne fuie !', msg_defeated:'Vous avez vaincu {name}. +{xp} XP', msg_lvlup:'Vous avez atteint le niveau {lvl} !', msg_poisoned:'Vous \u00eates empoisonn\u00e9 ! Utilisez un Antidote.', msg_respawn:'Vous \u00eates r\u00e9apparu au temple. \u2212{lost} XP.', msg_swirl_miss:'Le Tourbillon n\u2019a touch\u00e9 personne.', msg_nova_miss:'La Nova n\u2019a touch\u00e9 personne.', msg_skill_locked:'D\u00e9bloqu\u00e9 au niveau {lv}.', msg_no_ray:'Aucune cible proche pour l\u2019\u00c9clair.', msg_cure_purge:'L\u2019antidote purge le poison.', msg_inn_heal:'Mira sert un bouillon chaud. Vie restaur\u00e9e (-30 or).', msg_inn_full:'Mira : \u00ab Revenez quand vous aurez besoin d\u2019un lit. \u00bb', msg_inn_need:'Mira : \u00ab C\u2019est 30 pi\u00e8ces pour le bouillon, voyageur. \u00bb', msg_priest_heal:'Le pr\u00eatre vous a soign\u00e9 pour 20 or.', msg_priest_full:'\u00ab Vous \u00eates intact, h\u00e9ros. \u00bb', msg_priest_need:'\u00ab Il me faut 20 or pour vous soigner. \u00bb', msg_ferry_go:'{name} vous fait traverser les eaux (-50 or).', msg_ferry_need:'{name} : \u00ab La travers\u00e9e co\u00fbte 50 pi\u00e8ces. \u00bb', msg_sage:'Vieux Nel : \u00ab {lore} \u00bb', msg_tut_map:'Touchez la minicarte (ou touche M) pour voir la carte de la Vall\u00e9e.', msg_thief_escaped:'Le {name} s\u2019est \u00e9chapp\u00e9...', msg_cls_no_use:'{cls} ne peut pas utiliser : {name}.', msg_item_req:'{name} requiert le niveau {req} (vous avez {lvl}).', msg_equipped:'\u00c9quip\u00e9 : {name}', msg_hp_full:'La vie est d\u00e9j\u00e0 pleine.', msg_bought:'Achet\u00e9 : {name}', msg_bless_recv:'B\u00e9n\u00e9diction re\u00e7ue : {name}.', msg_quest_done:'Qu\u00eate termin\u00e9e : {name} !', msg_quest_reward:'R\u00e9compense de qu\u00eate : +{g} or.', msg_ach:'Succ\u00e8s : {name} ! +{g} or.', msg_daily_claimed:'R\u00e9compense quotidienne r\u00e9clam\u00e9e (+{g} or).', msg_rest_bonus:'Bonus de repos : +30% d\u2019XP pour les {n} prochaines victimes.', msg_welcome_back:'Bon retour, {name}.', msg_welcome:'Bienvenue, {name}. L\u2019attaque est automatique. La Vall\u00e9e de Cindra vous attend.', msg_slots_full:'Les 3 emplacements sont pris. Supprimez d\u2019abord un h\u00e9ros.', msg_controls_lefty:'Commandes pour gauchers (attaque \u00e0 gauche).', msg_controls_right:'Commandes standard (attaque \u00e0 droite).', msg_quality:'Qualit\u00e9 : {q}', q_high:'\u00c9lev\u00e9e', q_perf:'Performance', c_hunt_done:'CHASSE TERMIN\u00c9E !', c_thief:'VOLEUR DOR\u00c9 !', c_fell:'{name} EST TOMB\u00c9 !', c_gold_rain:'PLUIE D\u2019OR !', c_lvl:'NIVEAU {lvl} !', c_new_skill:'NOUVELLE COMP\u00c9TENCE : {name} !', c_fury:'FUREUR D\u2019ACIER !', c_storm:'TEMP\u00caTE ARCANIQUE !', c_vorrak:'VORRAK D\u00c9CHA\u00ceNE SA FUREUR !', c_cls_no_use:'CLASSE NE PEUT PAS UTILISER', c_req_lvl:'REQUIERT NIVEAU {req}', c_ach:'SUCC\u00c8S : {name}', shop_smith:'Forge de Torvo', shop_psmith:'Galdu l\u2019Armurier', shop_alch:'Alchimie de Vessa', shop_merchant:'Marchand Odo',
+    equipment_title:'\u00c9quipement', off_shield:'Bouclier', slot_head:'T\u00eate', slot_legs:'Jambes', close_i:'Fermer (I)', inv_hint:'Touchez un objet pour \u00e9quiper / utiliser. Appuyez longuement (ou souris) pour voir les stats.', bless_cindra:'\u2726 B\u00e9n\u00e9diction de Cindra \u2726', bless_choose:'Choisissez un don pour ce voyage', quests_title:'Qu\u00eates Quotidiennes', daily_reward:'\u2726 R\u00e9compense Quotidienne \u2726', death_shadows:'Les ombres t\u2019ont emport\u00e9.', death_by:'{src} a port\u00e9 le coup fatal.', msg_old_removed:'Anciens objets retir\u00e9s du sac : {list}', msg_hunt_reward:'Chasse de {name} : +{gold} or, +{xp} XP.', msg_hunt_trophy:'Troph\u00e9e de chasse : {name} \u2713', msg_hunt_max:'Maximum de 2 chasses actives.', msg_skill_up:'Comp\u00e9tence {skill} est maintenant {val} !', msg_thief_appear:'Un {name} est apparu ! Rattrapez-le avant qu\u2019il ne fuie !', msg_defeated:'Vous avez vaincu {name}. +{xp} XP', msg_lvlup:'Vous avez atteint le niveau {lvl} !', msg_poisoned:'Vous \u00eates empoisonn\u00e9 ! Utilisez un Antidote.', msg_respawn:'Vous \u00eates r\u00e9apparu au temple. \u2212{lost} XP.', msg_swirl_miss:'Le Tourbillon n\u2019a touch\u00e9 personne.', msg_nova_miss:'La Nova n\u2019a touch\u00e9 personne.', msg_skill_locked:'D\u00e9bloqu\u00e9 au niveau {lv}.', msg_no_ray:'Aucune cible proche pour l\u2019\u00c9clair.', msg_cure_purge:'L\u2019antidote purge le poison.', msg_inn_heal:'Mira sert un bouillon chaud. Vie restaur\u00e9e (-30 or).', msg_inn_full:'Mira : \u00ab Revenez quand vous aurez besoin d\u2019un lit. \u00bb', msg_inn_need:'Mira : \u00ab C\u2019est 30 pi\u00e8ces pour le bouillon, voyageur. \u00bb', msg_priest_heal:'Le pr\u00eatre vous a soign\u00e9 pour 20 or.', msg_priest_full:'\u00ab Vous \u00eates intact, h\u00e9ros. \u00bb', msg_priest_need:'\u00ab Il me faut 20 or pour vous soigner. \u00bb', msg_ferry_go:'{name} vous fait traverser les eaux (-50 or).', msg_ferry_need:'{name} : \u00ab La travers\u00e9e co\u00fbte 50 pi\u00e8ces. \u00bb', msg_sage:'Vieux Nel : \u00ab {lore} \u00bb', msg_tut_map:'Touchez la minicarte (ou touche M) pour voir la carte de la Vall\u00e9e.', msg_thief_escaped:'Le {name} s\u2019est \u00e9chapp\u00e9...', msg_cls_no_use:'{cls} ne peut pas utiliser : {name}.', msg_item_req:'{name} requiert le niveau {req} (vous avez {lvl}).', msg_equipped:'\u00c9quip\u00e9 : {name}', msg_hp_full:'La vie est d\u00e9j\u00e0 pleine.', msg_bought:'Achet\u00e9 : {name}', msg_bless_recv:'B\u00e9n\u00e9diction re\u00e7ue : {name}.', msg_quest_done:'Qu\u00eate termin\u00e9e : {name} !', msg_quest_reward:'R\u00e9compense de qu\u00eate : +{g} or.', msg_ach:'Succ\u00e8s : {name} ! +{g} or.', msg_daily_claimed:'R\u00e9compense quotidienne r\u00e9clam\u00e9e (+{g} or).', msg_rest_bonus:'Bonus de repos : +30% d\u2019XP pour les {n} prochaines victimes.', msg_welcome_back:'Bon retour, {name}.', msg_welcome:'Bienvenue, {name}. L\u2019attaque est automatique. La Vall\u00e9e de Cindra vous attend.', msg_slots_full:'Les 3 emplacements sont pris. Supprimez d\u2019abord un h\u00e9ros.', msg_controls_lefty:'Commandes pour gauchers (attaque \u00e0 gauche).', msg_controls_right:'Commandes standard (attaque \u00e0 droite).', msg_quality:'Qualit\u00e9 : {q}', q_high:'\u00c9lev\u00e9e', q_perf:'Performance', c_hunt_done:'CHASSE TERMIN\u00c9E !', c_thief:'VOLEUR DOR\u00c9 !', c_fell:'{name} EST TOMB\u00c9 !', c_gold_rain:'PLUIE D\u2019OR !', c_lvl:'NIVEAU {lvl} !', c_new_skill:'NOUVELLE COMP\u00c9TENCE : {name} !', c_fury:'FUREUR D\u2019ACIER !', c_storm:'TEMP\u00caTE ARCANIQUE !', c_vorrak:'VORRAK D\u00c9CHA\u00ceNE SA FUREUR !', c_cls_no_use:'CLASSE NE PEUT PAS UTILISER', c_req_lvl:'REQUIERT NIVEAU {req}', c_ach:'SUCC\u00c8S : {name}', shop_smith:'Forge de Torvo', shop_psmith:'Galdu l\u2019Armurier', shop_alch:'Alchimie de Vessa', shop_merchant:'Marchand Odo',
     game_sub:'un RPG de poche dans la Vall\u00e9e de Cindra', target_btn:'CIBLE',
   your_heroes:'Vos h\u00e9ros', create_hero:'+ Cr\u00e9er un nouveau h\u00e9ros', new_hero:'nouveau h\u00e9ros',
   choose_class:'Choisissez votre classe', new_hero_class:'Nouveau h\u00e9ros \u2014 choisissez une classe', skin:'Peau', outfit:'Tenue', detail:'D\u00e9tail',
@@ -1100,8 +1103,38 @@ function setEquippedCount(sid){let n=0;for(const slot of ['weapon','shield','arm
 const ALLO=[].concat(OFFHANDS.knight,OFFHANDS.ranger,OFFHANDS.mage);
 /* tag das peças de conjunto (após todos os registros de itens) */
 (function(){for(const sid in SET_DEFS)for(const pid of SET_DEFS[sid].pieces){const it=itemById(pid);if(it)it.set=sid;}})();
-function itemById(id){return ALLW.find(s=>s.id===id)||ALLO.find(s=>s.id===id)||ARMORS.find(s=>s.id===id)||POTIONS.find(p=>p.id===id)||null;}
-function itemKind(it){if(ALLW.includes(it))return'weapon';if(ALLO.includes(it))return'off';if(ARMORS.includes(it))return'armor';return'potion';}
+/* ===== NOVOS EQUIPAMENTOS: cabeça (head) e pernas (legs), 2 tipos por vocação ===== */
+const GEAR=[
+  /* CAVALEIRO — capacete + grevas (defesa e vida) */
+  {id:'hk0',cls:'knight',slot:'head',name:'Elmo de Ferro',rar:'common',arm:4,hp:22,req:2,val:130,desc:'A\u00e7o batido que guarda a testa.'},
+  {id:'hk1',cls:'knight',slot:'head',name:'Elmo da Mil\u00edcia',rar:'uncommon',arm:8,hp:50,req:8,val:1100,desc:'Marcas de mil escaramu\u00e7as.'},
+  {id:'hk2',cls:'knight',slot:'head',name:'Elmo do Sentinela',rar:'rare',arm:13,hp:95,req:14,val:5200,desc:'Visor que nunca baixa.'},
+  {id:'hk3',cls:'knight',slot:'head',name:'Coroa de Guerra',rar:'epic',arm:19,hp:160,req:22,val:18000,desc:'Para quem lidera a carga.'},
+  {id:'lk0',cls:'knight',slot:'legs',name:'Grevas de Couro',rar:'common',arm:3,hp:18,req:2,val:110,desc:'Prote\u00e7\u00e3o simples das pernas.'},
+  {id:'lk1',cls:'knight',slot:'legs',name:'Grevas de Placa',rar:'uncommon',arm:7,hp:44,req:8,val:980,desc:'Ferro nas canelas.'},
+  {id:'lk2',cls:'knight',slot:'legs',name:'Perneiras do Balu\u00e1rte',rar:'rare',arm:11,hp:85,req:14,val:4800,desc:'Firmes como muralha.'},
+  {id:'lk3',cls:'knight',slot:'legs',name:'Grevas do Colosso',rar:'epic',arm:17,hp:145,req:22,val:16000,desc:'Passos que abalam o ch\u00e3o.'},
+  /* ARQUEIRA — capuz + botas (defesa + velocidade de ataque) */
+  {id:'hr0',cls:'ranger',slot:'head',name:'Capuz do Batedor',rar:'common',arm:2,hp:10,aspd:0.05,req:2,val:130,desc:'Some entre as folhas.'},
+  {id:'hr1',cls:'ranger',slot:'head',name:'Capuz Emplumado',rar:'uncommon',arm:5,hp:24,aspd:0.09,req:8,val:1100,desc:'Leve como o vento.'},
+  {id:'hr2',cls:'ranger',slot:'head',name:'M\u00e1scara da Ca\u00e7adora',rar:'rare',arm:8,hp:48,aspd:0.13,req:14,val:5200,desc:'Olhos que n\u00e3o perdem o alvo.'},
+  {id:'hr3',cls:'ranger',slot:'head',name:'Elmo do Falc\u00e3o',rar:'epic',arm:12,hp:80,aspd:0.18,req:22,val:18000,desc:'Vis\u00e3o de rapina.'},
+  {id:'lr0',cls:'ranger',slot:'legs',name:'Botas Silenciosas',rar:'common',arm:2,hp:8,aspd:0.05,req:2,val:110,desc:'Passos que ningu\u00e9m ouve.'},
+  {id:'lr1',cls:'ranger',slot:'legs',name:'Botas do Trilheiro',rar:'uncommon',arm:4,hp:20,aspd:0.09,req:8,val:980,desc:'Feitas para longas jornadas.'},
+  {id:'lr2',cls:'ranger',slot:'legs',name:'Botas Ligeiras',rar:'rare',arm:7,hp:42,aspd:0.13,req:14,val:4800,desc:'R\u00e1pidas como flechas.'},
+  {id:'lr3',cls:'ranger',slot:'legs',name:'Passos do Vendaval',rar:'epic',arm:10,hp:70,aspd:0.18,req:22,val:16000,desc:'O ch\u00e3o mal te sente.'},
+  /* MAGO — elmo arcano + vestes (defesa + recarga de magia) */
+  {id:'hm0',cls:'mage',slot:'head',name:'C\u00edrculo Arcano',rar:'common',arm:2,hp:8,cdr:0.04,req:2,val:130,desc:'Cristaliza o pensamento.'},
+  {id:'hm1',cls:'mage',slot:'head',name:'Tiara de Quartzo',rar:'uncommon',arm:4,hp:20,cdr:0.07,req:8,val:1100,desc:'Canaliza o fluxo m\u00e1gico.'},
+  {id:'hm2',cls:'mage',slot:'head',name:'Elmo do Vidente',rar:'rare',arm:7,hp:40,cdr:0.10,req:14,val:5200,desc:'V\u00ea al\u00e9m do v\u00e9u.'},
+  {id:'hm3',cls:'mage',slot:'head',name:'Coroa de \u00c9ter',rar:'epic',arm:10,hp:66,cdr:0.14,req:22,val:18000,desc:'A magia obedece.'},
+  {id:'lm0',cls:'mage',slot:'legs',name:'Vestes Tecidas',rar:'common',arm:2,hp:6,cdr:0.03,req:2,val:110,desc:'Fios embebidos de mana.'},
+  {id:'lm1',cls:'mage',slot:'legs',name:'Manto do Aprendiz',rar:'uncommon',arm:4,hp:16,cdr:0.06,req:8,val:980,desc:'Guarda o calor do feiti\u00e7o.'},
+  {id:'lm2',cls:'mage',slot:'legs',name:'Vestes R\u00fanicas',rar:'rare',arm:6,hp:36,cdr:0.09,req:14,val:4800,desc:'Runas que sussurram poder.'},
+  {id:'lm3',cls:'mage',slot:'legs',name:'Manto do Arquimago',rar:'epic',arm:9,hp:60,cdr:0.12,req:22,val:16000,desc:'Tecido com fios de estrela.'}
+];
+function itemById(id){return ALLW.find(s=>s.id===id)||ALLO.find(s=>s.id===id)||ARMORS.find(s=>s.id===id)||GEAR.find(s=>s.id===id)||POTIONS.find(p=>p.id===id)||null;}
+function itemKind(it){if(ALLW.includes(it))return'weapon';if(ALLO.includes(it))return'off';if(ARMORS.includes(it))return'armor';if(GEAR.includes(it))return it.slot;return'potion';}
 function isValidId(id){return !!itemById(id);}
 function sanitizeInventory(){
   if(Array.isArray(player.bag)){
@@ -1969,6 +2002,19 @@ function drawStairsUp(B, sx, sy){
   }
 }
 
+/* ---- Portal de teleporte (retorno ao andar 1): aneis cyan/roxo girando ---- */
+function drawPortal(B, sx, sy){
+  const T2=TILE, cx=sx+T2/2, cy=sy+T2/2, gt=(typeof gameTime!=='undefined'?gameTime:0);
+  B.fillStyle='#081016'; B.fillRect(sx+5,sy+5,T2-10,T2-10);
+  B.fillStyle='#0d2230'; B.fillRect(sx+7,sy+7,T2-14,T2-14);
+  for(let i=0;i<4;i++){
+    const r=(T2*0.30)*(1-i*0.22), a=0.35+0.4*Math.sin(gt*4+i*1.3);
+    B.globalAlpha=Math.max(0.15,Math.min(1,a)); B.strokeStyle=i%2?'#7fe0ff':'#b98cff'; B.lineWidth=2;
+    B.beginPath(); B.arc(cx, cy, Math.max(2,r), 0, 7); B.stroke();
+  }
+  B.globalAlpha=0.9; B.fillStyle='#e6faff'; B.fillRect(cx-2,cy-2,4,4); B.globalAlpha=1;
+}
+
 /* ---- Baú (top-down): fechado (com cadeado dourado) e aberto (vazio) ---- */
 function drawChest(B, sx, sy, opened){
   if(opened){
@@ -2089,10 +2135,11 @@ const POIManager = {
   // espada de cavaleiro a um mago, como o loot curado já faz de propósito.)
   _lootFor(x, y, rar) {
     let pool = ARMORS.filter(a => a.rar === rar)
-                     .concat(OFFHANDS[player.cls].filter(o => o.rar === rar));
+                     .concat(OFFHANDS[player.cls].filter(o => o.rar === rar))
+                     .concat((typeof GEAR!=='undefined'?GEAR:[]).filter(gi => gi.rar === rar && gi.cls === player.cls));
     if (rar === 'common') pool = pool.concat(POTIONS);
     if (!pool.length) return rar === 'common' ? 'hp_m' : null;
-    const idx = (hash2(x * 19 + 3, y * 23 + 11) * pool.length) | 0;   // item determinístico
+    const idx = ((Math.abs(Math.sin(x * 127.1 + y * 311.7) * 43758.5453)) % 1 * pool.length) | 0;   // item determinístico (distribuição uniforme)
     return pool[Math.min(idx, pool.length - 1)].id;
   },
 
@@ -2302,7 +2349,21 @@ function coverageSpawns(){
     const dg=dangerAt(jx,jy);if(dg<1)continue;
     let near=false;for(const sp of spawns){if(Math.abs(sp.x-jx)<=6&&Math.abs(sp.y-jy)<=6){near=true;break;}}
     if(near)continue;
-    spawns.push({x:jx,y:jy,type:coverageType(dg,zoneAt(jx,jy)),cd:rnd(9,4)*1000,timer:0,alive:null});}
+    spawns.push({x:jx,y:jy,type:biomeWeak(jx,jy),cd:rnd(9,4)*1000,timer:0,alive:null});}
+}
+/* Criatura FRACA apropriada ao bioma (decidida pelo tile) — usada só na superfície */
+function biomeWeak(x,y){
+  const t=tileAt(x,y);
+  let volcano=false;
+  for(let dy=-2;dy<=2&&!volcano;dy++)for(let dx=-2;dx<=2;dx++){const tt=tileAt(x+dx,y+dy);if(tt===T.lava||tt===T.obsidian||tt===T.ash){volcano=true;break;}}
+  let pool;
+  if(t===T.snow||t===T.ice) pool=['wolf','vampbat','bat','boar','boneling'];            // frio
+  else if(volcano||t===T.ash) pool=['ashimp','flameimp','skeleton','bat'];               // vulcão (fogo fraco)
+  else if(t===T.mud) pool=['froglet','toad','leech','slime','gcobra','serpent'];          // pântano
+  else if(t===T.sand) pool=['gcobra','serpent','skeleton','spider'];                      // areia/costa
+  else if(t===T.cfloor||t===T.cwall) pool=['bat','spider','weaver','boneling','slime'];   // caverna
+  else pool=['rat','mole','boar','wolf','spider','gcobra','vampbat','boneling'];          // campos/floresta
+  return pool[Math.floor(Math.random()*pool.length)];
 }
 function buildSpawns(){
   spawns=[];
@@ -2338,6 +2399,11 @@ function buildSpawns(){
   add(128,384,'vharun');      /* Vharun guarda a Espada do Titã */
   add(425,428,'spiderqueen'); /* Aracne, chefe oculto na catedral de Karghast */
   add(lair.x+2,lair.y+8,'troll');add(lair.x+9,lair.y+8,'troll');
+  /* BIOMA: superfície só com criaturas FRACAS apropriadas ao bioma. Os 3 chefes-marco
+     (Vorrak/dragão, Vharun, Aracne) ficam como set-pieces de lore; o resto é rebaixado. */
+  const _BOSS=new Set(['spiderqueen','dragon','vharun']);
+  const _SURF=new Set(['rat','mole','boar','wolf','spider','bat','vampbat','boneling','gcobra','froglet','toad','leech','slime','skeleton','serpent','weaver','ashimp','flameimp']);
+  for(const sp of spawns){if(_BOSS.has(sp.type))continue;if(!_SURF.has(sp.type))sp.type=biomeWeak(sp.x,sp.y);}
 }
 /* ===================== BAKING (pixel art do ambiente) ===================== */
 
@@ -3472,12 +3538,14 @@ function recompute(){
   const w=player.equip.weapon?itemById(player.equip.weapon):null;
   const o=player.equip.shield?itemById(player.equip.shield):null;
   const a=player.equip.armor?itemById(player.equip.armor):null;
+  const h=player.equip.head?itemById(player.equip.head):null;
+  const l=player.equip.legs?itemById(player.equip.legs):null;
   player.atk=(w?w.atk:2)+(o&&o.atkb?o.atkb:0);
-  player.atkspd=(w?w.spd:0.9)+(o&&o.aspd?o.aspd:0);
+  player.atkspd=(w?w.spd:0.9)+(o&&o.aspd?o.aspd:0)+(h&&h.aspd?h.aspd:0)+(l&&l.aspd?l.aspd:0);
   player.el=w?w.el:'none'; player.rng=w?w.rng:1; player.wfx=w?(w.fx||null):null;
-  player.def=(w?w.def:0)+(o?o.def:0); player.arm=a?a.arm:0;
-  player.maxhp=C.hp0+player.lvl*C.hpL+(a?a.hp:0);
-  player.cdr=(o&&o.cdr?o.cdr:0);
+  player.def=(w?w.def:0)+(o?o.def:0); player.arm=(a?a.arm:0)+(h&&h.arm?h.arm:0)+(l&&l.arm?l.arm:0);
+  player.maxhp=C.hp0+player.lvl*C.hpL+(a?a.hp:0)+(h&&h.hp?h.hp:0)+(l&&l.hp?l.hp:0);
+  player.cdr=(o&&o.cdr?o.cdr:0)+(h&&h.cdr?h.cdr:0)+(l&&l.cdr?l.cdr:0);
   player.fireRes=(o&&o.fireRes?o.fireRes:0)+(a&&a.fireRes?a.fireRes:0);
   const bl=(meta&&meta.bless)?meta.bless:{};
   player.atk=Math.round(player.atk*(1+0.08*(bl.dano||0)));
@@ -3552,7 +3620,7 @@ function spawnMonster(sp){const d=MTYPES[sp.type];
   if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active){                 /* M3: escala por profundidade + mini-chefe guardiao da descida */
     const dp=DungeonLayer.depth||1, sc=1+(dp-1)*0.12;
     m.maxhp=Math.round(m.maxhp*sc);m.hp=m.maxhp;m.dmgMul=(m.dmgMul||1)*sc;
-    if(sp&&sp.room==='boss'&&!m.elite){m.elite={n:'Guardi\u00e3o',c:'#ffcf5a',k:'brute',g:'fire'};m.dmgMul*=1.3;m.szMul=(m.szMul||1)*1.4;m.maxhp=Math.round(m.maxhp*2.4);m.hp=m.maxhp;m.mini=true;}
+    if(sp&&sp.room==='boss'&&!m.elite&&!m.d.boss){m.elite={n:'Guardi\u00e3o',c:'#ffcf5a',k:'brute',g:'fire'};m.dmgMul*=1.3;m.szMul=(m.szMul||1)*1.4;m.maxhp=Math.round(m.maxhp*2.4);m.hp=m.maxhp;m.mini=true;}
   }
   monsters.push(m);sp.alive=m;}
 function mName(m){return (m.elite?eliteLoc(m.elite)+' ':'')+mLocName(m.d);}
@@ -3801,7 +3869,7 @@ function giveXp(x){player.xp+=x;const _lv0=player.lvl;
     renderSkillLocks();
     _blessQ+=player.lvl-_lv0;saveGame();openBless();}}
 function monsterHitsPlayer(m){if(player.dead||player.invuln>0)return;
-  let dmg=ri(m.d.dmin,m.d.dmax);if(m.dmgMul)dmg=Math.round(dmg*m.dmgMul);
+  let dmg=Math.round(ri(m.d.dmin,m.d.dmax)*1.6);if(m.dmgMul)dmg=Math.round(dmg*m.dmgMul);   /* +60% de perigo: exploração tensa */
   const o=player.equip.shield?itemById(player.equip.shield):null;
   if(o&&o.block&&chance(o.block)){addFloater(player.px,player.py-TILE*0.6,t('fl_block'),'#8fb7ff');SFX.hit();
     addRing(player.px,player.py,'#8fb7ff',TILE*0.6,0.3);return;}
@@ -3832,7 +3900,14 @@ function poisonPlayer(n){if(player.dead)return;
 function die(src){player.dead=true;buzz([60,60,120]);
   addParticles(player.px,player.py,24,{col:'#c0392b',spd:110,life:0.7,size:3.2,grav:60});
   document.getElementById('deathMsg').textContent=src?tf('death_by',{src:src}):t('death_shadows');
+  const cost=reviveCost(),rb=document.getElementById('reviveBtn');
+  if(rb){rb.textContent=tf('revive_btn',{g:cost});const poor=player.gold<cost;rb.style.opacity=poor?'0.45':'1';rb.style.pointerEvents=poor?'none':'auto';}
   document.getElementById('death').classList.remove('hidden');}
+function reviveCost(){return Math.round(60+player.lvl*22+((typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?DungeonLayer.depth*45:0));}
+function revive(){const cost=reviveCost();if(player.gold<cost){addMessage(t('revive_no'),'dmg');return;}
+  player.gold-=cost;player.dead=false;player.hp=Math.round(player.maxhp*0.6);player.invuln=2;player.target=null;player.path=[];player.dash=0;
+  document.getElementById('death').classList.add('hidden');
+  addFloater(player.px,player.py-TILE*0.7,'-'+cost+' ouro','#ffcf5a');if(SFX.gold)SFX.gold();shake(4);buzz(20);saveGame();}
 function respawn(){const fl=xpFloor();const lost=Math.floor((player.xp-fl)*0.1);
   player.xp=Math.max(fl,player.xp-lost);
   player.dead=false;player.hp=player.maxhp;player.target=null;player.path=[];player.invuln=1.2;player.dash=0;
@@ -5715,7 +5790,7 @@ function renderMinimap(ox,oy){const c=$('minimap');
     g.fillRect(tx*S,ty*S,S,S);}
   POIManager.drawMini(g,x0,y0,S,half*2);
   if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active){   // escadas na masmorra: verde=subir, laranja=descer
-    for(const st of [[DungeonLayer.up,'#6ce06c'],[DungeonLayer.down,'#ff9a4a']]){const s=st[0];if(!s)continue;
+    for(const st of [[DungeonLayer.up,'#6ce06c'],[DungeonLayer.down,'#ff9a4a'],[DungeonLayer.teleport,'#7fe0ff']]){const s=st[0];if(!s)continue;
       const mx=s.x-x0,my=s.y-y0;if(mx>=0&&mx<=half*2&&my>=0&&my<=half*2){g.fillStyle=st[1];g.fillRect(mx*S+(S/2-2),my*S+(S/2-2),4,4);}}}
   for(const mk of MAP_MARKS){const mx=mk.x-x0,my=mk.y-y0;
     if(mx>=0&&mx<=half*2&&my>=0&&my<=half*2){g.fillStyle=mk.c;
@@ -5803,7 +5878,7 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
     g.fillStyle='#e8e0ff';g.fillText(lb,x,ly);}
   /* --- escadas da masmorra (quando dentro): SUBIR (verde) / DESCER (laranja) --- */
   if(_inDng){g.font="700 22px 'Segoe UI',system-ui,sans-serif";
-    const _sm=[[DungeonLayer.up,'#6ce06c',t('dng_up')],[DungeonLayer.down,'#ff9a4a',t('dng_down')]];
+    const _sm=[[DungeonLayer.up,'#6ce06c',t('dng_up')],[DungeonLayer.down,'#ff9a4a',t('dng_down')],[DungeonLayer.teleport,'#7fe0ff',t('dng_tp')]];
     for(const mk of _sm){const s=mk[0];if(!s)continue;const x=s.x*SC,y=s.y*SC;
       g.fillStyle=mk[1];g.beginPath();g.arc(x,y,11,0,7);g.fill();
       g.lineWidth=4;g.strokeStyle='#0c0f14';g.stroke();
@@ -5823,7 +5898,7 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
   g.fillStyle='#dff4ff';g.fillText(you,jx,jy+26+(FS+10)/2);
   /* etiqueta de build (pequena, canto) — útil pra diagnosticar cache no futuro */
   g.textAlign='left';g.textBaseline='bottom';g.font="700 30px 'Segoe UI',system-ui,sans-serif";
-  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 15',16,c.height-14);
+  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 18',16,c.height-14);
   g.textAlign='left';g.textBaseline='alphabetic';
   const LG=[['#55704d',t('leg_fields')],['#3a5340',t('leg_forest')],['#b3a276',t('leg_sand')],['#24405e',t('leg_water')],['#574f3d',t('leg_mud')],['#626670',t('leg_rock')],['#181720',t('leg_cave')],['#34302a',t('leg_crypt')],['#cc4a1f',t('leg_lava')],['#ffe28a','\u25cf '+t('leg_npc')],['#4fd1ff','\u25cf '+t('you_here')]];
   $('bmLegend').innerHTML=LG.map(l=>`<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:10px;height:10px;background:${l[0]};display:inline-block;border-radius:2px"></i>${l[1]}</span>`).join('');}
@@ -7165,6 +7240,11 @@ function _renderIcon(g,it){
   const P=(x,y,c,w,h)=>{g.fillStyle=c;g.fillRect(x,y,w||1,h||1);};
   const k=itemKind(it);
   const elc=(it.el&&it.el!=='none')?ELEM[it.el].c:null;
+  if(k==='head'){const col=it.cls==='mage'?'#9a8cff':it.cls==='ranger'?'#7fd66a':'#c8cdd8',dk='#2a2e38';
+    P(6,4,dk,6,1);P(5,5,col,8,4);P(5,9,dk,8,1);P(4,6,col,1,3);P(13,6,col,1,3);P(7,7,dk,1,2);P(10,7,dk,1,2);
+    if(it.rar==='epic'||it.rar==='rare')P(8,3,'#e8c15a',2,1);return;}
+  if(k==='legs'){const col=it.cls==='mage'?'#9a8cff':it.cls==='ranger'?'#7fd66a':'#c8cdd8',dk='#2a2e38';
+    P(6,4,col,6,3);P(6,7,col,2,7);P(10,7,col,2,7);P(6,13,dk,2,1);P(10,13,dk,2,1);P(8,7,dk,2,6);return;}
   if(k==='weapon'){
     const tier=WEAPONS[it.cls].indexOf(it);
     if(it.cls==='knight'){
@@ -7293,7 +7373,7 @@ function addItemTip(slot,it,onTap){
 function renderInv(){
   document.querySelectorAll('#inv .slot[data-eq]').forEach(slot=>{
     const kind=slot.dataset.eq;const id=player.equip[kind];
-    const labTxt=kind==='weapon'?'Arma':kind==='armor'?'Armadura':CLASSES[player.cls].offName;
+    const labTxt=kind==='weapon'?'Arma':kind==='armor'?'Armadura':kind==='head'?t('slot_head'):kind==='legs'?t('slot_legs'):CLASSES[player.cls].offName;
     slot.innerHTML='';slot.className='slot';
     if(id){const it=itemById(id);slot.classList.add('rar-'+it.rar);
       try{slot.appendChild(mkIconCanvas(it));}catch(e){}
@@ -7303,7 +7383,7 @@ function renderInv(){
     slot.appendChild(lab);
   });
   const bag=$('bag');bag.innerHTML='';
-  const order={weapon:0,off:1,armor:2,potion:3};
+  const order={weapon:0,off:1,armor:2,head:3,legs:4,potion:5};
   const sorted=player.bag.slice().sort((a,b)=>{const ia=itemById(a.id),ib=itemById(b.id);return order[itemKind(ia)]-order[itemKind(ib)];});
   for(const b of sorted){const it=itemById(b.id);const slot=document.createElement('div');slot.className='slot rar-'+it.rar;
     try{slot.appendChild(mkIconCanvas(it));}catch(e){}
@@ -7335,7 +7415,7 @@ function unequip(kind){const id=player.equip[kind];if(!id)return;pushBag(id,1);p
 /* itens de outra vocacao ficam guardados (marcados). so desequipa os de outra classe (saves antigos), movendo pra mochila. */
 function sanitizeClassItems(){
   if(typeof player==='undefined'||!player)return;
-  for(const slot of ['weapon','shield']){const id=player.equip&&player.equip[slot];
+  for(const slot of ['weapon','shield','head','legs']){const id=player.equip&&player.equip[slot];
     if(id){const it=itemById(id);if(it&&it.cls&&it.cls!==player.cls){player.equip[slot]=null;if(typeof pushBag==='function')pushBag(id,1);}}}
   /* seguranca: heroi nunca fica sem arma (senao rng=1 corpo-a-corpo). equipa a inicial da classe. */
   if(player.equip&&!player.equip.weapon&&typeof WEAPONS!=='undefined'&&WEAPONS[player.cls])player.equip.weapon=WEAPONS[player.cls][0].id;
@@ -7375,11 +7455,14 @@ function hideTip(){$('tooltip').style.display='none';}
 let shopKind='shop';
 let trackerOpen=false;  /* rastreador colapsado por padrão (ícone) */
 function shopItems(kind){const w=WEAPONS[player.cls],o=OFFHANDS[player.cls];
-  if(kind==='smith')return[w[4].id,w[5].id,w[6].id,w[7].id,o[1].id,o[2].id,'a2','a3'];
-  if(kind==='psmith')return[w[8].id,w[9].id,w[10].id,o[4].id,'a5','a6','a7'];
-  if(kind==='alch')return['hp_s','hp_m','hp_l','cure'];
-  if(kind==='wander'){const feat=[w[8].id,w[9].id,w[10].id,w[11].id][(meta.wanderVisit||0)%4];return[feat,w[12].id,o[4].id,'a7','hp_l'];}
-  return['hp_s','hp_m','cure',w[1].id,w[2].id,w[3].id,o[0].id,'a0','a1'];}
+  const gid=(slot,rar)=>{const g=GEAR.find(x=>x.cls===player.cls&&x.slot===slot&&x.rar===rar);return g?g.id:null;};
+  let list;
+  if(kind==='smith')list=[w[4].id,w[5].id,w[6].id,w[7].id,o[1].id,o[2].id,'a2','a3',gid('head','common'),gid('legs','common'),gid('head','uncommon'),gid('legs','uncommon')];
+  else if(kind==='psmith')list=[w[8].id,w[9].id,w[10].id,o[4].id,'a5','a6','a7',gid('head','rare'),gid('legs','rare')];
+  else if(kind==='alch')list=['hp_s','hp_m','hp_l','cure'];
+  else if(kind==='wander'){const feat=[w[8].id,w[9].id,w[10].id,w[11].id][(meta.wanderVisit||0)%4];list=[feat,w[12].id,o[4].id,'a7','hp_l',gid('head','epic'),gid('legs','epic')];}
+  else list=['hp_s','hp_m','cure',w[1].id,w[2].id,w[3].id,o[0].id,'a0','a1',gid('head','common'),gid('legs','common')];
+  return list.filter(Boolean);}
 function openShop(kind='shop'){closeAllPanels();shopKind=kind;
   $('shopTitle').textContent=kind==='smith'?t('shop_smith'):kind==='psmith'?t('shop_psmith'):kind==='alch'?t('shop_alch'):kind==='wander'?t('shop_wander'):t('shop_merchant');
   $('shop').classList.remove('hidden');renderShop();}
@@ -7671,9 +7754,13 @@ const DUNGEON_MOBS={
   3:{normal:['bonewarden','gargoyle','cavescorp','ashimp','flameimp'],boss:['minotaur','mummy'],treasure:['scorp']},
   4:{normal:['mummy','scorp','naga','salamander','troll'],boss:['cyclops','golem'],treasure:['obsidiangolem']},
   5:{normal:['golem','sentinel','wendigo','volcyclops'],boss:['reaper','magmademon'],treasure:['irontitan']},
-  6:{normal:['reaper','magmademon','irontitan','runegolem'],boss:['eldragon'],treasure:['runegolem']}
+  6:{normal:['reaper','magmademon','irontitan','runegolem'],boss:['eldragon'],treasure:['runegolem']},
+  7:{normal:['golem','obsidiangolem','sentinel','minotaur','naga'],boss:['reaper','magmademon'],treasure:['irontitan']},
+  8:{normal:['reaper','magmademon','runegolem','wendigo','volcyclops'],boss:['irontitan','eldragon'],treasure:['reaper']},
+  9:{normal:['reaper','magmademon','irontitan','runegolem','eldragon'],boss:['spiderqueen','irontitan'],treasure:['magmademon']},
+  10:{normal:['reaper','irontitan','eldragon','runegolem','magmademon'],boss:['dragon','vharun','spiderqueen'],treasure:['eldragon']}
 };
-function dmobFor(depth,room){const d=DUNGEON_MOBS[Math.max(1,Math.min(6,depth))];const pool=(d&&d[room])||(d&&d.normal)||['skeleton'];return pool[Math.floor(Math.random()*pool.length)];}
+function dmobFor(depth,room){const d=DUNGEON_MOBS[Math.max(1,Math.min(10,depth))];const pool=(d&&d[room])||(d&&d.normal)||['skeleton'];return pool[Math.floor(Math.random()*pool.length)];}
 
 const DungeonLayer={
   active:false,_surf:null,_poi:null,depth:0,off:{x:2,y:2},up:null,down:null,upReady:false,downReady:true,
@@ -7699,6 +7786,11 @@ const DungeonLayer={
     for(const c of this.chests)if(_st.opened[depth+','+c.x+','+c.y])c.opened=true;
     if(this.secret&&_st.secrets[depth]){this.secret.revealed=true;setTile(this.secret.x,this.secret.y,dg.FLOOR);}
     this.up={x:dg.up.x+OX,y:dg.up.y+OY};this.down={x:dg.down.x+OX,y:dg.down.y+OY};
+    /* teleporte de retorno ao andar 1 (só em andares > 1), perto da escada de subida */
+    this.teleport=null;this._tpReady=false;
+    if(depth>1){for(const d of [[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[3,0],[0,3],[-3,0],[0,-3]]){
+      const tx=this.up.x+d[0],ty=this.up.y+d[1];
+      if(walkable(tx,ty)&&!(tx===this.down.x&&ty===this.down.y)&&!this.chests.some(c=>c.x===tx&&c.y===ty)){this.teleport={x:tx,y:ty};break;}}}
     this.depth=depth;this.upReady=false;this.downReady=true;
     buildMinimapBase();
     /* spawna ADJACENTE à escada de subida (pra ela ficar visível ao entrar); pisar nela depois sai */
@@ -7710,14 +7802,18 @@ const DungeonLayer={
     if(this.active)return;
     this._poi=poi;
     this._surf={map:map,zoneA:zoneA,elevA:elevA,shadeA:shadeA,monsters:monsters,spawns:spawns,npcs:npcs,loots:loots,px:poi?poi.x:player.tx,py:poi?poi.y:player.ty};
-    const base=Math.max(1,Math.min(6,(dangerAt(poi.x,poi.y)|0)||1));
     meta.dungeons=meta.dungeons||{};
-    const st=meta.dungeons[poi.id]=meta.dungeons[poi.id]||{deepest:base,opened:{},secrets:{}};
-    const depth=Math.max(base,st.deepest||base);   // M4: retoma no andar mais fundo já alcançado
+    const st=meta.dungeons[poi.id]=meta.dungeons[poi.id]||{deepest:1,opened:{},secrets:{}};
+    const depth=Math.min(10,st.deepest||1);   // andares 1-10; retoma no mais fundo alcançado
     this.active=true;this._build(depth);
     addMessage(t('dng_enter').replace('{d}',this.depth),'sys');shake(4);buzz(30);if(SFX.pickup)SFX.pickup();saveGame();
   },
-  descend(){if(!this.active)return;this._build(this.depth+1);const s=this._state();s.deepest=Math.max(s.deepest||1,this.depth);addMessage(t('dng_deeper').replace('{d}',this.depth),'dmg');shake(5);buzz(40);saveGame();},
+  descend(){if(!this.active||this.depth>=10)return;this._build(this.depth+1);const s=this._state();s.deepest=Math.max(s.deepest||1,this.depth);addMessage(t('dng_deeper').replace('{d}',this.depth),'dmg');shake(5);buzz(40);saveGame();},
+  ascend(){if(!this.active)return;
+    if(this.depth>1){this._build(this.depth-1);addMessage(t('dng_up_floor').replace('{n}',this.depth),'sys');shake(3);buzz(20);saveGame();}
+    else this.leave();},
+  teleportFirst(){if(!this.active)return;this._build(1);addMessage(t('dng_teleport'),'good');shake(4);if(SFX.pickup)SFX.pickup();
+    addParticles(player.px,player.py,18,{col:'#7fe0ff',spd:90,life:0.6,size:2.8,glow:true});saveGame();},
   _restoreSurface(){const s=this._surf;if(!s)return;map=s.map;zoneA=s.zoneA;elevA=s.elevA;shadeA=s.shadeA;monsters=s.monsters;spawns=s.spawns;npcs=s.npcs;loots=s.loots;this._clearFx();buildMinimapBase();this.active=false;},
   leave(){
     if(!this.active)return;const s=this._surf;this._restoreSurface();
@@ -7731,6 +7827,7 @@ const DungeonLayer={
     if(!this.active)return;
     const vis=(tx,ty)=>{const sx=tx*TILE-ox,sy=ty*TILE-oy;return (sx>-TILE&&sy>-TILE&&sx<W+TILE&&sy<H+TILE)?[sx,sy]:null;};
     if(this.chests)for(const c of this.chests){const p=vis(c.x,c.y);if(p)drawChest(B,p[0],p[1],c.opened);}
+    if(this.teleport){const p=vis(this.teleport.x,this.teleport.y);if(p)drawPortal(B,p[0],p[1]);}
     if(this.secret&&!this.secret.revealed){const p=vis(this.secret.x,this.secret.y);if(p){const sx=p[0],sy=p[1];
       B.fillStyle='#2a2d35';B.fillRect(sx+2,sy+2,TILE-4,TILE-4);            // parede
       B.strokeStyle='#14151a';B.lineWidth=2;B.beginPath();                  // rachadura (dica sutil)
@@ -7766,7 +7863,8 @@ const DungeonLayer={
     }
     if(this.chests)for(const c of this.chests){if(!c.opened&&player.tx===c.x&&player.ty===c.y)this._openChest(c);}
     if(player.moving)return;
-    if(!(player.tx===this.up.x&&player.ty===this.up.y))this.upReady=true;else if(this.upReady){this.leave();return;}
+    if(this.teleport){if(!(player.tx===this.teleport.x&&player.ty===this.teleport.y))this._tpReady=true;else if(this._tpReady){this.teleportFirst();return;}}
+    if(!(player.tx===this.up.x&&player.ty===this.up.y))this.upReady=true;else if(this.upReady){this.ascend();return;}
     if(!(player.tx===this.down.x&&player.ty===this.down.y))this.downReady=true;else if(this.downReady){this.descend();return;}
   }
 };
@@ -8130,6 +8228,7 @@ function init(){
       if($('btnLefty'))$('btnLefty').classList.toggle('act',leftyMode);};}})();
   $('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
   $('respawnBtn').onclick=respawn;
+  if($('reviveBtn'))$('reviveBtn').onclick=revive;
   $('invClose').onclick=closeInv;$('shopClose').onclick=closeShop;$('sbClose').onclick=closeSpellbook;$('helpClose').onclick=()=>$('help').classList.add('hidden');
   $('btnHelp').onclick=()=>{closeAllPanels();$('help').classList.remove('hidden');};
   $('mapwrap').onclick=function(e){
