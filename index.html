@@ -5903,7 +5903,7 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
   g.fillStyle='#dff4ff';g.fillText(you,jx,jy+26+(FS+10)/2);
   /* etiqueta de build (pequena, canto) — útil pra diagnosticar cache no futuro */
   g.textAlign='left';g.textBaseline='bottom';g.font="700 30px 'Segoe UI',system-ui,sans-serif";
-  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 19',16,c.height-14);
+  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 20',16,c.height-14);
   g.textAlign='left';g.textBaseline='alphabetic';
   const LG=[['#55704d',t('leg_fields')],['#3a5340',t('leg_forest')],['#b3a276',t('leg_sand')],['#24405e',t('leg_water')],['#574f3d',t('leg_mud')],['#626670',t('leg_rock')],['#181720',t('leg_cave')],['#34302a',t('leg_crypt')],['#cc4a1f',t('leg_lava')],['#ffe28a','\u25cf '+t('leg_npc')],['#4fd1ff','\u25cf '+t('you_here')]];
   $('bmLegend').innerHTML=LG.map(l=>`<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:10px;height:10px;background:${l[0]};display:inline-block;border-radius:2px"></i>${l[1]}</span>`).join('');}
@@ -7726,8 +7726,8 @@ function genDungeon(opts){
   for(const r of rooms)for(let y=r.y;y<r.y+r.h;y++)for(let x=r.x;x<r.x+r.w;x++)st(x,y,FLOOR);
   const order=[rooms[0]],rest=rooms.slice(1);
   while(rest.length){const last=order[order.length-1];let bi=0,bd=1e9;rest.forEach((r,i)=>{const d=Math.abs(r.cx-last.cx)+Math.abs(r.cy-last.cy);if(d<bd){bd=d;bi=i;}});order.push(rest.splice(bi,1)[0]);}
-  const cHl=(x0,x1,y)=>{for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++)st(x,y,FLOOR);};
-  const cVl=(y0,y1,x)=>{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++)st(x,y,FLOOR);};
+  const cHl=(x0,x1,y)=>{for(let x=Math.min(x0,x1);x<=Math.max(x0,x1);x++){st(x,y,FLOOR);st(x,y+1,FLOOR);}};   // corredor com 2 quadrados de largura
+  const cVl=(y0,y1,x)=>{for(let y=Math.min(y0,y1);y<=Math.max(y0,y1);y++){st(x,y,FLOOR);st(x+1,y,FLOOR);}};   // corredor com 2 quadrados de largura
   for(let i=1;i<order.length;i++){const a=order[i-1],b=order[i];if(rng()<0.5){cHl(a.cx,b.cx,a.cy);cVl(a.cy,b.cy,b.cx);}else{cVl(a.cy,b.cy,a.cx);cHl(a.cx,b.cx,b.cy);}}
   const entrance=order[0];let boss=order[0],bmax=-1;
   for(const r of order){const d=Math.abs(r.cx-entrance.cx)+Math.abs(r.cy-entrance.cy);if(d>bmax){bmax=d;boss=r;}}
@@ -7780,7 +7780,7 @@ const DungeonLayer={
     for(let y=0;y<dg.h;y++)for(let x=0;x<dg.w;x++)nMap[(y+OY)*MAPW+(x+OX)]=dg.grid[y*dg.w+x];
     map=nMap;zoneA=nZone;elevA=nElev;shadeA=nShade;
     monsters=[];npcs=[];loots=[];spawns=[];this._clearFx();
-    for(const s of dg.spawns)spawns.push({x:s.x+OX,y:s.y+OY,type:dmobFor(depth,s.room),room:s.room,cd:rnd(5,2)*1000,timer:rnd(2500,0),alive:null});
+    for(const s of dg.spawns)spawns.push({x:s.x+OX,y:s.y+OY,type:dmobFor(depth,s.room),room:s.room,cd:Math.round(rnd(5,2)*1330),timer:rnd(2500,0),alive:null});
     /* baus: sala de tesouro (+ nicho secreto, se houver) */
     this.chests=[{x:dg.treasure.x+OX,y:dg.treasure.y+OY,opened:false,kind:'treasure'}];
     this.secret=null;
