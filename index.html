@@ -189,7 +189,12 @@
   .clsCard .pips .pt i{display:block;height:100%;background:var(--cc)}
   @media (max-width:560px){#clsGrid{grid-template-columns:repeat(3,1fr);gap:6px}.clsCard .cd2{display:none}}
   #inv .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:6px}
-  #inv .equip{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  #inv .equip{display:grid;grid-template-columns:repeat(3,54px);grid-template-areas:". head ." "shield armor weapon" ". legs .";gap:8px;justify-content:center;margin:6px auto 2px}
+  #inv .equip .slot[data-eq="head"]{grid-area:head}
+  #inv .equip .slot[data-eq="shield"]{grid-area:shield}
+  #inv .equip .slot[data-eq="armor"]{grid-area:armor}
+  #inv .equip .slot[data-eq="weapon"]{grid-area:weapon}
+  #inv .equip .slot[data-eq="legs"]{grid-area:legs}
   .slot{aspect-ratio:1;border-radius:12px;background:rgba(0,0,0,.4);border:1px solid var(--edge);position:relative;
     cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center}
   .slot:active{transform:scale(.96)}
@@ -3869,7 +3874,7 @@ function giveXp(x){player.xp+=x;const _lv0=player.lvl;
     renderSkillLocks();
     _blessQ+=player.lvl-_lv0;saveGame();openBless();}}
 function monsterHitsPlayer(m){if(player.dead||player.invuln>0)return;
-  let dmg=Math.round(ri(m.d.dmin,m.d.dmax)*1.6);if(m.dmgMul)dmg=Math.round(dmg*m.dmgMul);   /* +60% de perigo: exploração tensa */
+  let dmg=Math.round(ri(m.d.dmin,m.d.dmax)*3.2);if(m.dmgMul)dmg=Math.round(dmg*m.dmgMul);   /* dobro da força: exploração muito tensa */
   const o=player.equip.shield?itemById(player.equip.shield):null;
   if(o&&o.block&&chance(o.block)){addFloater(player.px,player.py-TILE*0.6,t('fl_block'),'#8fb7ff');SFX.hit();
     addRing(player.px,player.py,'#8fb7ff',TILE*0.6,0.3);return;}
@@ -4481,7 +4486,7 @@ function updateMonsters(dt){
       else{m.wander-=dt;if(m.wander<=0){m.wander=rnd(1.4,0.6);
         const dd=[[1,0],[-1,0],[0,1],[0,-1]][ri(0,3)];startStep(m,dd[0],dd[1],m);}}
       continue;}
-    if(dP<=m.d.aggro+3)m._hunt=4;else if(m._hunt>0)m._hunt=Math.max(0,m._hunt-dt);  /* nota o herói a partir de aggro+3 (cobre a distância de spawn ~7) e persegue por ~4s mesmo se ele se afastar — antes nasciam fora do aggro e só vagavam */
+    if(dP<=m.d.aggro+5)m._hunt=8;else if(m._hunt>0&&dP<=m.d.aggro+12)m._hunt=Math.max(m._hunt,3);else if(m._hunt>0)m._hunt=Math.max(0,m._hunt-dt);  /* ATACA AO VER: percebe o herói a ~aggro+5 (visão), persegue por 8s e não desiste enquanto ele estiver a ~aggro+12 */
     if(m._hunt>0){
       const _b=m.d.beh;
       if(_b==='skittish'&&m.hp<m.maxhp*0.4&&dP<=4){
@@ -5898,7 +5903,7 @@ function renderBigMap(){const c=$('bmCanvas');const SC=4;
   g.fillStyle='#dff4ff';g.fillText(you,jx,jy+26+(FS+10)/2);
   /* etiqueta de build (pequena, canto) — útil pra diagnosticar cache no futuro */
   g.textAlign='left';g.textBaseline='bottom';g.font="700 30px 'Segoe UI',system-ui,sans-serif";
-  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 18',16,c.height-14);
+  g.fillStyle='rgba(150,140,200,.5)';g.fillText('build 19',16,c.height-14);
   g.textAlign='left';g.textBaseline='alphabetic';
   const LG=[['#55704d',t('leg_fields')],['#3a5340',t('leg_forest')],['#b3a276',t('leg_sand')],['#24405e',t('leg_water')],['#574f3d',t('leg_mud')],['#626670',t('leg_rock')],['#181720',t('leg_cave')],['#34302a',t('leg_crypt')],['#cc4a1f',t('leg_lava')],['#ffe28a','\u25cf '+t('leg_npc')],['#4fd1ff','\u25cf '+t('you_here')]];
   $('bmLegend').innerHTML=LG.map(l=>`<span style="display:inline-flex;align-items:center;gap:4px"><i style="width:10px;height:10px;background:${l[0]};display:inline-block;border-radius:2px"></i>${l[1]}</span>`).join('');}
