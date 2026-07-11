@@ -9275,17 +9275,18 @@ try{(function(){
 
     /* ---- chip discreto no HUD ---- */
     var _chip=null,_chipTxt='';
-    function _mqChipShow(on){ try{ if(_chip)_chip.style.display=on?'block':'none'; }catch(e){} }
+    function _mqChipShow(on){ try{ if(_chip){ var hide=(window._acAnyPanel&&window._acAnyPanel()); _chip.style.display=(on&&!hide)?'block':'none'; } }catch(e){} }
     function _mqChipUpdate(){
       try{
         if(_mq()>=5){ if(_chip&&_chip.parentNode){_chip.parentNode.removeChild(_chip);_chip=null;} return; }
         if(!_chip){
           _chip=document.createElement('div');
           _chip.id='mqChip';
-          _chip.style.cssText='position:fixed;top:122px;left:10px;z-index:9990;max-width:52vw;background:rgba(22,22,30,0.82);border:1px solid #4a4432;border-left:3px solid #c9a24a;border-radius:8px;padding:6px 9px;font:11.5px sans-serif;color:#d8d4c4;pointer-events:none;line-height:1.35;display:none;';
+          _chip.style.cssText='position:fixed;top:122px;left:10px;z-index:60;max-width:52vw;background:rgba(22,22,30,0.86);border:1px solid #4a4432;border-left:3px solid #c9a24a;border-radius:8px;padding:6px 10px;font:11.5px sans-serif;color:#e6e0cc;pointer-events:auto;cursor:pointer;line-height:1.35;display:none;box-shadow:0 3px 10px rgba(0,0,0,.35);';
           (document.body||document.documentElement).appendChild(_chip);
+          _chip.onclick=function(){ try{ if(typeof openQuests==='function')openQuests(); }catch(e){} };
         }
-        var t='\uD83D\uDCDC '+MQ_T().steps[_mq()];
+        var t='\uD83D\uDCDC ▸ '+MQ_T().steps[_mq()];
         if(t!==_chipTxt){ _chipTxt=t; _chip.textContent=t; }
       }catch(e){}
     }
@@ -9359,6 +9360,7 @@ try{(function(){
   /* ============ UX: fechar tocando fora + rolagem melhor + nivel minimo na loja ============ */
   try{
     var OVR=['inv','spellbook','shop','help','bless','quests','daily','bigmap','settings'];
+    try{ window._acAnyPanel=function(){ for(var i=0;i<OVR.length;i++){ var e=document.getElementById(OVR[i]); if(e&&!e.classList.contains('hidden'))return true; } return false; }; }catch(e){}
 
     /* ---- 1+2: fechar ao tocar FORA da janela (no fundo do overlay) ---- */
     function _wireOutside(id){
@@ -9653,10 +9655,10 @@ try{(function(){
     function _evLang(o){ var l=(typeof LANG!=='undefined'&&o[LANG])?LANG:'pt'; return o[l]; }
     function _evChip(txt){
       try{
-        if(!EV.chip){ EV.chip=document.createElement('div'); EV.chip.style.cssText='position:fixed;top:158px;left:10px;z-index:9990;max-width:52vw;background:rgba(40,32,14,0.88);border:1px solid #c9a24a;border-radius:8px;padding:5px 9px;font:11.5px sans-serif;color:#ffe2a0;pointer-events:none;display:none;'; document.body.appendChild(EV.chip); }
-        if(txt===null){EV.chip.style.display='none';return;}
+        if(!EV.chip){ EV.chip=document.createElement('div'); EV.chip.style.cssText='position:fixed;top:158px;left:10px;z-index:60;max-width:52vw;background:rgba(40,32,14,0.9);border:1px solid #c9a24a;border-radius:8px;padding:5px 9px;font:11.5px sans-serif;color:#ffe2a0;pointer-events:none;display:none;box-shadow:0 3px 10px rgba(0,0,0,.35);'; document.body.appendChild(EV.chip); }
+        if(txt===null||(window._acAnyPanel&&window._acAnyPanel())){EV.chip.style.display='none';if(txt===null)return;}
         if(txt!==EV.last){EV.last=txt;EV.chip.textContent=txt;}
-        EV.chip.style.display='block';
+        if(!(window._acAnyPanel&&window._acAnyPanel()))EV.chip.style.display='block';
       }catch(e){}
     }
     function _evStart(type){
