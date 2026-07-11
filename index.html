@@ -3832,7 +3832,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
   killStreak=(gameTime-lastKillAt<=4)?killStreak+1:1;lastKillAt=gameTime;
   const smul=1+Math.min(0.5,(killStreak-1)*0.05);
   let rm=1;if(meta.rested>0){meta.rested--;rm=1.3;}
-  const _dsc=(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?(1+((DungeonLayer.depth||1)-1)*0.12):1;const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm*_dsc);
+  const _dsc=(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?(1+((DungeonLayer.depth||1)-1)*0.12):1;const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm*_dsc*(window._evXp||1));
   if(killStreak>=3)addFloater(m.px,m.py-TILE*0.95,tf('fl_combo',{n:killStreak}),'#ffd76a',killStreak>=6);
   meta.stats.kills++;qProg('kill');taskProg(m.type);
   if(m._invader&&invasion){invasion.killed++;const bg=Math.round((m.d.xp||10)*0.6);player.gold+=bg;addFloater(m.px,m.py-TILE*1.0,'+'+bg+'\u29bf','#ffd76a');}
@@ -4620,7 +4620,7 @@ function updateLoot(dt){for(const L of loots){L.t+=dt;
         if(SFX.pickup)SFX.pickup();addParticles(player.px,player.py,16,{col:'#b9e0ff',spd:90,life:0.7,size:2.4,glow:true,up:16});
         giveXp(_xp);saveGame();}}}
   compact(loots,_keepAlive);}
-function pickupLoot(L){if(L.gold>0){const g2=Math.round(L.gold*(player.goldMul||1));player.gold+=g2;qProg('gold',g2);addFloater(player.px,player.py-TILE*0.7,'+'+g2+' ouro','#e8c15a');SFX.gold();}
+function pickupLoot(L){if(L.gold>0){const g2=Math.round(L.gold*(player.goldMul||1)*(window._goldDepth?window._goldDepth():1));player.gold+=g2;qProg('gold',g2);addFloater(player.px,player.py-TILE*0.7,'+'+g2+' ouro','#e8c15a');SFX.gold();}
   for(const id of L.items){if(!itemById(id))continue;pushBag(id,1);const it=itemById(id);addMessage(t('m_got')+' '+itemName(it),'good');}
   if(L.items.length)SFX.pickup();
   if(L.items.some(id=>{const it=itemById(id);return it&&(it.rar==='legendary'||it.rar==='epic');})){shake(4);buzz([20,30,20]);centerMsg(t('rare_item'));}
@@ -4890,6 +4890,7 @@ function drawFloor(tx,ty,t,sx,sy){
   else if(t===T.mud){arr=tileCanvas.mud;idx=Math.floor(hash2(tx,ty)*3)%3;}
   else if(t===T.snow){arr=tileCanvas.snow;idx=Math.floor(hash2(tx,ty)*3)%3;}
   if(arr)B.drawImage(arr[idx],sx,sy);
+  if(typeof _acAO==='function')_acAO(tx,ty,sx,sy,t);
   if(t===T.sand||t===T.stone||t===T.dfloor||t===T.mud||t===T.snow){const F=fringes.g;
     if(isGrassy(tileAt(tx,ty-1)))B.drawImage(F.n,sx,sy);
     if(isGrassy(tileAt(tx,ty+1)))B.drawImage(F.s,sx,sy+TILE-F.s.height);
@@ -8918,7 +8919,7 @@ try{(function(){
     }
 
     /* ---- construtor de vilarejo ---- */
-    function _buildVillage(vx,vy,vw,vh,defs){
+    function _buildVillage(vx,vy,vw,vh,defs,nm){
       try{
         for(var y=0;y<vh;y++)for(var x=0;x<vw;x++) setTile(vx+x,vy+y,T.stone);
         for(var x=-1;x<=vw;x++){ setTile(vx+x,vy-1,T.wall); setTile(vx+x,vy+vh,T.wall); }
@@ -8932,10 +8933,11 @@ try{(function(){
         for(var d=0;d<4;d++) setTile(gx+nb[d][0],gy+nb[d][1],T.stone);
         setTile(vx+2,vy+vh-2,T.brazier); setTile(vx+vw-3,vy+vh-2,T.brazier);
         for(var i=0;i<defs.length;i++){ var d2=defs[i]; npcs.push({x:vx+d2.dx,y:vy+d2.dy,kind:d2.kind,name:d2.name}); }
-        _villages.push({x:vx,y:vy,w:vw,h:vh});
+        _villages.push({x:vx,y:vy,w:vw,h:vh,name:nm||''});
       }catch(e){}
     }
     var VW=14, VH=11;
+    var VNAMES=["Val do Freixo", "Brejo Alto", "Pedra Rachada", "Campo Cinzento", "Toca do Sul", "Ribeira Fria"];
     var VTPL=[
       [{dx:3,dy:7,kind:'shop',name:'Doran, o Mercador'},{dx:10,dy:7,kind:'inn',name:'Beca, a Estalajadeira'},{dx:6,dy:8,kind:'alch',name:'Ysolde, a Boticaria'}],
       [{dx:3,dy:7,kind:'shop',name:'Harn, o Mercador'},{dx:10,dy:7,kind:'smith',name:'Bruta, a Ferreira'},{dx:6,dy:8,kind:'priest',name:'Frei Osmo'}],
@@ -8971,7 +8973,7 @@ try{(function(){
           for(var cx=WOFF+30; cx<MAPW-WOFF-30 && vAdded<VMAX; cx+=STEPV){
             if(occupied(cx,cy)) continue;
             if(!_villageOK(cx,cy)) continue;
-            _buildVillage(cx-(VW>>1), cy-(VH>>1), VW, VH, VTPL[ti%VTPL.length]); ti++;
+            _buildVillage(cx-(VW>>1), cy-(VH>>1), VW, VH, VTPL[ti%VTPL.length], VNAMES[ti%VNAMES.length]); ti++;
             vAdded++;
           }
         }
@@ -9039,6 +9041,7 @@ try{(function(){
       yes.onclick=function(){ ov.style.display='none'; try{ onYes&&onYes(); }catch(e){} };
       no.onclick=function(){ ov.style.display='none'; };
     }
+    try{window._acConfirm=_cfm;}catch(e){}
     var _nm=function(it){ try{ return (typeof itemName==='function')? itemName(it) : ((it&&it.name)||'item'); }catch(e){ return 'item'; } };
 
     if(typeof buyItem==='function'){
@@ -9325,6 +9328,12 @@ try{(function(){
         return Math.max(0.15, window._ARMK/(window._ARMK + A));   /* 0.15 = teto de 85% de mitigacao */
       }catch(e){ return 1; }
     };
+    /* ouro por profundidade: drops de monstro na masmorra escalam a METADE da taxa
+       do sc (0.06/andar vs 0.12) — por abate cresce, mas ouro/hora nao inflaciona
+       (profundidade paga principalmente em XP + itens + baus, que ja escalam) */
+    window._goldDepth = function(){
+      try{ var base=(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?(1+((DungeonLayer.depth||1)-1)*0.06):1; return base*(window._evGold||1); }catch(e){ return (window._evGold||1); }
+    };
     /* mostra a mitigacao total no painel de inventario */
     if(typeof renderInv==='function'){
       var _origRInv=renderInv;
@@ -9422,6 +9431,463 @@ try{(function(){
     }
     try{console.log('[ux] fechar-tocando-fora + rolagem + nivel minimo na loja.');}catch(e){}
   }catch(e){ try{console.warn('uxfix falhou',e);}catch(_){} }
+
+  /* ============ P3 POLIMENTO: nome do vilarejo + transicoes de painel + audio ambiente ============ */
+  try{
+    /* ---- 1) nome do vilarejo ao entrar (toast proprio, estilo zona) ---- */
+    var _vLbl={pt:'Vilarejo',en:'Hamlet',es:'Aldea',fr:'Hameau'};
+    var _vToast=null,_vLast=-1;
+    function _villageToast(nm){
+      try{
+        if(!_vToast){
+          _vToast=document.createElement('div');
+          _vToast.style.cssText='position:fixed;top:66px;left:50%;transform:translateX(-50%);z-index:9989;text-align:center;pointer-events:none;opacity:0;transition:opacity .5s ease;font-family:serif;';
+          document.body.appendChild(_vToast);
+        }
+        var L=(typeof LANG!=='undefined'&&_vLbl[LANG])?LANG:'pt';
+        _vToast.innerHTML='<div style="font-size:10px;letter-spacing:3px;color:#c9a24a;">\u2740 '+_vLbl[L].toUpperCase()+' \u2740</div>'
+          +'<div style="font-size:19px;color:#ece4cc;text-shadow:0 2px 8px rgba(0,0,0,.8);font-weight:600;">'+nm+'</div>';
+        _vToast.style.opacity='1';
+        clearTimeout(_vToast._t); _vToast._t=setTimeout(function(){_vToast.style.opacity='0';},2600);
+      }catch(e){}
+    }
+    setInterval(function(){
+      try{
+        if(typeof running==='undefined'||!running||typeof player==='undefined'||!player){_vLast=-1;return;}
+        var vs=window._acVillages||[], cur=-1;
+        for(var i=0;i<vs.length;i++){var v=vs[i]; if(player.tx>=v.x-1&&player.tx<=v.x+v.w&&player.ty>=v.y-1&&player.ty<=v.y+v.h){cur=i;break;}}
+        if(cur!==_vLast){ if(cur>=0&&vs[cur].name)_villageToast(vs[cur].name); _vLast=cur; }
+      }catch(e){}
+    },400);
+
+    /* ---- 2) transicoes de painel (fade+pop na abertura; fechamento instantaneo) ---- */
+    try{
+      var st=document.createElement('style');
+      st.textContent='@keyframes acOvIn{from{opacity:0}to{opacity:1}}'
+        +'@keyframes acWinIn{from{transform:scale(.955);opacity:.55}to{transform:scale(1);opacity:1}}'
+        +'.overlay:not(.hidden){animation:acOvIn .13s ease-out}'
+        +'.overlay:not(.hidden)>div{animation:acWinIn .16s cubic-bezier(.2,.9,.3,1.15)}';
+      (document.head||document.documentElement).appendChild(st);
+    }catch(e){}
+
+    /* ---- 3) audio ambiente por bioma (WebAudio; respeita som ligado/desligado) ---- */
+    var AMB={cur:null,gain:null,src:null,lp:null,accT:null,zone:'',want:'off'};
+    var PROF={
+      forest:{lp:900, vol:0.055, acc:'bird'},
+      snow:  {lp:1500,vol:0.06,  acc:'wind'},
+      desert:{lp:600, vol:0.05,  acc:'wind'},
+      swamp: {lp:500, vol:0.055, acc:'frog'},
+      ember: {lp:260, vol:0.06,  acc:'rumble'},
+      cave:  {lp:340, vol:0.065, acc:'drip'}
+    };
+    function _zoneProf(nm){
+      var s=String(nm||'').toLowerCase();
+      if(/gel|neve|snow|frost/.test(s))return 'snow';
+      if(/cinza|ash|vulc|volc|ember|brasa/.test(s))return 'ember';
+      if(/brejo|swamp|pant|lodo/.test(s))return 'swamp';
+      if(/deser|dune|areia/.test(s))return 'desert';
+      return 'forest';
+    }
+    if(typeof showZone==='function'){
+      var _origShowZone=showZone;
+      showZone=function(nm){ try{AMB.zone=nm;}catch(e){} return _origShowZone(nm); };
+    }
+    function _ambStart(profName){
+      if(!AC||!master)return;
+      _ambStop();
+      var p=PROF[profName]; if(!p)return;
+      try{
+        var len=2*AC.sampleRate, buf=AC.createBuffer(1,len,AC.sampleRate), ch=buf.getChannelData(0);
+        for(var i=0;i<len;i++)ch[i]=(Math.random()*2-1)*0.6;
+        var src=AC.createBufferSource(); src.buffer=buf; src.loop=true;
+        var lp=AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=p.lp; lp.Q.value=0.6;
+        var g=AC.createGain(); g.gain.value=0;
+        src.connect(lp); lp.connect(g); g.connect(master); src.start();
+        try{ g.gain.linearRampToValueAtTime(p.vol, AC.currentTime+1.6); }catch(e){ g.gain.value=p.vol; }
+        AMB.src=src; AMB.lp=lp; AMB.gain=g; AMB.cur=profName;
+        _ambAccents(p);
+      }catch(e){}
+    }
+    function _ambStop(){
+      try{ if(AMB.gain){ var g=AMB.gain,s=AMB.src; try{g.gain.linearRampToValueAtTime(0.0001,AC.currentTime+0.9);}catch(e){g.gain.value=0;} setTimeout(function(){try{s.stop();}catch(e){}},1000); } }catch(e){}
+      if(AMB.accT){clearTimeout(AMB.accT);AMB.accT=null;}
+      AMB.src=null;AMB.gain=null;AMB.lp=null;AMB.cur=null;
+    }
+    function _ambAccents(p){
+      var next=function(){
+        AMB.accT=setTimeout(function(){
+          try{
+            if(AC&&soundOn&&AMB.cur){
+              if(p.acc==='bird'){ beep(2200+Math.random()*700,0.07,'sine',0.05); setTimeout(function(){beep(1900+Math.random()*600,0.06,'sine',0.04);},110); }
+              else if(p.acc==='drip'){ beep(1200,0.04,'sine',0.06,320); }
+              else if(p.acc==='frog'){ beep(180+Math.random()*60,0.09,'square',0.03); }
+              else if(p.acc==='rumble'){ beep(60+Math.random()*20,0.5,'sine',0.05); }
+              else if(p.acc==='wind'&&AMB.lp){ try{AMB.lp.frequency.linearRampToValueAtTime(p.lp*(0.7+Math.random()*0.9),AC.currentTime+2.2);}catch(e){} }
+            }
+          }catch(e){}
+          next();
+        }, 3200+Math.random()*5200);
+      };
+      next();
+    }
+    setInterval(function(){
+      try{
+        var run=(typeof running!=='undefined'&&running);
+        var want=(!run||!AC||typeof soundOn==='undefined'||!soundOn)?'off'
+                 :((typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?'cave':_zoneProf(AMB.zone));
+        if(want==='off'){ if(AMB.cur)_ambStop(); return; }
+        if(want!==AMB.cur)_ambStart(want);
+      }catch(e){}
+    },1200);
+    try{console.log('[polish] nome de vilarejo + transicoes + ambiente por bioma.');}catch(e){}
+  }catch(e){ try{console.warn('polish falhou',e);}catch(_){} }
+
+  /* ============ P4: FORJA + EVENTOS AGENDADOS + GAMEPAD + ACESSIBILIDADE ============ */
+  try{
+    /* ================= FORJA (Ferreiro): +6% stats/nivel, max +5, custo escalonado ================= */
+    var FORGE_MAX=5, FORGE_PCT=0.06;
+    function _forgeMap(){ try{ if(typeof meta!=='undefined'&&meta){ meta.forge=meta.forge||{}; return meta.forge; } }catch(e){} return {}; }
+    window._forgeLvl=function(id){ try{ return (_forgeMap()[id]|0); }catch(e){ return 0; } };
+    function _forgeCost(it,k){ return Math.round((it.val||100)*(0.8+0.7*k)); }
+    /* bonus aplicado via cadeia do recompute (alimenta tambem a mitigacao de armadura) */
+    if(typeof recompute==='function'){
+      var _prevRec=recompute;
+      recompute=function(){ _prevRec();
+        try{
+          if(typeof player==='undefined'||!player||!player.equip)return;
+          var slots=['weapon','shield','armor','head','legs'];
+          for(var i=0;i<slots.length;i++){
+            var id=player.equip[slots[i]]; if(!id)continue;
+            var k=window._forgeLvl(id); if(!k)continue;
+            var it=itemById(id); if(!it)continue;
+            if(it.atk)player.atk+=it.atk*FORGE_PCT*k;
+            if(it.def)player.def+=it.def*FORGE_PCT*k;
+            if(it.arm)player.arm+=it.arm*FORGE_PCT*k;
+            if(it.hp){player.maxhp+=Math.round(it.hp*FORGE_PCT*k);}
+          }
+          if(player.hp>player.maxhp)player.hp=player.maxhp;
+        }catch(e){}
+      };
+    }
+    /* nome exibe +k em todo lugar */
+    if(typeof itemName==='function'){
+      var _prevIN=itemName;
+      itemName=function(it){ var n=_prevIN(it); try{ var k=it&&window._forgeLvl(it.id); if(k)n+=' +'+k; }catch(e){} return n; };
+    }
+    /* tooltip: linha da forja */
+    if(typeof showTip==='function'){
+      var _prevTip=showTip;
+      showTip=function(){ var r=_prevTip.apply(this,arguments);
+        try{
+          var it=arguments[0]; if(it&&it.id){ var k=window._forgeLvl(it.id);
+            if(k){ var tipEl=document.getElementById('tip');
+              if(tipEl&&tipEl.innerHTML.indexOf('acForgeTip')<0)
+                tipEl.innerHTML+='<div id="acForgeTip" style="color:#e8c15a;font-size:12px;margin-top:2px;">\u2692 Forja +'+k+' ('+(k*FORGE_PCT*100).toFixed(0)+'% stats)</div>';
+            } }
+        }catch(e){}
+        return r; };
+    }
+    /* secao ⚒ na loja do ferreiro */
+    var _fLbl={pt:{t:'\u2692 Forjar equipamento',n:'Pr\u00f3ximo: +6% stats',b:'Forjar',mx:'M\u00c1X',q:'Forjar {n} por {g} ouro? (+6% stats)'},
+               en:{t:'\u2692 Forge equipment',n:'Next: +6% stats',b:'Forge',mx:'MAX',q:'Forge {n} for {g} gold? (+6% stats)'},
+               es:{t:'\u2692 Forjar equipo',n:'Siguiente: +6% stats',b:'Forjar',mx:'M\u00c1X',q:'\u00bfForjar {n} por {g} de oro? (+6% stats)'},
+               fr:{t:'\u2692 Forger l\u2019\u00e9quipement',n:'Suivant : +6% stats',b:'Forger',mx:'MAX',q:'Forger {n} pour {g} or ? (+6% stats)'}};
+    function _fT(){ var l=(typeof LANG!=='undefined'&&_fLbl[LANG])?LANG:'pt'; return _fLbl[l]; }
+    if(typeof renderShop==='function'){
+      var _prevRS=renderShop;
+      renderShop=function(){ _prevRS();
+        try{
+          if(typeof shopKind==='undefined'||(shopKind!=='smith'&&shopKind!=='psmith'))return;
+          var rows=document.getElementById('shopRows'); if(!rows)return;
+          var T=_fT(), wrap=document.createElement('div');
+          wrap.style.cssText='grid-column:1/-1;';
+          var hdr='<div style="margin:2px 0 6px;font-size:11px;font-weight:700;color:#e8c15a;letter-spacing:.5px;text-transform:uppercase;">'+T.t+'</div>';
+          var body='';
+          var slots=['weapon','shield','armor','head','legs'];
+          for(var i=0;i<slots.length;i++){
+            var id=player.equip&&player.equip[slots[i]]; if(!id)continue;
+            var it=itemById(id); if(!it)continue;
+            var k=window._forgeLvl(id), maxed=k>=FORGE_MAX, cost=_forgeCost(it,k), can=(player.gold||0)>=cost;
+            body+='<div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid rgba(255,255,255,0.05);">'
+              +'<div style="flex:1;min-width:0;"><div style="color:'+(RAR[it.rar]?RAR[it.rar].c:'#fff')+';font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+itemName(it)+'</div>'
+              +'<div style="font-size:11px;color:#8a8f9a;">'+(maxed?'':T.n)+'</div></div>'
+              +(maxed?'<span style="font-size:12px;color:#7fd4a0;font-weight:700;">'+T.mx+'</span>'
+                :'<span style="font-size:12px;color:'+(can?'#e8c15a':'#e06a6a')+';">'+cost+' \u29bf</span>'
+                +'<button class="btn" data-forge="'+id+'" style="background:#6a4f1a;border-color:#c9a24a;">'+T.b+'</button>')
+              +'</div>';
+          }
+          if(!body)return;
+          wrap.innerHTML=hdr+body;
+          rows.insertBefore(wrap, rows.firstChild);
+          var btns=wrap.querySelectorAll('[data-forge]');
+          for(var b2=0;b2<btns.length;b2++)(function(btn){
+            btn.onclick=function(){
+              var id=btn.getAttribute('data-forge'), it=itemById(id); if(!it)return;
+              var k=window._forgeLvl(id); if(k>=FORGE_MAX)return;
+              var cost=_forgeCost(it,k);
+              if((player.gold||0)<cost){ if(typeof addMessage==='function'&&typeof t==='function')addMessage(t('need_gold'),'sys'); return; }
+              var doIt=function(){
+                try{
+                  player.gold-=cost; _forgeMap()[id]=k+1;
+                  if(typeof SFX!=='undefined'&&SFX.gold)SFX.gold(); if(typeof buzz==='function')buzz([10,16]);
+                  if(typeof addMessage==='function')addMessage('\u2692 '+itemName(it)+' \u2014 +'+((k+1)*FORGE_PCT*100).toFixed(0)+'%','good');
+                  if(typeof recompute==='function')recompute();
+                  if(typeof saveGame==='function')saveGame();
+                  renderShop(); if(typeof renderHUD==='function')renderHUD();
+                  if(typeof invOpen!=='undefined'&&invOpen&&typeof renderInv==='function')renderInv();
+                }catch(e){}
+              };
+              var msg=_fT().q.replace('{n}',itemName(it)).replace('{g}',cost);
+              if(window._acConfirm)window._acConfirm(msg,doIt); else doIt();
+            };
+          })(btns[b2]);
+        }catch(e){}
+      };
+    }
+
+    /* ================= EVENTOS AGENDADOS (somam-se as invasoes existentes) ================= */
+    var EV={active:null, ends:0, nextAt:Date.now()+ (7*60+Math.random()*150)*1000, chip:null, last:''};
+    var EV_TXT={gold:{pt:'F\u00faria Dourada \u2014 ouro em dobro!',en:'Golden Frenzy \u2014 double gold!',es:'\u00a1Furia Dorada \u2014 oro doble!',fr:'Furie Dor\u00e9e \u2014 or doubl\u00e9 !',ic:'\uD83D\uDCB0'},
+                xp:{pt:'Chuva de Ess\u00eancia \u2014 +50% XP!',en:'Essence Rain \u2014 +50% XP!',es:'\u00a1Lluvia de Esencia \u2014 +50% XP!',fr:'Pluie d\u2019Essence \u2014 +50% XP !',ic:'\u2728'}};
+    var EV_END={pt:'O evento terminou.',en:'The event has ended.',es:'El evento termin\u00f3.',fr:'L\u2019\u00e9v\u00e9nement est termin\u00e9.'};
+    function _evLang(o){ var l=(typeof LANG!=='undefined'&&o[LANG])?LANG:'pt'; return o[l]; }
+    function _evChip(txt){
+      try{
+        if(!EV.chip){ EV.chip=document.createElement('div'); EV.chip.style.cssText='position:fixed;top:158px;left:10px;z-index:9990;max-width:52vw;background:rgba(40,32,14,0.88);border:1px solid #c9a24a;border-radius:8px;padding:5px 9px;font:11.5px sans-serif;color:#ffe2a0;pointer-events:none;display:none;'; document.body.appendChild(EV.chip); }
+        if(txt===null){EV.chip.style.display='none';return;}
+        if(txt!==EV.last){EV.last=txt;EV.chip.textContent=txt;}
+        EV.chip.style.display='block';
+      }catch(e){}
+    }
+    function _evStart(type){
+      EV.active=type; EV.ends=Date.now()+75000;
+      if(type==='gold')window._evGold=2; else window._evXp=1.5;
+      var m=_evLang(EV_TXT[type]);
+      try{ if(typeof centerMsg==='function')centerMsg(EV_TXT[type].ic+' '+m); if(typeof addMessage==='function')addMessage(EV_TXT[type].ic+' '+m,'good'); if(typeof SFX!=='undefined'&&SFX.level)SFX.level(); }catch(e){}
+    }
+    function _evEnd(){
+      window._evGold=1; window._evXp=1;
+      try{ if(typeof addMessage==='function')addMessage(_evLang(EV_END),'sys'); }catch(e){}
+      EV.active=null; EV.nextAt=Date.now()+ (6.5*60+Math.random()*150)*1000; _evChip(null);
+    }
+    var _evAlt=Math.random()<0.5?'gold':'xp';
+    setInterval(function(){
+      try{
+        var run=(typeof running!=='undefined'&&running&&typeof player!=='undefined'&&player&&!player.dead);
+        if(EV.active){
+          var left=EV.ends-Date.now();
+          if(left<=0){_evEnd();return;}
+          var s=Math.ceil(left/1000), mm=(s/60)|0, ss=s%60;
+          _evChip(EV_TXT[EV.active].ic+' '+_evLang(EV_TXT[EV.active]).split(' \u2014')[0]+' \u2014 '+mm+':'+(ss<10?'0':'')+ss);
+          return;
+        }
+        if(run&&Date.now()>=EV.nextAt){ _evStart(_evAlt); _evAlt=(_evAlt==='gold'?'xp':'gold'); }
+      }catch(e){}
+    },500);
+
+    /* ================= GAMEPAD ================= */
+    var GP={was:{},dirs:{w:false,a:false,s:false,d:false},announced:false};
+    function _gpBtn(gp,i){ var b=gp.buttons&&gp.buttons[i]; return !!(b&&(b.pressed||b.value>0.5)); }
+    setInterval(function(){
+      try{
+        var gps=(navigator.getGamepads&&navigator.getGamepads())||[]; var gp=null;
+        for(var i=0;i<gps.length;i++){ if(gps[i]&&gps[i].connected){gp=gps[i];break;} }
+        if(!gp){ for(var k in GP.dirs){ if(GP.dirs[k]){keys[k]=false;GP.dirs[k]=false;} } GP.was={}; return; }
+        if(!GP.announced){ GP.announced=true; try{ if(typeof addMessage==='function')addMessage('\uD83C\uDFAE Controle conectado','sys'); }catch(e){} }
+        var run=(typeof running!=='undefined'&&running);
+        var ax=gp.axes&&gp.axes.length>=2?gp.axes:[0,0], DZ=0.42;
+        var want={ a:(ax[0]<-DZ)||_gpBtn(gp,14), d:(ax[0]>DZ)||_gpBtn(gp,15), w:(ax[1]<-DZ)||_gpBtn(gp,12), s:(ax[1]>DZ)||_gpBtn(gp,13) };
+        for(var kk in want){ var v=run&&want[kk]; if(v!==GP.dirs[kk]){ keys[kk]=v; GP.dirs[kk]=v; } }
+        function edge(i){ var p=_gpBtn(gp,i), r=p&&!GP.was[i]; GP.was[i]=p; return r; }
+        if(run){
+          if(edge(0)){ var ab=document.getElementById('attackBtn'); if(ab){ try{ ab.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true})); }catch(e){} } }
+          if(edge(2)&&typeof castSlot==='function')castSlot(0);
+          if(edge(3)&&typeof castSlot==='function')castSlot(1);
+          if(edge(1)&&typeof castSlot==='function')castSlot(2);
+          if(edge(5)&&typeof usePotion==='function')usePotion('hp');
+          if(edge(4)&&typeof usePotion==='function')usePotion('cure');
+          if(edge(9)&&typeof toggleInv==='function')toggleInv();
+          if(edge(8)){ var bm=document.getElementById('bigmap'); if(bm){ if(bm.classList.contains('hidden')&&typeof openBigMap==='function')openBigMap(); else if(typeof closeAllPanels==='function')closeAllPanels(); } }
+        } else { for(var i2=0;i2<16;i2++)GP.was[i2]=_gpBtn(gp,i2); }
+      }catch(e){}
+    },60);
+
+    /* ================= ACESSIBILIDADE: texto grande + cores acessiveis ================= */
+    var ACS={big:false,cb:false};
+    try{ ACS.big=(typeof lsGet==='function'&&lsGet('acs.bigtext')==='1'); ACS.cb=(typeof lsGet==='function'&&lsGet('acs.cb')==='1'); }catch(e){}
+    try{
+      var st=document.createElement('style');
+      st.textContent='.acBigText .overlay>div{font-size:116%;} .acBigText #mqChip{font-size:13px;} .acBigText #ftueBanner div{font-size:15px !important;} .acBigText #armMitLine{font-size:14.5px;}';
+      (document.head||document.documentElement).appendChild(st);
+    }catch(e){}
+    function _acsApply(){
+      try{ document.documentElement.classList.toggle('acBigText',ACS.big); }catch(e){}
+      window._cbOn=ACS.cb?1:0;
+    }
+    _acsApply();
+    if(typeof addFloater==='function'){
+      var CBMAP={'#ff7a6a':'#ff9e00','#ff8f8f':'#ffb000','#7fd4a0':'#56b4e9','#a9e6a0':'#56b4e9','#b0d060':'#56b4e9','#c8ffd0':'#8fd3ff'};
+      var _prevAF=addFloater;
+      addFloater=function(x,y,txt,col,big){ try{ if(window._cbOn&&col&&CBMAP[String(col).toLowerCase()])col=CBMAP[String(col).toLowerCase()]; }catch(e){} return _prevAF(x,y,txt,col,big); };
+    }
+    var _aLbl={pt:[['Texto grande','Aumenta o texto dos pain\u00e9is'],['Cores acess\u00edveis','Paleta amig\u00e1vel ao dalt\u00f4nico']],
+               en:[['Large text','Bigger panel text'],['Accessible colors','Colorblind-friendly palette']],
+               es:[['Texto grande','Texto de paneles m\u00e1s grande'],['Colores accesibles','Paleta apta para dalt\u00f3nicos']],
+               fr:[['Grand texte','Texte des panneaux agrandi'],['Couleurs accessibles','Palette adapt\u00e9e au daltonisme']]};
+    function _acsRows(){
+      try{
+        var sw=document.querySelector('#settings .swin'); if(!sw||document.getElementById('rowBigText'))return;
+        var L=(typeof LANG!=='undefined'&&_aLbl[LANG])?LANG:'pt', lb=_aLbl[L];
+        function row(id,ic,tt,ss,on,cb){
+          var d=document.createElement('div'); d.id=id; d.className='srow';
+          d.innerHTML='<div class="sic">'+ic+'</div><div class="stx"><b>'+tt+'</b><span>'+ss+'</span></div>'
+            +'<button style="min-width:56px;padding:6px 10px;border-radius:14px;border:1px solid '+(on?'#c9a24a':'#4a4f5e')+';background:'+(on?'#6a4f1a':'#2a2e3a')+';color:'+(on?'#ffe2a0':'#9aa0ae')+';font-weight:700;cursor:pointer;">'+(on?'ON':'OFF')+'</button>';
+          d.querySelector('button').onclick=function(){ cb(); _acsRows._re(); };
+          sw.appendChild(d); return d;
+        }
+        _acsRows._re=function(){ var a=document.getElementById('rowBigText'),b=document.getElementById('rowCb'); if(a)a.remove(); if(b)b.remove(); _acsRows(); };
+        row('rowBigText','\uD83D\uDD24',lb[0][0],lb[0][1],ACS.big,function(){ ACS.big=!ACS.big; try{lsSet('acs.bigtext',ACS.big?'1':'0');}catch(e){} _acsApply(); });
+        row('rowCb','\uD83C\uDFA8',lb[1][0],lb[1][1],ACS.cb,function(){ ACS.cb=!ACS.cb; try{lsSet('acs.cb',ACS.cb?'1':'0');}catch(e){} _acsApply(); });
+      }catch(e){}
+    }
+    setInterval(_acsRows,1600);
+    try{console.log('[endgame] forja + eventos agendados + gamepad + acessibilidade.');}catch(e){}
+  }catch(e){ try{console.warn('endgame falhou',e);}catch(_){} }
+
+  /* ============ ART POLISH PASS — aditivo, identidade preservada ============
+     Fase 2: adereços de profissao nos NPCs (grade PIX exata; itens de costas
+     desenhados ANTES do sprite, frontais DEPOIS). Fase 3: oclusao de contato na
+     base de objetos altos + micro-textura sutil nas variantes assadas (source-atop,
+     so escurece/clareia pixels existentes — nenhuma cor nova). */
+  try{
+    var U=function(v){ return Math.round(v/PIX)*PIX; };
+
+    /* ---------- FASE 3a: micro-textura nas fabricas de tile (aditivo + re-assa) ---------- */
+    var SPECK={ makeGrass:[5,2], makeSand:[4,2], makeMoss:[4,2], makeAsh:[5,1], makeCobble:[3,1],
+                makeSlab:[3,1], makeIce:[1,5], makeObsidian:[0,3], makeScrub:[4,1], makeRoof:[2,0],
+                makeCliff:[3,2], makePine:[3,1], makeDeadTree:[2,1], makeMud:[4,1], makeCave:[3,1] };
+    var CRACK={ makeCobble:1, makeSlab:1 };
+    function _speck(c,dk,lt,crack){
+      try{
+        var g=c.getContext('2d'); g.save(); g.globalCompositeOperation='source-atop';
+        var W2=c.width,H2=c.height;
+        var put=function(col,a,w,h){ g.globalAlpha=a; g.fillStyle=col;
+          g.fillRect(((Math.random()*W2/PIX)|0)*PIX, ((Math.random()*H2/PIX)|0)*PIX, w, h); };
+        for(var i=0;i<dk;i++)put('#000000',0.13,PIX,PIX);
+        for(var j=0;j<lt;j++)put('#ffffff',0.10,PIX,PIX);
+        if(crack){ var cx0=((Math.random()*(W2-4*PIX)/PIX)|0)*PIX, cy0=((Math.random()*(H2-4*PIX)/PIX)|0)*PIX;
+          g.globalAlpha=0.16; g.fillStyle='#000000';
+          for(var k2=0;k2<4;k2++){ g.fillRect(cx0,cy0,PIX,PIX); cx0+=PIX; cy0+=(Math.random()<0.5?PIX:0); } }
+        g.restore();
+      }catch(e){}
+      return c;
+    }
+    var _wrapped=0;
+    for(var fn in SPECK){ (function(name,cfg){
+      try{
+        var f=(typeof window!=='undefined'?window[name]:null) || (function(){try{return eval(name);}catch(e){return null;}})();
+        if(typeof f!=='function')return;
+        var wrap=function(){ var c=f.apply(this,arguments); return _speck(c,cfg[0],cfg[1],CRACK[name]||0); };
+        try{ window[name]=wrap; }catch(e){}
+        try{ eval(name+'=wrap'); }catch(e){}
+        _wrapped++;
+      }catch(e){}
+    })(fn,SPECK[fn]); }
+    /* re-assa com as fabricas envolvidas (uma vez; barato) */
+    try{ if(_wrapped&&typeof bakeTiles==='function'){ bakeTiles(); if(typeof bakeStatics==='function')bakeStatics(); if(typeof buildMinimapBase==='function')buildMinimapBase(); } }catch(e){}
+
+    /* ---------- FASE 3b: oclusao de contato sob objetos altos (chamado pelo drawFloor) ---------- */
+    var TALL={};
+    try{ [T.wall,T.dwall,T.cwall,T.pillar,T.tree,T.rock,T.roof,T.pine,T.cliff,T.deadtree].forEach(function(t){TALL[t]=1;}); }catch(e){}
+    var FLOORISH={};
+    try{ [T.grass,T.stone,T.sand,T.moss,T.ash,T.mud,T.snow,T.dfloor,T.cfloor,T.scrub,T.obsidian,T.ice,T.bones,T.mushroom].forEach(function(t){FLOORISH[t]=1;}); }catch(e){}
+    window._acAO=function(tx,ty,sx,sy,t){
+      try{
+        if(!FLOORISH[t])return;
+        if(TALL[tileAt(tx,ty-1)]){
+          B.fillStyle='rgba(8,10,18,0.20)'; B.fillRect(sx,sy,TILE,PIX*2);
+          B.fillStyle='rgba(8,10,18,0.10)'; B.fillRect(sx,sy+PIX*2,TILE,PIX);
+        }
+      }catch(e){}
+    };
+
+    /* ---------- FASE 2: aderecos de profissao nos NPCs ---------- */
+    var C_LEATHER='#6a4a2e',C_LEATHER_D='#4e3620',C_WOOD='#7a5a34',C_IRON='#9aa2ad',C_IRON_L='#c9ced8',
+        C_GOLD='#c9a24a',C_GOLD_L='#f0dc9a',C_GLASS='#9fe8c8',C_PINK='#e8a0c8',C_ARC='#c9a2ff',C_ARC_L='#e8dcff',
+        C_CLOTH='#8a3a3a',C_CREAM='#efe6d0',C_MUG='#b8895a',C_STRAP='#5a4426',C_TIPS='#d8d0b8';
+    function _R(x,y,w,h,col){ B.fillStyle=col; B.fillRect(U(x),U(y),Math.max(PIX,U(w)),Math.max(PIX,U(h))); }
+    function _geom(cx,cy,n){
+      var set=npcSpr[n.kind]||npcSpr.shop; if(!set||!set.down)return null;
+      var S2=set.down, bx=Math.round(cx/PIX)*PIX, by=Math.round(cy/PIX)*PIX;
+      var bob=Math.sin(gameTime*1.7+(n.x||0)*1.3)>0?PIX:0;
+      var top=by-bob-S2.h*PIX+12+(S2.pad||0)*PIX, bh=S2.h*PIX, half=S2.w*PIX/2;
+      return {bx:bx,top:top,bh:bh,half:half};
+    }
+    function _back(n,g){ var u=PIX,bx=g.bx,top=g.top,bh=g.bh,half=g.half;
+      switch(n.kind){
+        case 'hunter':
+          _R(bx-half-u, top+bh*0.24, u, bh*0.5, C_WOOD);                        /* arco (talao) */
+          _R(bx+half-u, top+bh*0.30, u*2, u*4, C_STRAP);                        /* aljava */
+          _R(bx+half-u, top+bh*0.30-u, u, u, C_TIPS); _R(bx+half, top+bh*0.30-u, u, u, C_TIPS);
+          break;
+        case 'wander':
+          _R(bx-u*3, top+bh*0.22, u*6, u*5, C_LEATHER);                          /* mochila */
+          _R(bx-u*3, top+bh*0.22-u*2, u*6, u*2, C_CLOTH);                        /* manta enrolada */
+          _R(bx-u*3, top+bh*0.22, u*6, u, C_LEATHER_D);
+          break;
+        case 'sage':
+          _R(bx-half-u, top+u, u, bh-u*2, C_WOOD);                               /* cajado */
+          _R(bx-half-u*1.5, top-u, u*2, u*2, C_ARC); _R(bx-half-u, top-u, u, u, C_ARC_L);
+          break;
+      }
+    }
+    function _front(n,g){ var u=PIX,bx=g.bx,top=g.top,bh=g.bh,half=g.half;
+      switch(n.kind){
+        case 'smith': case 'psmith':
+          _R(bx-u*2, top+bh*0.42, u*4, bh*0.34, C_LEATHER);                      /* avental de couro */
+          _R(bx-u*2, top+bh*0.42, u*4, u, C_LEATHER_D);
+          _R(bx+half, top+bh*0.50, u, u*4, C_WOOD);                              /* martelo */
+          _R(bx+half-u, top+bh*0.45, u*3, u*2, C_IRON); _R(bx+half-u, top+bh*0.45, u, u, C_IRON_L);
+          break;
+        case 'shop':
+          _R(bx+half-u, top+bh*0.60, u*2, u*2, '#8a6a3a');                       /* bolsa de moedas */
+          _R(bx+half-u, top+bh*0.60, u*2, u*0.9, C_STRAP);
+          _R(bx-half+u, top+bh*0.30, u, u, C_STRAP); _R(bx-half+u*2, top+bh*0.36, u, u, C_STRAP);
+          _R(bx-half+u*3, top+bh*0.42, u, u, C_STRAP);                           /* alca diagonal */
+          break;
+        case 'inn':
+          _R(bx+half, top+bh*0.55, u*3, u, C_WOOD);                              /* bandeja */
+          _R(bx+half+u, top+bh*0.55-u*2, u*2, u*2, C_MUG);                       /* caneca */
+          _R(bx+half+u, top+bh*0.55-u*3, u*2, u, C_CREAM);                       /* espuma */
+          break;
+        case 'alch':
+          _R(bx+half-u*2, top+bh*0.60-u, u, u, C_WOOD);                          /* rolha */
+          _R(bx+half-u*2, top+bh*0.60, u, u*2, C_GLASS);                         /* frasco */
+          _R(bx-half+u, top+bh*0.62, u, u*2, C_PINK);                            /* frasco 2 */
+          break;
+        case 'priest':
+          _R(bx-u, top+bh*0.34, u*2, u, '#3a3426');                              /* cordao */
+          _R(bx-u, top+bh*0.40, u*2, u*2, C_GOLD); _R(bx-u, top+bh*0.40, u, u, C_GOLD_L); /* amuleto */
+          break;
+        case 'guard':
+          _R(bx+half, top-u*2, u, bh+u*2, C_WOOD);                               /* lanca */
+          _R(bx+half, top-u*4, u, u*2, C_IRON_L);
+          break;
+        case 'wander':
+          _R(bx-u, top+bh*0.32, u, u*3, C_LEATHER_D);                            /* alca frontal */
+          break;
+      }
+    }
+    if(typeof drawNpc==='function'){
+      var _prevDN=drawNpc;
+      drawNpc=function(cx,cy,n){
+        var g=null; try{ g=_geom(cx,cy,n); if(g)_back(n,g); }catch(e){}
+        _prevDN(cx,cy,n);
+        try{ if(g)_front(n,g); }catch(e){}
+      };
+    }
+    try{console.log('[arte] polish: '+_wrapped+' fabricas de tile com micro-textura + oclusao de contato + aderecos de profissao nos NPCs.');}catch(e){}
+  }catch(e){ try{console.warn('arte falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
