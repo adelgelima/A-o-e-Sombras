@@ -9800,7 +9800,7 @@ try{(function(){
 
     /* ---------- FASE 3b: oclusao de contato sob objetos altos (chamado pelo drawFloor) ---------- */
     var TALL={};
-    try{ [T.wall,T.dwall,T.cwall,T.pillar,T.tree,T.rock,T.roof,T.pine,T.cliff,T.deadtree].forEach(function(t){TALL[t]=1;}); }catch(e){}
+    try{ [T.roof,T.pine,T.cliff,T.deadtree,T.rock].forEach(function(t){TALL[t]=1;}); }catch(e){} /* muros/arvore/pilar ja tem elipse no render base — evitar sombra dupla */
     var FLOORISH={};
     try{ [T.grass,T.stone,T.sand,T.moss,T.ash,T.mud,T.snow,T.dfloor,T.cfloor,T.scrub,T.obsidian,T.ice,T.bones,T.mushroom].forEach(function(t){FLOORISH[t]=1;}); }catch(e){}
     window._acAO=function(tx,ty,sx,sy,t){
@@ -9890,6 +9890,49 @@ try{(function(){
     }
     try{console.log('[arte] polish: '+_wrapped+' fabricas de tile com micro-textura + oclusao de contato + aderecos de profissao nos NPCs.');}catch(e){}
   }catch(e){ try{console.warn('arte falhou',e);}catch(_){} }
+
+  /* ============ HUD POLISH + MICROANIMACOES (aditivo, discreto) ============ */
+  try{
+    var st=document.createElement('style');
+    st.textContent=
+      /* barras suaves (vida interpola; veneno transiciona o filtro) */
+      '#hpbar{transition:width .28s ease, filter .3s ease;}'
+      +'#xpbar{transition:width .35s ease;}'
+      /* toque premium nos botoes (sem redesenho) */
+      +'.btn{transition:transform .07s ease, filter .12s ease, box-shadow .12s ease;}'
+      +'.btn:active{transform:translateY(1px) scale(.97);filter:brightness(1.18);}'
+      /* profundidade dos paineis */
+      +'.overlay>div{box-shadow:0 12px 44px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.045);}'
+      /* pop do ouro */
+      +'@keyframes acGoldPop{0%{transform:scale(1);}35%{transform:scale(1.26);color:#ffd76a;text-shadow:0 0 8px rgba(255,215,106,.55);}100%{transform:scale(1);}}'
+      +'#pgold{display:inline-block;}'
+      +'#pgold.goldpop{animation:acGoldPop .38s cubic-bezier(.2,1.3,.4,1);}'
+      /* pop do aviso central (preserva o translateX) */
+      +'@keyframes acCenterPop{from{transform:translateX(-50%) scale(.86);opacity:.4;}to{transform:translateX(-50%) scale(1);opacity:1;}}';
+    (document.head||document.documentElement).appendChild(st);
+
+    /* ouro: pop quando aumenta */
+    var _lg=null;
+    setInterval(function(){
+      try{
+        if(typeof player==='undefined'||!player)return;
+        var g=player.gold|0;
+        if(_lg!==null&&g>_lg){ var el=document.getElementById('pgold');
+          if(el){ el.classList.remove('goldpop'); void el.offsetWidth; el.classList.add('goldpop'); } }
+        _lg=g;
+      }catch(e){}
+    },200);
+
+    /* aviso central: re-dispara um pop sutil a cada mensagem */
+    if(typeof centerMsg==='function'){
+      var _prevCM=centerMsg;
+      centerMsg=function(txt){ var r=_prevCM(txt);
+        try{ var el=document.getElementById('centermsg');
+          if(el){ el.style.animation='none'; void el.offsetWidth; el.style.animation='acCenterPop .32s cubic-bezier(.2,1.35,.4,1)'; } }catch(e){}
+        return r; };
+    }
+    try{console.log('[hudfx] barras suaves + toque nos botoes + pops de ouro/aviso.');}catch(e){}
+  }catch(e){ try{console.warn('hudfx falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
