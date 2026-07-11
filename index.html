@@ -2249,7 +2249,7 @@ function genWorld(){
   house(tx+1,ty+1,4,3); house(tx+tw-4,ty+1,4,3);                   /* casas (telhados + portas) */
   house(tx+1,ty+th-3,4,3); house(tx+tw-4,ty+th-3,4,3);
   const cx0=tx+7,cy0=ty+1;for(let y=0;y<3;y++)for(let x=0;x<5;x++)setTile(cx0+x,cy0+y,T.roof);  /* capela */
-  setTile(cx0+2,cy0+3,T.dfloor);setTile(cx0+2,cy0-1,T.pillar);temple={x:cx0+2,y:cy0+3};
+  setTile(cx0+2,cy0+3,T.dfloor);setTile(cx0+2,cy0-1,T.brazier);temple={x:cx0+2,y:cy0+3};
   setTile(tx+9,ty+8,T.water);for(const d of[[-1,0],[1,0],[0,-1],[0,1]])setTile(tx+9+d[0],ty+8+d[1],T.stone);  /* poço */
   for(let gy=0;gy<2;gy++)for(let gx=0;gx<3;gx++)setTile(tx+6+gx,ty+6+gy,T.mud);  /* horta */
   setTile(tx+tw-3,ty+6,T.brazier);setTile(tx+3,ty+8,T.brazier);   /* tochas/forja */
@@ -2318,6 +2318,7 @@ function genWorld(){
   shiftWorldRefs();
   spawns=spawns.filter(sp=>walkable(sp.x,sp.y));
   coverageSpawns();
+  (function(){var kept=[];for(var i=0;i<spawns.length;i++){var s=spawns[i];if(isSafeZone(s.x,s.y)){continue;}var dV=Math.max(Math.abs(s.x-(VIL.x+VIL.w/2)),Math.abs(s.y-(VIL.y+VIL.h/2)));var dP=Math.max(Math.abs(s.x-(PORT.x+PORT.w/2)),Math.abs(s.y-(PORT.y+PORT.h/2)));if(dV<VIL.w/2+8||dP<PORT.w/2+8){continue;}kept.push(s);}spawns.length=0;for(var j=0;j<kept.length;j++)spawns.push(kept[j]);try{console.log('[respawn-vila] spawns proximos da cidade removidos.');}catch(e){}})();
   placeLandmarks();
   scatterMicro();
   placeRoads();
@@ -4169,7 +4170,7 @@ function nearestAdj(tx,ty){const dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-
   for(const[dx,dy]of dirs)if(canEnter(tx+dx,ty+dy,null))return[tx+dx,ty+dy];return null;}
 function inAttackRange(m){return cheby(player.tx,player.ty,m.tx,m.ty)<=player.rng
   &&!(m.tx===player.tx&&m.ty===player.ty)
-  &&(player.rng<=1||hasLOS(player.tx,player.ty,m.tx,m.ty));}
+  &&(player.rng<=1||cheby(player.tx,player.ty,m.tx,m.ty)<=1||hasLOS(player.tx,player.ty,m.tx,m.ty));}
 function autoAcquire(){ /* ataque automático: pega o hostil mais próximo já ao alcance */
   if(player.dead)return;
   let best=null,bd=1e9;
@@ -4178,7 +4179,7 @@ function autoAcquire(){ /* ataque automático: pega o hostil mais próximo já a
     const d=cheby(m.tx,m.ty,player.tx,player.ty);
     if(d>player.rng)continue;
     if(d>1&&d>m.d.aggro)continue; /* longe: só quem já te caça */
-    if(player.rng>1&&!hasLOS(player.tx,player.ty,m.tx,m.ty))continue;
+    if(d>1&&player.rng>1&&!hasLOS(player.tx,player.ty,m.tx,m.ty))continue;  /* adjacente: sempre revida (porta/muro) */
     if(d<bd){bd=d;best=m;}}
   if(best){player.target=best;player.autoTgt=true;renderBattle();}}
 const keys={};
@@ -4211,11 +4212,11 @@ cv.addEventListener('pointerdown',e=>{if(!running)return;
   handleTap(x,y);});
 window.addEventListener('pointermove',e=>{if(!joy.active||e.pointerId!==joy.pid)return;
   const rect=cv.getBoundingClientRect();const x=e.clientX-rect.left,y=e.clientY-rect.top;
-  let dx=x-joy.bx,dy=y-joy.by;const d=Math.hypot(dx,dy);if(d>8)joy.moved=true;
+  let dx=x-joy.bx,dy=y-joy.by;const d=Math.hypot(dx,dy);if(d>14)joy.moved=true;
   const max=54;if(d>max){dx*=max/d;dy*=max/d;}
   joy.dx=dx;joy.dy=dy;joy.mag=Math.min(1,d/max);moveJoyStick();});
 function joyEnd(e){if(joy.active&&e.pointerId===joy.pid){
-  const quick=(performance.now()-joy.t0<200)&&!joy.moved;
+  const quick=(performance.now()-joy.t0<300)&&!joy.moved;
   joy.active=false;hideJoy();
   if(quick)handleTap(joy.bx,joy.by);}}
 window.addEventListener('pointerup',joyEnd);
@@ -4235,6 +4236,7 @@ function handleTap(sx,sy){
       addRing(tx*TILE+TILE/2,ty*TILE+TILE/2,CLASSES[player.cls].col,TILE*0.45,0.4);}}}
 function approachTarget(m){
   // corpo a corpo: fica adjacente. À distância: chega só até entrar no alcance com linha de visão.
+  if(isSafeZone(player.tx,player.ty)&&m&&!isSafeZone(m.tx,m.ty)){player.path=[];return;}  /* zona segura: nao ser puxado pra fora */
   if(inAttackRange(m))return;
   if(player.rng<=1){const adj=nearestAdj(m.tx,m.ty);
     if(adj){const p=findPath(player.tx,player.ty,adj[0],adj[1]);if(p)player.path=p;}
