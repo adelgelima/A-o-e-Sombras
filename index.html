@@ -3661,7 +3661,7 @@ function updateAoes(dt){for(const a of aoes){a.t+=dt;
       if(a.friendly){for(const m of monsters.slice()){if(m.dead)continue;
           if(Math.hypot(m.px-a.x,m.py-a.y)<=a.r)strikeMonster(m,a.mult);}}
       else if(!player.dead&&player.invuln<=0&&Math.hypot(player.px-a.x,player.py-a.y)<=a.r){
-        const dmg=Math.max(1,Math.round(ri(a.dmin,a.dmax)-player.arm*rnd(1,.5)));
+        const dmg=Math.max(1,Math.round(ri(a.dmin,a.dmax)*(window._armMit?window._armMit():1)));
         applyPlayerDamage(dmg,'a explos\u00e3o');}}}
   compact(aoes,_keepAlive);}
 function updateOrbs(dt){for(const o of orbs){o.t+=dt;
@@ -3897,7 +3897,7 @@ function monsterHitsPlayer(m){if(player.dead||player.invuln>0)return;
   const o=player.equip.shield?itemById(player.equip.shield):null;
   if(o&&o.block&&chance(o.block)){addFloater(player.px,player.py-TILE*0.6,t('fl_block'),'#8fb7ff');SFX.hit();
     addRing(player.px,player.py,'#8fb7ff',TILE*0.6,0.3);return;}
-  dmg=Math.max(1,Math.round(dmg-player.def*rnd(1,.5)-player.arm*rnd(1,.6)));
+  dmg=Math.max(1,Math.round(dmg*(window._armMit?window._armMit():1)));
   applyPlayerDamage(dmg,mName(m));m.swing=1;
   if(m.d.pois){player.poison=Math.min(9,Math.max(player.poison,3));addFloater(player.px+8,player.py-TILE*0.9,'\u2620','#8fe08a');}
   if(m.d.size>=1.15||m.d.beh==='charge'){const kx=Math.sign(player.px-m.px)||0.5,ky=Math.sign(player.py-m.py);player.recoilX=kx*TILE*0.55;player.recoilY=ky*TILE*0.55;}
@@ -4565,7 +4565,7 @@ function updateProjectiles(dt){for(const p of projectiles){
   } else {
     const hitPlayer=!player.dead&&dist(p.x,p.y,player.px,player.py)<TILE*0.5;
     if(hitPlayer){let dmg=ri(p.dmin,p.dmax);dmg=Math.round(dmg*(1-(p.el==='fire'?player.fireRes:0)));
-      dmg=Math.max(1,Math.round(dmg-player.arm*rnd(1,.5)));applyPlayerDamage(dmg,p.from?p.from.d.name:'Um projétil');
+      dmg=Math.max(1,Math.round(dmg*(window._armMit?window._armMit():1)));applyPlayerDamage(dmg,p.from?p.from.d.name:'Um projétil');
       if(p.el==='poison')poisonPlayer(5);
       if(p.web)slowPlayer(1.5);
       if(p.from&&!p.from.dead&&(!player.target||player.target.dead)){player.target=p.from;player.autoTgt=true;renderBattle();}
@@ -8576,6 +8576,11 @@ try{(function(){
       SFX.spell();shake(10);player.swing=1;buzz([20,28]);addRing(player.px,player.py,'#c8ffd0',TILE*3.5,0.6);
       addParticles(player.px,player.py,30,{col:'#a9e6a0',spd:150,life:0.5,size:3,glow:true});
       for(var i=0;i<monsters.length;i++){var m=monsters[i];if(m.dead)continue;if(dist(m.px,m.py,player.px,player.py)<=TILE*3.5){var lowhp=(m.hp/m.maxhp)<0.3;strikeMonster(m,lowhp?4.5:2.4);}}}},
+    k_quake:{cls:'knight',name:'Quebra-Terra',ic:'\uD83E\uDEA8',lv:260,cd:22,cast:function(){
+      SFX.spell();shake(12);player.swing=1;buzz([22,30]);hitStop=Math.max(hitStop,0.06);
+      addRing(player.px,player.py,'#c9a24a',TILE*3.4,0.6);addRing(player.px,player.py,'#8a6f3a',TILE*4.6,0.9);
+      addParticles(player.px,player.py,44,{col:'#b09468',spd:170,life:0.7,size:3.6,grav:140,up:20});
+      for(var i=0;i<monsters.length;i++){var m=monsters[i];if(m.dead)continue;if(dist(m.px,m.py,player.px,player.py)<=TILE*3.4){strikeMonster(m,4.0);m.slow=Math.max(m.slow||0,2.5);m.flinchX=(m.px-player.px)*0.3;m.flinchY=(m.py-player.py)*0.3;}}}},
     k_ragnarok:{cls:'knight',name:'Ju\u00edzo de A\u00e7o',ic:'\u26A1',lv:300,cd:42,cast:function(){
       SFX.level();shake(16);buzz([30,40,50]);centerMsg('JU\u00cdZO DE A\u00c7O');screenFlash('#ffd76a',0.4);
       addRing(player.px,player.py,'#ffd76a',TILE*5.0,0.8);addRing(player.px,player.py,'#ff9a4a',TILE*7.0,1.1);
@@ -8643,7 +8648,7 @@ try{(function(){
     for(var sid in NS){ if(!SPELLS[sid]){ SPELLS[sid]=NS[sid]; SPELL_ORDER.push(sid); } }
     /* traducoes dos nomes novos (fallback PT se faltar) */
     if(typeof SKILL_NAMES!=='undefined'){
-      var TR={'Talho Amplo':{en:'Wide Cleave',es:'Tajo Amplio',fr:'Taille Large'},'Corrente Espectral':{en:'Spectral Chain',es:'Cadena Espectral',fr:'Cha\u00eene Spectrale'},'Condena\u00e7\u00e3o':{en:'Doom',es:'Condena',fr:'Damnation'},'Cataclismo':{en:'Cataclysm',es:'Cataclismo',fr:'Cataclysme'},'Ceifa':{en:'Reap',es:'Siega',fr:'Fauche'},'Ju\u00edzo de A\u00e7o':{en:'Steel Judgment',es:'Juicio de Acero',fr:'Jugement d\u2019Acier'},'Leque Mortal':{en:'Deadly Fan',es:'Abanico Mortal',fr:'\u00c9ventail Mortel'},'Flecha Perfurante':{en:'Piercing Arrow',es:'Flecha Perforante',fr:'Fl\u00e8che Per\u00e7ante'},'Estrepes':{en:'Caltrops',es:'Abrojos',fr:'Chausse-trapes'},'Tempestade de Flechas':{en:'Arrow Storm',es:'Tormenta de Flechas',fr:'Temp\u00eate de Fl\u00e8ches'},'Barragem':{en:'Barrage',es:'Descarga',fr:'Barrage'},'Tiro Fatal':{en:'Fatal Shot',es:'Tiro Fatal',fr:'Tir Fatal'},'Chuva do Fim':{en:'Endrain',es:'Lluvia Final',fr:'Pluie Finale'},'Nova Glacial':{en:'Frost Nova',es:'Nova Glacial',fr:'Nova de Givre'},'Rel\u00e2mpago':{en:'Lightning',es:'Rel\u00e1mpago',fr:'\u00c9clair'},'Muralha de Fogo':{en:'Firewall',es:'Muro de Fuego',fr:'Mur de Feu'},'Nevasca':{en:'Blizzard',es:'Ventisca',fr:'Blizzard'},'Cometa':{en:'Comet',es:'Cometa',fr:'Com\u00e8te'},'Singularidade':{en:'Singularity',es:'Singularidad',fr:'Singularit\u00e9'},'Apocalipse':{en:'Apocalypse',es:'Apocalipsis',fr:'Apocalypse'}};
+      var TR={'Talho Amplo':{en:'Wide Cleave',es:'Tajo Amplio',fr:'Taille Large'},'Corrente Espectral':{en:'Spectral Chain',es:'Cadena Espectral',fr:'Cha\u00eene Spectrale'},'Condena\u00e7\u00e3o':{en:'Doom',es:'Condena',fr:'Damnation'},'Cataclismo':{en:'Cataclysm',es:'Cataclismo',fr:'Cataclysme'},'Ceifa':{en:'Reap',es:'Siega',fr:'Fauche'},'Quebra-Terra':{en:'Earthshatter',es:'Quiebratierra',fr:'Brise-Terre'},'Ju\u00edzo de A\u00e7o':{en:'Steel Judgment',es:'Juicio de Acero',fr:'Jugement d\u2019Acier'},'Leque Mortal':{en:'Deadly Fan',es:'Abanico Mortal',fr:'\u00c9ventail Mortel'},'Flecha Perfurante':{en:'Piercing Arrow',es:'Flecha Perforante',fr:'Fl\u00e8che Per\u00e7ante'},'Estrepes':{en:'Caltrops',es:'Abrojos',fr:'Chausse-trapes'},'Tempestade de Flechas':{en:'Arrow Storm',es:'Tormenta de Flechas',fr:'Temp\u00eate de Fl\u00e8ches'},'Barragem':{en:'Barrage',es:'Descarga',fr:'Barrage'},'Tiro Fatal':{en:'Fatal Shot',es:'Tiro Fatal',fr:'Tir Fatal'},'Chuva do Fim':{en:'Endrain',es:'Lluvia Final',fr:'Pluie Finale'},'Nova Glacial':{en:'Frost Nova',es:'Nova Glacial',fr:'Nova de Givre'},'Rel\u00e2mpago':{en:'Lightning',es:'Rel\u00e1mpago',fr:'\u00c9clair'},'Muralha de Fogo':{en:'Firewall',es:'Muro de Fuego',fr:'Mur de Feu'},'Nevasca':{en:'Blizzard',es:'Ventisca',fr:'Blizzard'},'Cometa':{en:'Comet',es:'Cometa',fr:'Com\u00e8te'},'Singularidade':{en:'Singularity',es:'Singularidad',fr:'Singularit\u00e9'},'Apocalipse':{en:'Apocalypse',es:'Apocalipsis',fr:'Apocalypse'}};
       for(var kk in TR)if(!SKILL_NAMES[kk])SKILL_NAMES[kk]=TR[kk];
     }
     try{console.log('[magias] +'+Object.keys(NS).length+' magias novas (nv 55-300), ofensivas/controle.');}catch(e){}
@@ -8881,18 +8886,22 @@ try{(function(){
     try{console.log('[ressurreicao] custo 20x + limite de 3 com ouro (zera no templo).');}catch(e){}
   }catch(e){ try{console.warn('ressurreicao falhou',e);}catch(_){} }
 
-  /* ============ MUNDO: bloqueio de combate na cidade + vilarejos + cavernas ao sul ============ */
+  /* ============ MUNDO: bloqueio de combate na cidade + vilarejos + cavernas ao sul ============
+     NOTA CRITICA: init() roda ANTES deste bloco (linha 422 do bootstrap). Por isso a
+     colocacao e executada IMEDIATAMENTE aqui (mundo ja gerado) + re-bake, alem de
+     manter o wrap do generate para regeneracoes futuras. */
   try{
-    /* ---- lista de vilarejos (bounds) usada pelo override de zona segura ---- */
     var _villages = [];
     var _inVillage = function(x,y){ for(var i=0;i<_villages.length;i++){var v=_villages[i]; if(x>=v.x-2&&x<=v.x+v.w+1&&y>=v.y-2&&y<=v.y+v.h+1)return true;} return false; };
+    try{ window._acVillages=_villages; window._acInVillage=_inVillage; }catch(e){}
 
-    /* ---- #1: estende isSafeZone (vilarejos viram zona segura: sem spawn/monstro/combate) ---- */
+    /* ---- estende isSafeZone (vilarejos = zona segura) ---- */
+    var _origSafe=null;
     if(typeof isSafeZone==='function'){
-      var _origSafe = isSafeZone;
+      _origSafe = isSafeZone;
       isSafeZone = function(x,y){ return _origSafe(x,y) || _inVillage(x,y); };
     }
-    /* ---- #1: dentro da zona segura o heroi NAO ataca (nem magia) e NAO e atacado ---- */
+    /* ---- na zona segura o heroi NAO ataca (nem magia) e NAO e atacado ---- */
     if(typeof strikeMonster==='function'){
       var _origStrike = strikeMonster;
       strikeMonster = function(m,mult){
@@ -8908,26 +8917,24 @@ try{(function(){
       };
     }
 
-    /* ---- construtor de vilarejo (versao menor da cidade: muros, portoes, casas, poco, NPCs) ---- */
+    /* ---- construtor de vilarejo ---- */
     function _buildVillage(vx,vy,vw,vh,defs){
       try{
-        for(var y=0;y<vh;y++)for(var x=0;x<vw;x++) setTile(vx+x,vy+y,T.stone);           /* praca */
-        for(var x=-1;x<=vw;x++){ setTile(vx+x,vy-1,T.wall); setTile(vx+x,vy+vh,T.wall); }  /* muros */
+        for(var y=0;y<vh;y++)for(var x=0;x<vw;x++) setTile(vx+x,vy+y,T.stone);
+        for(var x=-1;x<=vw;x++){ setTile(vx+x,vy-1,T.wall); setTile(vx+x,vy+vh,T.wall); }
         for(var y=-1;y<=vh;y++){ setTile(vx-1,vy+y,T.wall); setTile(vx+vw,vy+y,T.wall); }
         var gx=vx+(vw>>1), gy=vy+(vh>>1);
-        setTile(gx,vy-1,T.stone); setTile(gx,vy+vh,T.stone);                               /* portoes N/S */
-        setTile(vx-1,gy,T.stone); setTile(vx+vw,gy,T.stone);                               /* portoes L/O */
+        setTile(gx,vy-1,T.stone); setTile(gx,vy+vh,T.stone);
+        setTile(vx-1,gy,T.stone); setTile(vx+vw,gy,T.stone);
         var house=function(hx,hy,hw,hh){ for(var y=0;y<hh;y++)for(var x=0;x<hw;x++) setTile(hx+x,hy+y,T.roof); setTile(hx+(hw>>1),hy+hh-1,T.dfloor); };
-        house(vx+1,vy+1,4,3); house(vx+vw-5,vy+1,4,3);                                      /* 2 casas no topo */
-        setTile(gx,gy,T.water); var nb=[[-1,0],[1,0],[0,-1],[0,1]];                         /* poco central */
+        house(vx+1,vy+1,4,3); house(vx+vw-5,vy+1,4,3);
+        setTile(gx,gy,T.water); var nb=[[-1,0],[1,0],[0,-1],[0,1]];
         for(var d=0;d<4;d++) setTile(gx+nb[d][0],gy+nb[d][1],T.stone);
-        setTile(vx+2,vy+vh-2,T.brazier); setTile(vx+vw-3,vy+vh-2,T.brazier);               /* tochas */
-        for(var i=0;i<defs.length;i++){ var d=defs[i]; npcs.push({x:vx+d.dx,y:vy+d.dy,kind:d.kind,name:d.name}); }
+        setTile(vx+2,vy+vh-2,T.brazier); setTile(vx+vw-3,vy+vh-2,T.brazier);
+        for(var i=0;i<defs.length;i++){ var d2=defs[i]; npcs.push({x:vx+d2.dx,y:vy+d2.dy,kind:d2.kind,name:d2.name}); }
         _villages.push({x:vx,y:vy,w:vw,h:vh});
       }catch(e){}
     }
-
-    /* ---- modelos de vilarejo (NPCs variados; posicoes na praca, longe de casas/poco) ---- */
     var VW=14, VH=11;
     var VTPL=[
       [{dx:3,dy:7,kind:'shop',name:'Doran, o Mercador'},{dx:10,dy:7,kind:'inn',name:'Beca, a Estalajadeira'},{dx:6,dy:8,kind:'alch',name:'Ysolde, a Boticaria'}],
@@ -8937,8 +8944,6 @@ try{(function(){
       [{dx:3,dy:7,kind:'shop',name:'Vesk, o Mercador'},{dx:10,dy:7,kind:'alch',name:'Runa, a Boticaria'},{dx:6,dy:8,kind:'smith',name:'Odval, o Ferreiro'}],
       [{dx:3,dy:7,kind:'shop',name:'Lorn, o Mercador'},{dx:10,dy:7,kind:'priest',name:'Frei Bento'},{dx:6,dy:8,kind:'hunter',name:'Sena, a Rastreadora'}]
     ];
-
-    /* ---- checa se a area do vilarejo e majoritariamente terra andavel ---- */
     function _villageOK(cx,cy){
       var x0=cx-(VW>>1), y0=cy-(VH>>1), tot=0, walk=0;
       for(var y=-2;y<VH+2;y++)for(var x=-2;x<VW+2;x++){
@@ -8949,63 +8954,66 @@ try{(function(){
       return (walk/tot) > 0.72;
     }
 
+    /* ---- colocacao (idempotente): vilarejos + cavernas ao sul ---- */
+    function _placeExtras(self){
+      if(window.__acExtrasDone) return; window.__acExtrasDone=true;
+      /* VILAREJOS */
+      try{
+        var vAdded=0, VMAX=6, VMIND=80, ti=0;
+        var occupied=function(cx,cy){
+          if(typeof _origSafe==='function'&&_origSafe(cx,cy)) return true;
+          for(var i=0;i<_villages.length;i++){var v=_villages[i]; if(Math.abs((v.x+(v.w>>1))-cx)<VMIND&&Math.abs((v.y+(v.h>>1))-cy)<VMIND)return true;}
+          for(var k=0;k<self.pois.length;k++){var q=self.pois[k]; if(Math.abs(q.x-cx)<12&&Math.abs(q.y-cy)<12)return true;}
+          return false;
+        };
+        var STEPV=24;
+        for(var cy=WOFF+30; cy<MAPH-WOFF-30 && vAdded<VMAX; cy+=STEPV){
+          for(var cx=WOFF+30; cx<MAPW-WOFF-30 && vAdded<VMAX; cx+=STEPV){
+            if(occupied(cx,cy)) continue;
+            if(!_villageOK(cx,cy)) continue;
+            _buildVillage(cx-(VW>>1), cy-(VH>>1), VW, VH, VTPL[ti%VTPL.length]); ti++;
+            vAdded++;
+          }
+        }
+        if(typeof spawns!=='undefined' && spawns && spawns.length){
+          for(var i=spawns.length-1;i>=0;i--){ if(_inVillage(spawns[i].x,spawns[i].y)) spawns.splice(i,1); }
+        }
+        try{console.log('[vilarejos] +'+vAdded+' vilarejos com NPCs.');}catch(e){}
+      }catch(e){ try{console.warn('vilarejos falhou',e);}catch(_){}
+      }
+      /* CAVERNAS AO SUL */
+      try{
+        function _paintCaveSouth(cx,cy){
+          for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++) setTile(cx+dx,cy+dy,T.cfloor);
+          setTile(cx-2,cy-2,T.cwall); setTile(cx+2,cy-2,T.cwall); setTile(cx-2,cy+2,T.cwall); setTile(cx+2,cy+2,T.cwall);
+        }
+        var added=0, yLo=Math.floor(MAPH*0.55), yHi=MAPH-WOFF-6, STEP=14, MIND=40, MAXC=10;
+        var _clear=function(x,y){ for(var k=0;k<self.pois.length;k++){var q=self.pois[k];if(Math.abs(q.x-x)<MIND&&Math.abs(q.y-y)<MIND)return false;} return true; };
+        for(var gy=yHi; gy>yLo && added<MAXC; gy-=STEP){
+          for(var gx=WOFF+18; gx<MAPW-WOFF-18 && added<MAXC; gx+=STEP){
+            var x=gx, y=gy;
+            if(typeof walkable==='function' && !walkable(x,y)) continue;
+            if(isSafeZone(x,y)) continue;
+            if(self._byTile && self._byTile.has(x+','+y)) continue;
+            if(!_clear(x,y)) continue;
+            _paintCaveSouth(x,y);
+            var p={ id:self.key(x,y), x:x, y:y, type:'cave' };
+            self.pois.push(p); if(self._byTile) self._byTile.set(x+','+y, p);
+            added++;
+          }
+        }
+        try{console.log('[cavernas] +'+added+' cavernas ao sul.');}catch(e){}
+      }catch(e){ try{console.warn('cavernas falhou',e);}catch(_){}
+      }
+      /* re-assa terreno/estaticos/minimapa (o bake do init rodou ANTES desta colocacao) */
+      try{ if(typeof bakeTiles==='function')bakeTiles(); if(typeof bakeStatics==='function')bakeStatics(); if(typeof buildMinimapBase==='function')buildMinimapBase(); }catch(e){}
+    }
+
     if(typeof POIManager!=='undefined' && POIManager.generate){
       var _origGenPOI = POIManager.generate.bind(POIManager);
-      POIManager.generate = function(){
-        var r = _origGenPOI();   /* POIs procedurais primeiro */
-        var self=this;
-
-        /* ===== VILAREJOS espalhados pelo mapa inteiro ===== */
-        try{
-          var vAdded=0, VMAX=6, VMIND=80, ti=0;
-          var occupied=function(cx,cy){
-            if(typeof _origSafe==='function'&&_origSafe(cx,cy)) return true;   /* longe da cidade/porto original */
-            for(var i=0;i<_villages.length;i++){var v=_villages[i]; if(Math.abs((v.x+(v.w>>1))-cx)<VMIND&&Math.abs((v.y+(v.h>>1))-cy)<VMIND)return true;}
-            for(var k=0;k<self.pois.length;k++){var q=self.pois[k]; if(Math.abs(q.x-cx)<12&&Math.abs(q.y-cy)<12)return true;}
-            return false;
-          };
-          var STEPV=24;
-          for(var cy=WOFF+30; cy<MAPH-WOFF-30 && vAdded<VMAX; cy+=STEPV){
-            for(var cx=WOFF+30; cx<MAPW-WOFF-30 && vAdded<VMAX; cx+=STEPV){
-              if(occupied(cx,cy)) continue;
-              if(!_villageOK(cx,cy)) continue;
-              _buildVillage(cx-(VW>>1), cy-(VH>>1), VW, VH, VTPL[ti%VTPL.length]); ti++;
-              vAdded++;
-            }
-          }
-          /* remove spawns que cairam dentro de vilarejos (spawns sao montados antes) */
-          if(typeof spawns!=='undefined' && spawns && spawns.length){
-            for(var i=spawns.length-1;i>=0;i--){ if(_inVillage(spawns[i].x,spawns[i].y)) spawns.splice(i,1); }
-          }
-          try{console.log('[vilarejos] +'+vAdded+' vilarejos com NPCs espalhados.');}catch(e){}
-        }catch(e){ try{console.warn('vilarejos falhou',e);}catch(_){} }
-
-        /* ===== CAVERNAS ao sul (evitam vilarejos: isSafeZone ja os inclui) ===== */
-        try{
-          function _paintCaveSouth(cx,cy){
-            for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++) setTile(cx+dx,cy+dy,T.cfloor);
-            setTile(cx-2,cy-2,T.cwall); setTile(cx+2,cy-2,T.cwall); setTile(cx-2,cy+2,T.cwall); setTile(cx+2,cy+2,T.cwall);
-          }
-          var added=0, yLo=Math.floor(MAPH*0.55), yHi=MAPH-WOFF-6, STEP=14, MIND=40, MAXC=10;
-          var _clear=function(x,y){ for(var k=0;k<self.pois.length;k++){var q=self.pois[k];if(Math.abs(q.x-x)<MIND&&Math.abs(q.y-y)<MIND)return false;} return true; };
-          for(var gy=yHi; gy>yLo && added<MAXC; gy-=STEP){
-            for(var gx=WOFF+18; gx<MAPW-WOFF-18 && added<MAXC; gx+=STEP){
-              var x=gx, y=gy;
-              if(typeof walkable==='function' && !walkable(x,y)) continue;
-              if(isSafeZone(x,y)) continue;                       /* evita cidade/porto/VILAREJOS */
-              if(self._byTile && self._byTile.has(x+','+y)) continue;
-              if(!_clear(x,y)) continue;
-              _paintCaveSouth(x,y);
-              var p={ id:self.key(x,y), x:x, y:y, type:'cave' };
-              self.pois.push(p); if(self._byTile) self._byTile.set(x+','+y, p);
-              added++;
-            }
-          }
-          try{console.log('[cavernas] +'+added+' cavernas ao sul.');}catch(e){}
-        }catch(e){ try{console.warn('cavernas falhou',e);}catch(_){} }
-
-        return r;
-      };
+      POIManager.generate = function(){ var r=_origGenPOI(); window.__acExtrasDone=false; _placeExtras(this); return r; };
+      /* init() ja rodou: coloca AGORA */
+      if(POIManager.pois && POIManager.pois.length){ _placeExtras(POIManager); }
     }
   }catch(e){ try{console.warn('mundo (cidade/vilarejos/cavernas) falhou',e);}catch(_){} }
 
@@ -9185,6 +9193,235 @@ try{(function(){
     }, 280);
     try{console.log('[ftue] tutorial do primeiro minuto ativo (so p/ herois novos).');}catch(e){}
   }catch(e){ try{console.warn('ftue falhou',e);}catch(_){} }
+
+  /* ============ A ROTA DO SUL — cadeia de missoes direcionais ============
+     5 objetivos sequenciais que costuram o conteudo novo: vilarejos -> caverna
+     do sul -> profundezas -> chefe. Progresso em meta.mq (0-5), recompensas de
+     ouro+XP escalonadas por nivel, chip discreto no HUD, secao no painel 📜. */
+  try{
+    var MQ_TXT={
+      pt:{title:'A Rota do Sul', done:'A Rota do Sul \u2014 conclu\u00edda \u2713', reward:'Recompensa',
+          steps:['Visite um vilarejo','Converse com um alde\u00e3o do vilarejo','Entre numa caverna ao sul','Des\u00e7a ao 3\u00ba andar de uma caverna','Derrote um chefe das profundezas']},
+      en:{title:'The Southern Route', done:'The Southern Route \u2014 completed \u2713', reward:'Reward',
+          steps:['Visit a hamlet','Talk to a hamlet villager','Enter a southern cave','Reach floor 3 of a cave','Defeat a boss of the depths']},
+      es:{title:'La Ruta del Sur', done:'La Ruta del Sur \u2014 completada \u2713', reward:'Recompensa',
+          steps:['Visita una aldea','Habla con un aldeano de la aldea','Entra en una cueva del sur','Baja al 3.\u00ba piso de una cueva','Derrota a un jefe de las profundidades']},
+      fr:{title:'La Route du Sud', done:'La Route du Sud \u2014 termin\u00e9e \u2713', reward:'R\u00e9compense',
+          steps:['Visitez un hameau','Parlez \u00e0 un villageois du hameau','Entrez dans une grotte du sud','Atteignez l\u2019\u00e9tage 3 d\u2019une grotte','Vainquez un chef des profondeurs']}
+    };
+    function MQ_T(){ var l=(typeof LANG!=='undefined'&&MQ_TXT[LANG])?LANG:'pt'; return MQ_TXT[l]; }
+    function _mq(){ try{ return (typeof meta!=='undefined'&&meta)?(meta.mq|0):0; }catch(e){ return 0; } }
+    function _mqStarted(){ try{ return typeof meta!=='undefined'&&meta&&(meta.ftueDone||((player&&player.lvl)||1)>2); }catch(e){ return false; } }
+
+    function _mqComplete(step){
+      try{
+        if(typeof meta==='undefined'||!meta||(meta.mq|0)!==step)return;
+        meta.mq=step+1;
+        var L=(player&&player.lvl)||1;
+        var g=Math.round((90+L*15)*(1+step*0.6));
+        var xg=0; try{ xg=Math.round((xpForLevel(L+1)-xpForLevel(L))*(0.15+step*0.07)); }catch(e){}
+        player.gold=(player.gold||0)+g;
+        if(xg&&typeof giveXp==='function')giveXp(xg);
+        try{ addFloater(player.px,player.py-TILE*0.9,'+'+g+' \uD83D\uDCB0','#e8c15a',true); }catch(e){}
+        try{ addMessage('\uD83D\uDCDC '+MQ_T().title+': '+MQ_T().steps[step]+' \u2713  (+'+g+' ouro'+(xg?', +'+xg+' XP':'')+')','good'); }catch(e){}
+        try{ SFX.gold(); buzz([12,18]); }catch(e){}
+        if((meta.mq|0)<5){ try{ addMessage('\uD83D\uDCDC '+MQ_T().steps[meta.mq],'sys'); }catch(e){} }
+        else { try{ addMessage('\uD83D\uDCDC '+MQ_T().done,'good'); centerMsg&&centerMsg(MQ_T().done); }catch(e){} }
+        try{ if(typeof saveGame==='function')saveGame(); }catch(e){}
+        _mqChipUpdate();
+      }catch(e){}
+    }
+
+    /* ---- ganchos por acao ---- */
+    if(typeof interactNpc==='function'){
+      var _origInteract=interactNpc;
+      interactNpc=function(n){
+        try{ if(_mqStarted()&&_mq()===1&&n&&window._acInVillage&&window._acInVillage(n.x,n.y)) _mqComplete(1); }catch(e){}
+        return _origInteract(n);
+      };
+    }
+    if(typeof DungeonLayer!=='undefined'&&DungeonLayer.enter){
+      var _origEnter=DungeonLayer.enter.bind(DungeonLayer);
+      DungeonLayer.enter=function(p){
+        var r=_origEnter(p);
+        try{ if(_mqStarted()&&_mq()===2&&p&&p.y>=Math.floor(MAPH*0.55)) _mqComplete(2); }catch(e){}
+        return r;
+      };
+    }
+    if(typeof killMonster==='function'){
+      var _origKillM=killMonster;
+      killMonster=function(m){
+        var wasBoss=false; try{ wasBoss=!!(m&&m.d&&m.d.boss&&!m._summoned); }catch(e){}
+        var r=_origKillM(m);
+        try{ if(wasBoss&&_mqStarted()&&_mq()===4) _mqComplete(4); }catch(e){}
+        return r;
+      };
+    }
+    /* passos por posicao (0: vilarejo; 3: andar 3) + failsafe se nao houver vilarejos */
+    setInterval(function(){
+      try{
+        if(typeof running==='undefined'||!running||typeof player==='undefined'||!player||player.dead){ _mqChipShow(false); return; }
+        if(!_mqStarted()||_mq()>=5){ _mqChipShow(_mq()<5?false:false); return; }
+        var s=_mq();
+        if(s<=1&&(!window._acVillages||!window._acVillages.length)){ meta.mq=2; _mqChipUpdate(); }  /* sem vilarejos no terreno: pula */
+        else if(s===0&&window._acInVillage&&window._acInVillage(player.tx,player.ty)) _mqComplete(0);
+        else if(s===3&&typeof DungeonLayer!=='undefined'&&DungeonLayer.active&&(DungeonLayer.depth|0)>=3) _mqComplete(3);
+        _mqChipShow(true); _mqChipUpdate();
+      }catch(e){}
+    },320);
+
+    /* ---- chip discreto no HUD ---- */
+    var _chip=null,_chipTxt='';
+    function _mqChipShow(on){ try{ if(_chip)_chip.style.display=on?'block':'none'; }catch(e){} }
+    function _mqChipUpdate(){
+      try{
+        if(_mq()>=5){ if(_chip&&_chip.parentNode){_chip.parentNode.removeChild(_chip);_chip=null;} return; }
+        if(!_chip){
+          _chip=document.createElement('div');
+          _chip.id='mqChip';
+          _chip.style.cssText='position:fixed;top:122px;left:10px;z-index:9990;max-width:52vw;background:rgba(22,22,30,0.82);border:1px solid #4a4432;border-left:3px solid #c9a24a;border-radius:8px;padding:6px 9px;font:11.5px sans-serif;color:#d8d4c4;pointer-events:none;line-height:1.35;display:none;';
+          (document.body||document.documentElement).appendChild(_chip);
+        }
+        var t='\uD83D\uDCDC '+MQ_T().steps[_mq()];
+        if(t!==_chipTxt){ _chipTxt=t; _chip.textContent=t; }
+      }catch(e){}
+    }
+
+    /* ---- secao no painel de missoes (📜) ---- */
+    if(typeof renderQuests==='function'){
+      var _origRQ=renderQuests;
+      renderQuests=function(){
+        _origRQ();
+        try{
+          var panel=document.getElementById('quests'); if(!panel)return;
+          var win=panel.firstElementChild; if(!win)return;
+          var blk=document.getElementById('mqBlock');
+          if(!blk){ blk=document.createElement('div'); blk.id='mqBlock'; win.insertBefore(blk, win.children[1]||null); }
+          var T=MQ_T(), cur=_mq(), rows='';
+          for(var i=0;i<5;i++){
+            var st=i<cur?'\u2713':(i===cur?'\u25B8':'\u00b7');
+            var col=i<cur?'#7fd4a0':(i===cur?'#e8c15a':'#6a6f7a');
+            var wt=i===cur?'600':'400';
+            rows+='<div style="display:flex;gap:8px;align-items:baseline;padding:2px 0;color:'+col+';font-weight:'+wt+';font-size:13px;"><span style="width:14px;text-align:center;">'+st+'</span><span>'+T.steps[i]+'</span></div>';
+          }
+          blk.innerHTML='<div style="border:1px solid #4a4432;border-left:3px solid #c9a24a;border-radius:10px;padding:10px 12px;margin-bottom:12px;background:rgba(201,162,74,0.06);">'
+            +'<div style="font-weight:700;color:#e8c15a;font-size:14px;margin-bottom:6px;">\uD83D\uDCDC '+(cur>=5?T.done:T.title)+'</div>'
+            +(cur>=5?'':rows)+'</div>';
+        }catch(e){}
+      };
+    }
+    try{console.log('[rota do sul] cadeia de missoes direcionais ativa.');}catch(e){}
+  }catch(e){ try{console.warn('rota do sul falhou',e);}catch(_){} }
+
+  /* ============ ARMADURA PERCENTUAL — helper + exibicao ============
+     dano recebido = bruto * K/(K+A), A = def*0.75 + arm*0.8, K=250, teto 85%.
+     Substitui a subtracao fixa nos 3 sites (corpo-a-corpo, projetil, area) —
+     patch das linhas no inject.py; aqui ficam o helper e a UI. */
+  try{
+    window._ARMK = 250;                                  /* unico botao de ajuste */
+    window._armMit = function(){
+      try{
+        var A = ((player.def||0)*0.75 + (player.arm||0)*0.8);
+        return Math.max(0.15, window._ARMK/(window._ARMK + A));   /* 0.15 = teto de 85% de mitigacao */
+      }catch(e){ return 1; }
+    };
+    /* mostra a mitigacao total no painel de inventario */
+    if(typeof renderInv==='function'){
+      var _origRInv=renderInv;
+      renderInv=function(){
+        _origRInv();
+        try{
+          var panel=document.getElementById('inv'); if(!panel)return;
+          var win=panel.firstElementChild; if(!win)return;
+          var mit=Math.round((1-window._armMit())*100);
+          var el=document.getElementById('armMitLine');
+          if(!el){ el=document.createElement('div'); el.id='armMitLine';
+            el.style.cssText='margin-top:8px;padding:6px 10px;border:1px solid #3a3f4e;border-radius:8px;font-size:12.5px;color:#bfc6d4;background:rgba(255,255,255,0.03);';
+            win.appendChild(el); }
+          var lbl={pt:'Mitiga\u00e7\u00e3o de dano',en:'Damage mitigation',es:'Mitigaci\u00f3n de da\u00f1o',fr:'Mitigation des d\u00e9g\u00e2ts'};
+          var L=(typeof LANG!=='undefined'&&lbl[LANG])?LANG:'pt';
+          el.textContent='\uD83D\uDEE1\uFE0F '+lbl[L]+': '+mit+'%';
+        }catch(e){}
+      };
+    }
+    try{console.log('[armadura] mitigacao percentual ativa (K='+window._ARMK+', teto 85%).');}catch(e){}
+  }catch(e){ try{console.warn('armadura falhou',e);}catch(_){} }
+
+  /* ============ UX: fechar tocando fora + rolagem melhor + nivel minimo na loja ============ */
+  try{
+    var OVR=['inv','spellbook','shop','help','bless','quests','daily','bigmap','settings'];
+
+    /* ---- 1+2: fechar ao tocar FORA da janela (no fundo do overlay) ---- */
+    function _wireOutside(id){
+      var ov=document.getElementById(id); if(!ov||ov._outsideWired)return; ov._outsideWired=true;
+      /* o clique so conta se comecou E terminou no proprio overlay (fundo), nao na janela filha */
+      var downOnBg=false;
+      ov.addEventListener('pointerdown', function(e){ downOnBg=(e.target===ov); }, true);
+      ov.addEventListener('click', function(e){
+        if(e.target!==ov||!downOnBg) return;                 /* clicou dentro da janela: ignora */
+        downOnBg=false;
+        try{ if(typeof closeAllPanels==='function')closeAllPanels(); }catch(_){}
+        try{ ov.classList.add('hidden'); }catch(_){}         /* garante os que closeAllPanels nao cobre (spellbook/bless/daily) */
+      });
+    }
+    OVR.forEach(_wireOutside);
+    /* re-tenta (alguns overlays so ganham conteudo apos abrir) */
+    var _wireT=setInterval(function(){ OVR.forEach(_wireOutside); }, 1500);
+    setTimeout(function(){ clearInterval(_wireT); }, 12000);
+
+    /* ---- 2: rolagem tatil suave nas janelas (momentum + nao "prende" o toque) ---- */
+    try{
+      var st=document.createElement('style');
+      st.textContent='.overlay > div{ -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:thin; }'
+        +'#shopRows,#bag,.slist{ touch-action:pan-y; }'
+        +'.overlay > div::-webkit-scrollbar{ width:10px; }'
+        +'.overlay > div::-webkit-scrollbar-thumb{ background:#4a4f5e; border-radius:6px; border:2px solid transparent; background-clip:padding-box; }'
+        +'.overlay > div::-webkit-scrollbar-thumb:active{ background:#6a7080; }'
+        +'.overlay > div::-webkit-scrollbar-track{ background:transparent; }';
+      (document.head||document.documentElement).appendChild(st);
+    }catch(e){}
+
+    /* ---- 3: nivel minimo (req) nos itens negociados pela loja ---- */
+    if(typeof renderShop==='function'){
+      var _lblReq={pt:'Nv',en:'Lv',es:'Nv',fr:'Niv'};
+      var _reqL=function(){ var l=(typeof LANG!=='undefined'&&_lblReq[LANG])?LANG:'pt'; return _lblReq[l]; };
+      var _origRShop=renderShop;
+      renderShop=function(){
+        _origRShop();
+        try{
+          var rows=document.getElementById('shopRows'); if(!rows)return;
+          var lvl=(typeof player!=='undefined'&&player)?(player.lvl||1):1;
+          var list=rows.querySelectorAll('.row');
+          for(var i=0;i<list.length;i++){
+            var row=list[i]; if(row._reqTagged) continue;
+            var info=row.querySelector('.info .n'); if(!info)continue;
+            /* descobre o item pela correspondencia de nome */
+            var nm=(info.childNodes[0]&&info.childNodes[0].textContent||info.textContent||'').replace(/\u2298/g,'').trim();
+            var it=_findByName(nm); if(!it||!it.req)continue;
+            var tag=document.createElement('span');
+            var can=(it.req||1)<=lvl;
+            tag.textContent=' \u00b7 '+_reqL()+' '+it.req;
+            tag.style.cssText='font-size:11px;font-weight:700;margin-left:4px;color:'+(can?'#7fd0a0':'#e06a6a')+';';
+            info.appendChild(tag);
+            if(!can){ var d=row.querySelector('.info .d'); if(d)d.style.opacity='0.7'; }
+            row._reqTagged=true;
+          }
+        }catch(e){}
+      };
+      function _findByName(nm){
+        try{
+          var pools=[];
+          if(typeof ALLW!=='undefined')pools=pools.concat(ALLW);
+          if(typeof ALLO!=='undefined')pools=pools.concat(ALLO);
+          if(typeof ARMORS!=='undefined')pools=pools.concat(ARMORS);
+          if(typeof GEAR!=='undefined')pools=pools.concat(GEAR);
+          for(var i=0;i<pools.length;i++){ if(typeof itemName==='function'?itemName(pools[i])===nm:pools[i].name===nm) return pools[i]; }
+        }catch(e){}
+        return null;
+      }
+    }
+    try{console.log('[ux] fechar-tocando-fora + rolagem + nivel minimo na loja.');}catch(e){}
+  }catch(e){ try{console.warn('uxfix falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
