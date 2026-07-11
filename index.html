@@ -8623,10 +8623,9 @@ try{(function(){
   }
   }catch(e){try{console.warn('magias falhou',e);}catch(_){}}
 
-  /* ================= LOGIN GOOGLE + SAVE NA NUVEM (Firebase) =================
-     OPCIONAL e OFFLINE-FIRST. Enquanto window.FIREBASE_CONFIG tiver "COLE_",
-     o jogo roda normal (so local). Ao preencher, sincroniza o blob dos 3 slots
-     por conta Google, resolvendo conflito por timestamp (o mais recente vence). */
+  /* ================= LOGIN GOOGLE + SAVE NA NUVEM + TRAVA DE DISPOSITIVO (Firebase) =================
+     OPCIONAL e OFFLINE-FIRST. Sincroniza o blob dos 3 slots por conta (conflito por timestamp),
+     e trava para so um dispositivo jogar o mesmo heroi por vez (sessao + heartbeat no Firestore). */
   try{
     var FC=window.FIREBASE_CONFIG;
     var _fbOn = FC && FC.apiKey && FC.apiKey.indexOf('COLE_')<0 && FC.projectId && typeof firebase!=='undefined';
@@ -8634,28 +8633,31 @@ try{(function(){
       try{ firebase.initializeApp(FC); }catch(e){}
       var _auth=firebase.auth(), _fdb=firebase.firestore(), _fuser=null;
       var _cwBusy=false,_cwPending=false,_cwTimer=null;
+      /* ---- trava de dispositivo ---- */
+      var _sessId = Math.random().toString(36).slice(2)+Date.now().toString(36);
+      var _active=false, _locked=false, _sessUnsub=null, _wasRunning=false;
+      var STALE=45000; /* sessao considerada abandonada apos 45s sem heartbeat */
+      function _sref(){ return _fdb.collection('sessions').doc(_fuser.uid); }
 
       function _sdb(){ try{var r=lsGet(SLOTS_KEY);return r?JSON.parse(r):null;}catch(e){return null;} }
       function _sts(){ var d=_sdb(); return (d&&d._ts)||0; }
 
       function _cloudWrite(){
-        if(!_fuser)return; if(_cwBusy){_cwPending=true;return;}
+        if(!_fuser||_locked)return; if(_cwBusy){_cwPending=true;return;}
         var d=_sdb(); if(!d)return;
         if(!d._ts){ d._ts=Date.now(); try{lsSet(SLOTS_KEY,JSON.stringify(d));}catch(e){} }
         _cwBusy=true;
         _fdb.collection('saves').doc(_fuser.uid).set({blob:JSON.stringify(d),updatedAt:d._ts,name:_fuser.displayName||'',email:_fuser.email||''})
           .then(function(){_cwBusy=false;if(_cwPending){_cwPending=false;_schedCloud();}})
-          .catch(function(){_cwBusy=false;}); /* offline: tenta no proximo save */
+          .catch(function(){_cwBusy=false;});
       }
       function _schedCloud(){ if(_cwTimer)clearTimeout(_cwTimer); _cwTimer=setTimeout(_cloudWrite,3500); }
 
-      /* wrap saveSlots: carimba _ts e agenda a sincronizacao */
       if(typeof saveSlots==='function'){
         var _origSS=saveSlots;
-        saveSlots=function(db){ try{ if(db&&typeof db==='object') db._ts=Date.now(); }catch(e){} _origSS(db); if(_fuser)_schedCloud(); };
+        saveSlots=function(db){ try{ if(db&&typeof db==='object') db._ts=Date.now(); }catch(e){} _origSS(db); if(_fuser&&!_locked)_schedCloud(); };
       }
 
-      /* ao logar / abrir: puxa o save mais recente da nuvem */
       function _pull(){
         if(!_fuser)return;
         _fdb.collection('saves').doc(_fuser.uid).get().then(function(doc){
@@ -8668,18 +8670,70 @@ try{(function(){
               else { _toast('Ha progresso mais novo na nuvem. Volte ao menu para carregar.'); }
               return;
             } else if(localTS>cloudTS){ _schedCloud(); }
-          } else { _schedCloud(); } /* primeira vez: sobe o local */
+          } else { _schedCloud(); }
         }).catch(function(){});
       }
 
-      _auth.onAuthStateChanged(function(u){ _fuser=u; _renderBtn(); if(u){ _pull(); } });
-      function _login(){ var p=new firebase.auth.GoogleAuthProvider(); _auth.signInWithPopup(p).catch(function(e){ try{_auth.signInWithRedirect(p);}catch(_){} }); }
-      function _logout(){ try{_auth.signOut();}catch(e){} }
+      /* ---- reivindica a sessao (atomico). force=true ignora sessao ativa alheia (ao "Jogar aqui") ---- */
+      function _claim(force){
+        if(!_fuser)return;
+        var ref=_sref();
+        _fdb.runTransaction(function(tx){
+          return tx.get(ref).then(function(doc){
+            var now=Date.now();
+            if(!force && doc.exists){
+              var d=doc.data(), fresh=d.heartbeat&&(now-d.heartbeat<STALE);
+              if(fresh && d.sessionId && d.sessionId!==_sessId){ throw {code:'occupied'}; }
+            }
+            tx.set(ref,{sessionId:_sessId,heartbeat:now,device:(navigator.userAgent||'').slice(0,90)});
+            return true;
+          });
+        }).then(function(){ _active=true; _locked=false; _hideLock(); })
+        .catch(function(err){ if(err&&err.code==='occupied'){ _active=false; _locked=true; _showLock(); } });
+      }
 
-      /* ---- UI: botao flutuante (aparece so no menu) ---- */
+      /* ---- ouve a sessao: se outro dispositivo reivindicar, trava este ---- */
+      function _listen(){
+        if(_sessUnsub){try{_sessUnsub();}catch(e){}}
+        if(!_fuser)return;
+        _sessUnsub=_sref().onSnapshot(function(doc){
+          try{
+            if(!doc.exists)return;
+            var d=doc.data();
+            if(d.sessionId && d.sessionId!==_sessId){
+              if(_active){ _active=false; _locked=true; _showLock(); }  /* fui substituido enquanto jogava */
+            } else if(d.sessionId===_sessId){
+              if(_locked){ _locked=false; _hideLock(); }
+            }
+          }catch(e){}
+        }, function(){});
+      }
+
+      _auth.onAuthStateChanged(function(u){
+        _fuser=u; _renderBtn();
+        if(_sessUnsub){try{_sessUnsub();}catch(e){}_sessUnsub=null;}
+        if(u){ _pull(); _listen(); }
+        else { _active=false; _locked=false; _hideLock(); }
+      });
+      function _login(){ var p=new firebase.auth.GoogleAuthProvider(); _auth.signInWithPopup(p).catch(function(e){ try{_auth.signInWithRedirect(p);}catch(_){} }); }
+      function _logout(){ try{ _active=false; _auth.signOut(); }catch(e){} }
+
+      /* ---- reivindica ao COMECAR a jogar; libera ao voltar ao menu ---- */
+      setInterval(function(){
+        try{
+          if(!_fuser)return;
+          var r=(typeof running!=='undefined'&&running);
+          if(r&&!_wasRunning){ _claim(false); }   /* comecou a jogar -> reivindica */
+          if(!r&&_wasRunning){ _active=false; }    /* voltou ao menu -> libera (para de heartbeat) */
+          _wasRunning=r;
+        }catch(e){}
+      },1000);
+      /* ---- heartbeat enquanto ativo ---- */
+      setInterval(function(){ try{ if(_fuser&&_active&&!_locked){ _sref().update({heartbeat:Date.now()}).catch(function(){}); } }catch(e){} },15000);
+
+      /* ---- UI: botao de login (so no menu) ---- */
       var _btn=document.createElement('div');
-      _btn.id='fbLoginBtn';
-      _btn.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;display:none;';
+      _btn.id='fbLoginBtn'; _btn.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;display:none;';
       if(document.body)document.body.appendChild(_btn);
       var _toastEl=null;
       function _toast(msg){ try{ if(!_toastEl){_toastEl=document.createElement('div');_toastEl.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(20,20,28,0.92);color:#e8e8f0;padding:8px 14px;border-radius:8px;font:13px sans-serif;border:1px solid #444;';document.body.appendChild(_toastEl);} _toastEl.textContent=msg;_toastEl.style.display='block';clearTimeout(_toastEl._t);_toastEl._t=setTimeout(function(){_toastEl.style.display='none';},3500);}catch(e){} }
@@ -8699,11 +8753,106 @@ try{(function(){
       }
       _renderBtn();
       setInterval(function(){ try{ _btn.style.display=(typeof running!=='undefined'&&running)?'none':'block'; }catch(e){} }, 800);
-      try{console.log('[firebase] login Google + save na nuvem ATIVO.');}catch(e){}
+
+      /* ---- overlay de bloqueio (heroi em uso em outro dispositivo) ---- */
+      var _lockEl=null;
+      function _mkLock(){
+        if(_lockEl)return;
+        _lockEl=document.createElement('div');
+        _lockEl.style.cssText='position:fixed;inset:0;z-index:2147483647;background:rgba(8,8,12,0.92);display:flex;align-items:center;justify-content:center;font-family:sans-serif;';
+        _lockEl.innerHTML='<div style="max-width:340px;text-align:center;color:#e8e8f0;padding:24px;">'
+          +'<div style="font-size:40px;margin-bottom:10px;">\uD83D\uDD12</div>'
+          +'<div style="font-size:18px;font-weight:600;margin-bottom:8px;">Herói em uso em outro dispositivo</div>'
+          +'<div style="font-size:14px;opacity:0.8;line-height:1.5;margin-bottom:18px;">Este herói só pode ser jogado em um dispositivo por vez. Continue no outro aparelho, ou assuma o controle aqui (o outro será bloqueado).</div>'
+          +'<button id="fbTakeOver" style="background:#c9a24a;color:#1a1a1a;border:none;border-radius:8px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:14px;">Jogar aqui</button></div>';
+        document.body.appendChild(_lockEl);
+        var b=document.getElementById('fbTakeOver'); if(b)b.onclick=function(){ _claim(true); setTimeout(_pull,400); };
+      }
+      function _showLock(){ try{ _mkLock(); _lockEl.style.display='flex'; }catch(e){} }
+      function _hideLock(){ try{ if(_lockEl)_lockEl.style.display='none'; }catch(e){} }
+
+      try{console.log('[firebase] login + save na nuvem + trava de dispositivo ATIVOS.');}catch(e){}
     } else {
       try{console.log('[firebase] config nao preenchida — jogo roda local (sem nuvem).');}catch(e){}
     }
   }catch(e){ try{console.warn('firebase falhou',e);}catch(_){} }
+
+  /* ===== MINIMAPA volta ao zoom normal (6) sempre que o jogador se desloca no mapa =====
+     Observa a posicao do heroi (tx,ty). Ao mudar de quadrado, se o zoom nao for 6,
+     volta pro normal e redesenha. Nao toca na funcao de movimento (seguro). */
+  try{
+    var _mmLX=null,_mmLY=null;
+    setInterval(function(){
+      try{
+        if(typeof player==='undefined'||!player){ _mmLX=null;_mmLY=null; return; }
+        if(typeof running!=='undefined'&&!running){ _mmLX=null;_mmLY=null; return; }
+        if(player.tx!==_mmLX||player.ty!==_mmLY){
+          var wasTracking=(_mmLX!==null);
+          _mmLX=player.tx; _mmLY=player.ty;
+          if(wasTracking && typeof miniZoom!=='undefined' && miniZoom!==6){
+            miniZoom=6;
+            if(typeof renderMinimap==='function') renderMinimap();
+          }
+        }
+      }catch(e){}
+    }, 130);
+    try{console.log('[minimapa] volta ao zoom normal ao se deslocar.');}catch(e){}
+  }catch(e){}
+
+  /* ===== RESSURREICAO: custo 20x (escala com o nivel) + limite de 3 com ouro ===== */
+  try{
+    var _MAXREV=3;
+    /* #3 custo 20x (a escala por nivel ja existia em lvl*22; 20x a mantem e a intensifica) */
+    if(typeof reviveCost==='function'){
+      reviveCost=function(){
+        var lv=(player&&player.lvl)||1;
+        var depth=((typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?DungeonLayer.depth*45:0);
+        return Math.round(20*(60 + lv*22 + depth));
+      };
+    }
+    /* #2 no maximo 3 ressurreicoes com ouro; depois obriga voltar ao templo (que zera a contagem) */
+    if(typeof revive==='function'){
+      var _origRevive=revive;
+      revive=function(){
+        try{
+          if(typeof meta==='undefined'||!meta){ _origRevive(); return; }
+          meta.reviveCount=meta.reviveCount||0;
+          if(meta.reviveCount>=_MAXREV){
+            if(typeof addMessage==='function')addMessage('Ressurreicoes com ouro esgotadas (3). Volte ao templo.','dmg');
+            return;
+          }
+          var cost=(typeof reviveCost==='function')?reviveCost():0;
+          if(((player&&player.gold)||0)<cost){ _origRevive(); return; }  /* deixa a original avisar "ouro insuficiente" */
+          _origRevive();
+          if(player&&!player.dead){ meta.reviveCount++; if(typeof saveGame==='function')saveGame(); }
+        }catch(e){ try{_origRevive();}catch(_){} }
+      };
+    }
+    /* voltar ao templo zera a contagem */
+    if(typeof respawn==='function'){
+      var _origRespawn=respawn;
+      respawn=function(){ try{ if(typeof meta!=='undefined'&&meta)meta.reviveCount=0; }catch(e){} _origRespawn(); };
+    }
+    /* tela de morte: quando esgotado, desabilita o botao de reviver com ouro */
+    if(typeof die==='function'){
+      var _origDie=die;
+      die=function(src){ _origDie(src);
+        try{
+          var maxed=(typeof meta!=='undefined'&&meta&&(meta.reviveCount||0)>=_MAXREV);
+          var rb=document.getElementById('reviveBtn');
+          if(rb){
+            if(maxed){ rb.style.opacity='0.35'; rb.style.pointerEvents='none'; rb.textContent='Esgotado \u2014 volte ao templo'; }
+          }
+        }catch(e){}
+      };
+    }
+    /* re-liga os botoes da tela de morte (garante que usam as versoes novas) */
+    try{
+      var _rb=document.getElementById('reviveBtn'); if(_rb)_rb.onclick=function(){ if(typeof revive==='function')revive(); };
+      var _sb=document.getElementById('respawnBtn'); if(_sb)_sb.onclick=function(){ if(typeof respawn==='function')respawn(); };
+    }catch(e){}
+    try{console.log('[ressurreicao] custo 20x + limite de 3 com ouro (zera no templo).');}catch(e){}
+  }catch(e){ try{console.warn('ressurreicao falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
