@@ -7469,8 +7469,10 @@ function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
     if(it.fireRes)stats+=`<br>${t('tip_fireres')} ${Math.round(it.fireRes*100)}%`;
     stats+=`<br>${t('tip_reqlvl')} ${it.req}`;}
   else if(k==='armor')stats=`${t('tip_armor')} +${it.arm}`+(it.hp?`<br>${t('life')} +${it.hp}`:'')+(it.fireRes?`<br>${t('tip_fireres')} ${Math.round(it.fireRes*100)}%`:'')+`<br>${t('tip_reqlvl')} ${it.req}`;
+  else if(k==='head'||k==='legs')stats=`${t('tip_armor')} +${it.arm||0}`+(it.hp?`<br>${t('life')} +${it.hp}`:'')+(it.aspd?`<br>${t('tip_atkspd')} +${Math.round(it.aspd*100)}%`:'')+(it.cdr?`<br>${t('tip_cdr')} -${Math.round(it.cdr*100)}%`:'')+(it.fireRes?`<br>${t('tip_fireres')} ${Math.round(it.fireRes*100)}%`:'')+`<br>${t('tip_reqlvl')} ${it.req||1}`;
   else stats=it.kind==='hp'?tf('tip_restores',{n:it.amt}):t('tip_purge');
-  const kindLab=k==='weapon'?t('weapon'):k==='off'?classOff(it.cls||player.cls):k==='armor'?t('armor'):t('kind_consumable');
+  if(it.mLife)stats+=`<br><span style="color:#ff9a9a">+${Math.round(it.mLife*100)}% roubo de vida</span>`;if(it.mCritC)stats+=`<br><span style="color:#ffd98a">+${Math.round(it.mCritC*100)}% chance de crítico</span>`;if(it.mCritD)stats+=`<br><span style="color:#ffd98a">+${Math.round(it.mCritD*100)}% dano crítico</span>`;if(it.mThorns)stats+=`<br><span style="color:#c9b8a0">+${Math.round(it.mThorns*100)}% espinhos</span>`;if(it.mOrb)stats+=`<br><span style="color:#a9e6a0">+${Math.round(it.mOrb*100)}% cura por orbe</span>`;if(it.mFire)stats+=`<br><span style="color:#ff9a4a">+${Math.round(it.mFire*100)}% resist. a fogo</span>`;if(it.mGold)stats+=`<br><span style="color:#e8c15a">+${Math.round(it.mGold*100)}% ouro</span>`;
+  const kindLab=k==='weapon'?t('weapon'):k==='off'?classOff(it.cls||player.cls):k==='armor'?t('armor'):k==='head'?'Cabe\u00e7a':k==='legs'?'Pernas':t('kind_consumable');
   tp.innerHTML=`<div class="tn" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="tr">${rarName(it.rar)} · ${kindLab}</div><div class="st">${stats}</div><div class="desc">${itemDesc(it)}</div>`;
   tp.style.display='block';const r=tp.getBoundingClientRect();
   let x=e.clientX+14,y=e.clientY+14;if(x+r.width>window.innerWidth)x=e.clientX-r.width-14;if(y+r.height>window.innerHeight)y=window.innerHeight-r.height-8;
@@ -8330,7 +8332,7 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
   },true);
   document.addEventListener('click',function(e){
     if(synth)return;
-    if(supEl&&Date.now()<supUntil&&(e.target===supEl||(supEl.contains&&supEl.contains(e.target)))){e.stopPropagation();e.preventDefault();}
+    if(Date.now()<supUntil){supUntil=0;e.stopPropagation();e.preventDefault();}
   },true);
 })();
 
@@ -8854,50 +8856,195 @@ try{(function(){
     try{console.log('[ressurreicao] custo 20x + limite de 3 com ouro (zera no templo).');}catch(e){}
   }catch(e){ try{console.warn('ressurreicao falhou',e);}catch(_){} }
 
-  /* ===== MAIS CAVERNAS (entradas de masmorra) AO SUL DO MAPA =====
-     Injeta POIs type:'cave' na metade sul, no mesmo molde das existentes
-     (marcador + pisar aciona DungeonLayer.enter). Varredura em grade acha terra
-     andavel; pinta uma boca de caverna (chao andavel + cantos rochosos). */
+  /* ============ MUNDO: bloqueio de combate na cidade + vilarejos + cavernas ao sul ============ */
   try{
-    function _paintCaveSouth(cx,cy){
+    /* ---- lista de vilarejos (bounds) usada pelo override de zona segura ---- */
+    var _villages = [];
+    var _inVillage = function(x,y){ for(var i=0;i<_villages.length;i++){var v=_villages[i]; if(x>=v.x-2&&x<=v.x+v.w+1&&y>=v.y-2&&y<=v.y+v.h+1)return true;} return false; };
+
+    /* ---- #1: estende isSafeZone (vilarejos viram zona segura: sem spawn/monstro/combate) ---- */
+    if(typeof isSafeZone==='function'){
+      var _origSafe = isSafeZone;
+      isSafeZone = function(x,y){ return _origSafe(x,y) || _inVillage(x,y); };
+    }
+    /* ---- #1: dentro da zona segura o heroi NAO ataca (nem magia) e NAO e atacado ---- */
+    if(typeof strikeMonster==='function'){
+      var _origStrike = strikeMonster;
+      strikeMonster = function(m,mult){
+        try{ if(typeof player!=='undefined'&&player&&isSafeZone(player.tx,player.ty)) return {total:0,crit:false}; }catch(e){}
+        return _origStrike(m,mult);
+      };
+    }
+    if(typeof applyPlayerDamage==='function'){
+      var _origApply = applyPlayerDamage;
+      applyPlayerDamage = function(dmg,src){
+        try{ if(typeof player!=='undefined'&&player&&isSafeZone(player.tx,player.ty)) return; }catch(e){}
+        return _origApply(dmg,src);
+      };
+    }
+
+    /* ---- construtor de vilarejo (versao menor da cidade: muros, portoes, casas, poco, NPCs) ---- */
+    function _buildVillage(vx,vy,vw,vh,defs){
       try{
-        for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++) setTile(cx+dx,cy+dy,T.cfloor); /* centro andavel = o POI */
-        setTile(cx-2,cy-2,T.cwall); setTile(cx+2,cy-2,T.cwall);   /* cantos rochosos (diagonais nao bloqueiam o acesso) */
-        setTile(cx-2,cy+2,T.cwall); setTile(cx+2,cy+2,T.cwall);
+        for(var y=0;y<vh;y++)for(var x=0;x<vw;x++) setTile(vx+x,vy+y,T.stone);           /* praca */
+        for(var x=-1;x<=vw;x++){ setTile(vx+x,vy-1,T.wall); setTile(vx+x,vy+vh,T.wall); }  /* muros */
+        for(var y=-1;y<=vh;y++){ setTile(vx-1,vy+y,T.wall); setTile(vx+vw,vy+y,T.wall); }
+        var gx=vx+(vw>>1), gy=vy+(vh>>1);
+        setTile(gx,vy-1,T.stone); setTile(gx,vy+vh,T.stone);                               /* portoes N/S */
+        setTile(vx-1,gy,T.stone); setTile(vx+vw,gy,T.stone);                               /* portoes L/O */
+        var house=function(hx,hy,hw,hh){ for(var y=0;y<hh;y++)for(var x=0;x<hw;x++) setTile(hx+x,hy+y,T.roof); setTile(hx+(hw>>1),hy+hh-1,T.dfloor); };
+        house(vx+1,vy+1,4,3); house(vx+vw-5,vy+1,4,3);                                      /* 2 casas no topo */
+        setTile(gx,gy,T.water); var nb=[[-1,0],[1,0],[0,-1],[0,1]];                         /* poco central */
+        for(var d=0;d<4;d++) setTile(gx+nb[d][0],gy+nb[d][1],T.stone);
+        setTile(vx+2,vy+vh-2,T.brazier); setTile(vx+vw-3,vy+vh-2,T.brazier);               /* tochas */
+        for(var i=0;i<defs.length;i++){ var d=defs[i]; npcs.push({x:vx+d.dx,y:vy+d.dy,kind:d.kind,name:d.name}); }
+        _villages.push({x:vx,y:vy,w:vw,h:vh});
       }catch(e){}
     }
+
+    /* ---- modelos de vilarejo (NPCs variados; posicoes na praca, longe de casas/poco) ---- */
+    var VW=14, VH=11;
+    var VTPL=[
+      [{dx:3,dy:7,kind:'shop',name:'Doran, o Mercador'},{dx:10,dy:7,kind:'inn',name:'Beca, a Estalajadeira'},{dx:6,dy:8,kind:'alch',name:'Ysolde, a Boticaria'}],
+      [{dx:3,dy:7,kind:'shop',name:'Harn, o Mercador'},{dx:10,dy:7,kind:'smith',name:'Bruta, a Ferreira'},{dx:6,dy:8,kind:'priest',name:'Frei Osmo'}],
+      [{dx:3,dy:7,kind:'shop',name:'Pell, o Mercador'},{dx:10,dy:7,kind:'hunter',name:'Cauan, o Rastreador'},{dx:6,dy:8,kind:'sage',name:'Anciã Morwen'}],
+      [{dx:3,dy:7,kind:'shop',name:'Giro, o Mercador'},{dx:10,dy:7,kind:'inn',name:'Tila, a Estalajadeira'},{dx:6,dy:8,kind:'priest',name:'Frei Aldo'}],
+      [{dx:3,dy:7,kind:'shop',name:'Vesk, o Mercador'},{dx:10,dy:7,kind:'alch',name:'Runa, a Boticaria'},{dx:6,dy:8,kind:'smith',name:'Odval, o Ferreiro'}],
+      [{dx:3,dy:7,kind:'shop',name:'Lorn, o Mercador'},{dx:10,dy:7,kind:'priest',name:'Frei Bento'},{dx:6,dy:8,kind:'hunter',name:'Sena, a Rastreadora'}]
+    ];
+
+    /* ---- checa se a area do vilarejo e majoritariamente terra andavel ---- */
+    function _villageOK(cx,cy){
+      var x0=cx-(VW>>1), y0=cy-(VH>>1), tot=0, walk=0;
+      for(var y=-2;y<VH+2;y++)for(var x=-2;x<VW+2;x++){
+        var tx=x0+x, ty=y0+y;
+        if(tx<WOFF+2||ty<WOFF+2||tx>=MAPW-WOFF-2||ty>=MAPH-WOFF-2) return false;
+        tot++; if(typeof walkable==='function'&&walkable(tx,ty)) walk++;
+      }
+      return (walk/tot) > 0.72;
+    }
+
     if(typeof POIManager!=='undefined' && POIManager.generate){
       var _origGenPOI = POIManager.generate.bind(POIManager);
       POIManager.generate = function(){
-        var r = _origGenPOI();
+        var r = _origGenPOI();   /* POIs procedurais primeiro */
+        var self=this;
+
+        /* ===== VILAREJOS espalhados pelo mapa inteiro ===== */
         try{
-          var self=this, added=0;
-          var yLo=Math.floor(MAPH*0.55), yHi=MAPH-WOFF-6;  /* metade sul */
-          var STEP=14, MIND=40, MAXC=10;                    /* espacamento minimo entre cavernas e limite */
-          function _clear(x,y){                             /* longe de POIs/cavernas ja colocadas */
-            for(var k=0;k<self.pois.length;k++){var q=self.pois[k];if(Math.abs(q.x-x)<MIND&&Math.abs(q.y-y)<MIND)return false;}
-            return true;
+          var vAdded=0, VMAX=6, VMIND=80, ti=0;
+          var occupied=function(cx,cy){
+            if(typeof _origSafe==='function'&&_origSafe(cx,cy)) return true;   /* longe da cidade/porto original */
+            for(var i=0;i<_villages.length;i++){var v=_villages[i]; if(Math.abs((v.x+(v.w>>1))-cx)<VMIND&&Math.abs((v.y+(v.h>>1))-cy)<VMIND)return true;}
+            for(var k=0;k<self.pois.length;k++){var q=self.pois[k]; if(Math.abs(q.x-cx)<12&&Math.abs(q.y-cy)<12)return true;}
+            return false;
+          };
+          var STEPV=24;
+          for(var cy=WOFF+30; cy<MAPH-WOFF-30 && vAdded<VMAX; cy+=STEPV){
+            for(var cx=WOFF+30; cx<MAPW-WOFF-30 && vAdded<VMAX; cx+=STEPV){
+              if(occupied(cx,cy)) continue;
+              if(!_villageOK(cx,cy)) continue;
+              _buildVillage(cx-(VW>>1), cy-(VH>>1), VW, VH, VTPL[ti%VTPL.length]); ti++;
+              vAdded++;
+            }
           }
+          /* remove spawns que cairam dentro de vilarejos (spawns sao montados antes) */
+          if(typeof spawns!=='undefined' && spawns && spawns.length){
+            for(var i=spawns.length-1;i>=0;i--){ if(_inVillage(spawns[i].x,spawns[i].y)) spawns.splice(i,1); }
+          }
+          try{console.log('[vilarejos] +'+vAdded+' vilarejos com NPCs espalhados.');}catch(e){}
+        }catch(e){ try{console.warn('vilarejos falhou',e);}catch(_){} }
+
+        /* ===== CAVERNAS ao sul (evitam vilarejos: isSafeZone ja os inclui) ===== */
+        try{
+          function _paintCaveSouth(cx,cy){
+            for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++) setTile(cx+dx,cy+dy,T.cfloor);
+            setTile(cx-2,cy-2,T.cwall); setTile(cx+2,cy-2,T.cwall); setTile(cx-2,cy+2,T.cwall); setTile(cx+2,cy+2,T.cwall);
+          }
+          var added=0, yLo=Math.floor(MAPH*0.55), yHi=MAPH-WOFF-6, STEP=14, MIND=40, MAXC=10;
+          var _clear=function(x,y){ for(var k=0;k<self.pois.length;k++){var q=self.pois[k];if(Math.abs(q.x-x)<MIND&&Math.abs(q.y-y)<MIND)return false;} return true; };
           for(var gy=yHi; gy>yLo && added<MAXC; gy-=STEP){
             for(var gx=WOFF+18; gx<MAPW-WOFF-18 && added<MAXC; gx+=STEP){
               var x=gx, y=gy;
               if(typeof walkable==='function' && !walkable(x,y)) continue;
-              if(typeof isSafeZone==='function' && isSafeZone(x,y)) continue;
+              if(isSafeZone(x,y)) continue;                       /* evita cidade/porto/VILAREJOS */
               if(self._byTile && self._byTile.has(x+','+y)) continue;
               if(!_clear(x,y)) continue;
               _paintCaveSouth(x,y);
               var p={ id:self.key(x,y), x:x, y:y, type:'cave' };
-              self.pois.push(p);
-              if(self._byTile) self._byTile.set(x+','+y, p);
+              self.pois.push(p); if(self._byTile) self._byTile.set(x+','+y, p);
               added++;
             }
           }
-          try{console.log('[cavernas] +'+added+' cavernas ao sul do mapa.');}catch(e){}
-        }catch(e){}
+          try{console.log('[cavernas] +'+added+' cavernas ao sul.');}catch(e){}
+        }catch(e){ try{console.warn('cavernas falhou',e);}catch(_){} }
+
         return r;
       };
     }
-  }catch(e){ try{console.warn('cavernas sul falhou',e);}catch(_){} }
+  }catch(e){ try{console.warn('mundo (cidade/vilarejos/cavernas) falhou',e);}catch(_){} }
+
+  /* ===== CONFIRMACAO antes de comprar/vender no NPC ===== */
+  try{
+    function _cfm(msg, onYes){
+      var ov=document.getElementById('_cfmOverlay');
+      if(!ov){
+        ov=document.createElement('div');
+        ov.id='_cfmOverlay';
+        ov.style.cssText='position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,0.62);display:none;align-items:center;justify-content:center;';
+        ov.innerHTML='<div style="background:#26262e;border:1px solid #4a4a58;border-radius:12px;padding:20px 22px;max-width:300px;text-align:center;color:#e8e8f0;font-family:sans-serif;box-shadow:0 8px 30px rgba(0,0,0,0.5);">'
+          +'<div id="_cfmMsg" style="margin-bottom:18px;font-size:15px;line-height:1.45;"></div>'
+          +'<div style="display:flex;gap:10px;justify-content:center;">'
+          +'<button class="btn no" id="_cfmNo" style="background:#3a3a48;color:#e8e8f0;border:none;border-radius:8px;padding:9px 20px;cursor:pointer;font-size:14px;">Cancelar</button>'
+          +'<button class="btn yes" id="_cfmYes" style="background:#c9a24a;color:#1a1a1a;border:none;border-radius:8px;padding:9px 20px;font-weight:600;cursor:pointer;font-size:14px;">Confirmar</button>'
+          +'</div></div>';
+        (document.body||document.documentElement).appendChild(ov);
+      }
+      document.getElementById('_cfmMsg').textContent=msg;
+      ov.style.display='flex';
+      var yes=document.getElementById('_cfmYes'), no=document.getElementById('_cfmNo');
+      yes.onclick=function(){ ov.style.display='none'; try{ onYes&&onYes(); }catch(e){} };
+      no.onclick=function(){ ov.style.display='none'; };
+    }
+    var _nm=function(it){ try{ return (typeof itemName==='function')? itemName(it) : ((it&&it.name)||'item'); }catch(e){ return 'item'; } };
+
+    if(typeof buyItem==='function'){
+      var _origBuy=buyItem;
+      buyItem=function(it){
+        if(!it)return;
+        try{ if(typeof player!=='undefined'&&player&&(player.gold||0)<(it.val||0)){ if(typeof addMessage==='function'&&typeof t==='function')addMessage(t('need_gold'),'sys'); return; } }catch(e){}
+        _cfm('Comprar '+_nm(it)+' por '+(it.val||0)+' de ouro?', function(){ _origBuy(it); });
+      };
+    }
+    if(typeof sellBagItem==='function'){
+      var _origSell=sellBagItem;
+      sellBagItem=function(it){
+        if(!it)return;
+        var g=0; try{ g=(typeof sellPrice==='function')?sellPrice(it):0; }catch(e){}
+        _cfm('Vender '+_nm(it)+' por '+g+' de ouro?', function(){ _origSell(it); });
+      };
+    }
+    try{console.log('[loja] confirmacao antes de comprar/vender ativa.');}catch(e){}
+  }catch(e){ try{console.warn('confirmacao loja falhou',e);}catch(_){} }
+
+  /* ===== FIX fundo preto ao voltar ao Chrome: re-assa os tiles quando a aba/janela volta ===== */
+  try{
+    var _lastRebake=0;
+    function _rebakeWorld(){
+      try{
+        if(typeof running==='undefined'||!running)return;
+        var now=Date.now(); if(now-_lastRebake<300)return; _lastRebake=now;
+        if(typeof bakeTiles==='function')bakeTiles();
+        if(typeof bakeStatics==='function')bakeStatics();
+        if(typeof bakePlayers==='function')bakePlayers();
+        if(typeof buildMinimapBase==='function')buildMinimapBase();
+      }catch(e){}
+    }
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) _rebakeWorld(); });
+    window.addEventListener('pageshow', function(){ _rebakeWorld(); });
+    window.addEventListener('focus', function(){ _rebakeWorld(); });
+    try{console.log('[render] re-assa tiles ao voltar a aba (corrige fundo preto).');}catch(e){}
+  }catch(e){ try{console.warn('rebake falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
