@@ -3243,7 +3243,7 @@ function loadItemPng(){
     }catch(e){}}
 }
 /* ---- sprites de heroi (PNG de IA) por classe_genero_tipoarma ---- */
-const USE_AI_HEROES=false; /* IA destoou -> usa herois procedurais */
+const USE_AI_HEROES=true; /* reativado via pipeline das criaturas; sem PNG do heroi -> cai no procedural automaticamente */
 const heroPng={};
 const HEROPNG_SRC={};
 function loadHeroPng(){
@@ -9966,6 +9966,39 @@ try{(function(){
   }catch(e){}
     try{console.log('[hudfx] barras suaves + toque nos botoes + pops de ouro/aviso.');}catch(e){}
   }catch(e){ try{console.warn('hudfx falhou',e);}catch(_){} }
+
+  /* ============ HEROIS: refino de personagem (auditado visualmente, antes/depois aprovado) ============
+     Cavaleiro: rim light de aco forjado + ombreiras +1px + fivela brilhante.
+     Patrulheiro: capuz mais sombrio + ponta traseira (perfil) + alca de aljava diagonal.
+     Mago: estrela na ponta do chapeu + volume na aba (sombra inferior).
+     Grades 16x20 preservadas (ancoras/animacoes intactas); customizacao intacta (so char novo 'E'). */
+  try{
+    var HG={"knight":{"down":["................","......KprK......",".....KpprrK.....",".....KrrRrK.....","....KgggggK.....","...KEssssmdK....","...KssssmmdK....","...KsvvvvvdK....","...KsvcvvcvK....","...KKmvvvmKK....",".KEsgKmmmmKgdEK.",".KEdKrrggrrKdEK.",".KsdKrggggrKdsK.","..KKKrrgGrrKKK..","....KrRggRrK....","....KGgEggGK....","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...","..KKbbK..KbbKK.."],"side":["................","....KprK........","...KpprrK.......","...KrRrrK.......","....KggggK......","....KEsssmdK....","....KsssmmdK....","....KvvvcmdK....","....KsmvmmdK....",".....KKmmKK.....","..KRKEgmmmdK....",".KRrKdmmmmdK....",".KRrKdrrggdKmK..",".KRrKdrgggdKmK..","..KRKdrrrrdKK...","...KKKGgEgKK....",".....KffKfK.....",".....KffKfK.....","....KssbKbbK....","...KKbbbKbbK...."],"up":["................","......KrpK......",".....KrrppK.....",".....KRrrpK.....","....KgggggK.....","...KEssssmdK....","...KsssssmdK....","...KssssmmdK....","...KsmmmmmdK....","...KKmmmmmKK....",".KEsgKKKKKKgdEK.",".KsdKrrrrrrKdsK.",".KsdKrRrrRrKdsK.","..KKrrrrrrrrKK..","...KrrRrrRrrK...","...KGggEgggGK...","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...","..KKbbK..KbbKK.."]},"ranger":{"down":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhKKKKKKhK...","...KhKvvsvKhFK..","...KhKcvvcKhFK..","...KhKvSsvKhK...","....KHKssKHK....","...KHKlLltKHK...","...KHKtlgLtKH...","....KKltlLKK....",".....KlLlLK.....",".....KLlLlK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...","...KKbbK.KbbKK.."],"side":["................","................",".KeeK...........","KKehHKK.........",".KehhhhK........","..KehhhhhK......","...KhhhhhhK.....","...KhKKvvsK.....","...KhKcvsSK.....","...KhKvSssK.....","....KHKssK......","...KHKtltKFK....","...KHKlglKlK....","...KHKtltKK.....","....KKlLlK......",".....KLlLK......",".....KffKfK.....",".....KffKfK.....","....KllbKbbK....","...KKbbbKbbK...."],"up":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhhhhhhhhK...","...KHhhhhhhHK...","...KKhhKKhhKK...","..KHKlFFFFlKHK..","..KHKLqqqqLKHK..","..KHKlqKKqlKHK..","...KHKqqqqKHK...","...KHKlLLlKHK...","....KKlLlKK.....","....KLLLLLK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...","...KKbbK.KbbKK.."]},"mage":{"down":[".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","..KKKKssssKKKK..","....KcsSscK.....","....KwsvvswK....","...KwwwwwwwwK...","...KwWwwwwWwK...","....KwWWWWwK....","....KidddiK.....","...KdKidciKdK...","..KsKDdcdDKsK...","....KdgggdK.....","...KdDcdcDdK....","..KDdcdddcdDK...","...KbbK...KbbK.."],"side":["................","................",".....KEK........","....KidDK.......","....KiddDK......","....KgcgdK......","..KKiddddDKK....",".KiddDDDDddDK...","..KKKvssKKK.....","....KcvsSK......","....KwvssK......","....KwwwsK......",".....KwWwK......",".....KidiKdK....","....KdDciKdK....","....KDdcdKK.....","....KdggdK......","....KdDddDK.....","...KDdcdcdDK....","....KbbKKbbK...."],"up":["................","................",".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","....KddddddK....","....KDddddDK....","....KidddiK.....","...KdKddddKdK...","..KsKdDDDdKsK...","....KdDcDdK.....","....KddcddK.....","....KdgggdK.....","...KdDdddDdK....","..KDdcdddcdDK...","...KbbK...KbbK.."]}};
+    var HP={"knight":{"E":"#f2f6ff"},"mage":{"E":"#f2f6ff"}};
+    if(typeof PGRID!=='undefined'&&typeof PPAL!=='undefined'&&typeof bakeGridSet==='function'&&typeof playerSpr!=='undefined'){
+      for(var cls in HP)for(var k in HP[cls])PPAL[cls][k]=HP[cls][k];
+      for(var cls in HG)for(var v in HG[cls])PGRID[cls][v]=HG[cls][v];
+      bakeGridSet({knight:PGRID.knight,ranger:PGRID.ranger,mage:PGRID.mage},
+                  {knight:PPAL.knight,ranger:PPAL.ranger,mage:PPAL.mage}, playerSpr);
+      try{ if(typeof heroSpr!=='undefined'&&heroSpr&&typeof player!=='undefined'&&player&&player.cls&&typeof bakeHero==='function')heroSpr=bakeHero(player.cls,player.custom); }catch(e){}
+      try{console.log('[herois] refino aplicado: aco forjado, capuz+alca, estrela do chapeu.');}catch(e){}
+    }
+  }catch(e){ try{console.warn('herois falhou',e);}catch(_){} }
+
+  /* ============ HEROIS EM ALTA (PNG, mesmo pipeline das criaturas) ============
+     Registra hero_<classe>_<genero>_<arma>.png da raiz. loadHeroPng() do boot rodou
+     ANTES deste bloco, entao recarregamos aqui. Sem o PNG -> heroi procedural (grade)
+     automaticamente, por sprite. Nada muda ate os arquivos serem enviados e aprovados. */
+  try{
+    if(typeof HEROPNG_SRC!=='undefined'&&typeof loadHeroPng==='function'){
+      var KEYS=['knight_m_sword','knight_m_axe','knight_f_sword','knight_f_axe',
+                'ranger_m_bow','ranger_f_bow',
+                'mage_m_staff','mage_m_scepter','mage_f_staff','mage_f_scepter'];
+      for(var i=0;i<KEYS.length;i++) HEROPNG_SRC[KEYS[i]]='hero_'+KEYS[i]+'.png';
+      loadHeroPng();
+      try{console.log('[heroishd] 10 sprites de heroi registrados (fallback procedural se faltarem).');}catch(e){}
+    }
+  }catch(e){ try{console.warn('heroishd falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
