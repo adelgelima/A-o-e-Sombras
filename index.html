@@ -3243,7 +3243,7 @@ function loadItemPng(){
     }catch(e){}}
 }
 /* ---- sprites de heroi (PNG de IA) por classe_genero_tipoarma ---- */
-const USE_AI_HEROES=true; /* reativado via pipeline das criaturas; sem PNG do heroi -> cai no procedural automaticamente */
+const USE_AI_HEROES=false; /* IA destoou -> usa herois procedurais */
 const heroPng={};
 const HEROPNG_SRC={};
 function loadHeroPng(){
@@ -5125,7 +5125,7 @@ function drawPlayer(ox,oy){
   /* ---- fallback procedural (original) ---- */
   const spr=heroSpr||playerSpr[player.cls];if(!spr)return;
   const S=spr[view];
-  const img=(player.hurtFlash>0.5)?S.f:S.n;
+  let img=(player.hurtFlash>0.5)?S.f:S.n; try{if(window._heroFrame){const _hf=window._heroFrame(view);if(_hf)img=_hf;}}catch(e){}
   const dw=S.w*PIX, dh=S.h*PIX;
   B.save();B.translate(cx,cy-bob);
   if(typeof PLAYER_SCALE!=='undefined')B.scale(PLAYER_SCALE,PLAYER_SCALE);
@@ -9985,20 +9985,39 @@ try{(function(){
     }
   }catch(e){ try{console.warn('herois falhou',e);}catch(_){} }
 
-  /* ============ HEROIS EM ALTA (PNG, mesmo pipeline das criaturas) ============
-     Registra hero_<classe>_<genero>_<arma>.png da raiz. loadHeroPng() do boot rodou
-     ANTES deste bloco, entao recarregamos aqui. Sem o PNG -> heroi procedural (grade)
-     automaticamente, por sprite. Nada muda ate os arquivos serem enviados e aprovados. */
+  /* heróis em PNG: DESATIVADO por decisão de design — imagem única parece 'foto que anda'.
+     A vida vem do caminho procedural: ciclo de andar + piscar (bloco heroeslife). */
+
+  /* ============ HEROIS: CICLO DE ANDAR + PISCAR (vida de verdade) ============
+     Pes alternam em sincronia com o quique (_bobPh); piscar a cada ~3,6s no idle.
+     Quadros assados por jogador via heroPal(cls,custom) — customizacao de cores intacta.
+     Sem substituir nada: e um gancho que troca o frame; fallback = sprite base. */
   try{
-    if(typeof HEROPNG_SRC!=='undefined'&&typeof loadHeroPng==='function'){
-      var KEYS=['knight_m_sword','knight_m_axe','knight_f_sword','knight_f_axe',
-                'ranger_m_bow','ranger_f_bow',
-                'mage_m_staff','mage_m_scepter','mage_f_staff','mage_f_scepter'];
-      for(var i=0;i<KEYS.length;i++) HEROPNG_SRC[KEYS[i]]='hero_'+KEYS[i]+'.png';
-      loadHeroPng();
-      try{console.log('[heroishd] 10 sprites de heroi registrados (fallback procedural se faltarem).');}catch(e){}
+    var HLF={"knight":{"down":{"walkA":["................","......KprK......",".....KpprrK.....",".....KrrRrK.....","....KgggggK.....","...KEssssmdK....","...KssssmmdK....","...KsvvvvvdK....","...KsvcvvcvK....","...KKmvvvmKK....",".KEsgKmmmmKgdEK.",".KEdKrrggrrKdEK.",".KsdKrggggrKdsK.","..KKKrrgGrrKKK..","....KrRggRrK....","....KGgEggGK....","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...","..KKbbK........."],"walkB":["................","......KprK......",".....KpprrK.....",".....KrrRrK.....","....KgggggK.....","...KEssssmdK....","...KssssmmdK....","...KsvvvvvdK....","...KsvcvvcvK....","...KKmvvvmKK....",".KEsgKmmmmKgdEK.",".KEdKrrggrrKdEK.",".KsdKrggggrKdsK.","..KKKrrgGrrKKK..","....KrRggRrK....","....KGgEggGK....","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...",".........KbbKK.."],"blink":["................","......KprK......",".....KpprrK.....",".....KrrRrK.....","....KgggggK.....","...KEssssmdK....","...KssssmmdK....","...KsvvvvvdK....","...KsvvvvvvK....","...KKmvvvmKK....",".KEsgKmmmmKgdEK.",".KEdKrrggrrKdEK.",".KsdKrggggrKdsK.","..KKKrrgGrrKKK..","....KrRggRrK....","....KGgEggGK....","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...","..KKbbK..KbbKK.."]},"side":{"walkA":["................","....KprK........","...KpprrK.......","...KrRrrK.......","....KggggK......","....KEsssmdK....","....KsssmmdK....","....KvvvcmdK....","....KsmvmmdK....",".....KKmmKK.....","..KRKEgmmmdK....",".KRrKdmmmmdK....",".KRrKdrrggdKmK..",".KRrKdrgggdKmK..","..KRKdrrrrdKK...","...KKKGgEgKK....",".....KffKfK.....",".....KffKfK.....","....KssbKbbK....","...KKbbbK......."],"walkB":["................","....KprK........","...KpprrK.......","...KrRrrK.......","....KggggK......","....KEsssmdK....","....KsssmmdK....","....KvvvcmdK....","....KsmvmmdK....",".....KKmmKK.....","..KRKEgmmmdK....",".KRrKdmmmmdK....",".KRrKdrrggdKmK..",".KRrKdrgggdKmK..","..KRKdrrrrdKK...","...KKKGgEgKK....",".....KffKfK.....",".....KffKfK.....","....KssbKbbK....","........KbbK...."],"blink":["................","....KprK........","...KpprrK.......","...KrRrrK.......","....KggggK......","....KEsssmdK....","....KsssmmdK....","....KvvvvmdK....","....KsmvmmdK....",".....KKmmKK.....","..KRKEgmmmdK....",".KRrKdmmmmdK....",".KRrKdrrggdKmK..",".KRrKdrgggdKmK..","..KRKdrrrrdKK...","...KKKGgEgKK....",".....KffKfK.....",".....KffKfK.....","....KssbKbbK....","...KKbbbKbbK...."]},"up":{"walkA":["................","......KrpK......",".....KrrppK.....",".....KRrrpK.....","....KgggggK.....","...KEssssmdK....","...KsssssmdK....","...KssssmmdK....","...KsmmmmmdK....","...KKmmmmmKK....",".KEsgKKKKKKgdEK.",".KsdKrrrrrrKdsK.",".KsdKrRrrRrKdsK.","..KKrrrrrrrrKK..","...KrrRrrRrrK...","...KGggEgggGK...","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...","..KKbbK........."],"walkB":["................","......KrpK......",".....KrrppK.....",".....KRrrpK.....","....KgggggK.....","...KEssssmdK....","...KsssssmdK....","...KssssmmdK....","...KsmmmmmdK....","...KKmmmmmKK....",".KEsgKKKKKKgdEK.",".KsdKrrrrrrKdsK.",".KsdKrRrrRrKdsK.","..KKrrrrrrrrKK..","...KrrRrrRrrK...","...KGggEgggGK...","...KffK..KffK...","...KffK..KffK...","...KsbK..KsbK...",".........KbbKK.."]}},"ranger":{"down":{"walkA":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhKKKKKKhK...","...KhKvvsvKhFK..","...KhKcvvcKhFK..","...KhKvSsvKhK...","....KHKssKHK....","...KHKlLltKHK...","...KHKtlgLtKH...","....KKltlLKK....",".....KlLlLK.....",".....KLlLlK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...","...KKbbK........"],"walkB":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhKKKKKKhK...","...KhKvvsvKhFK..","...KhKcvvcKhFK..","...KhKvSsvKhK...","....KHKssKHK....","...KHKlLltKHK...","...KHKtlgLtKH...","....KKltlLKK....",".....KlLlLK.....",".....KLlLlK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...",".........KbbKK.."],"blink":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhKKKKKKhK...","...KhKvvsvKhFK..","...KhKvvvvKhFK..","...KhKvSsvKhK...","....KHKssKHK....","...KHKlLltKHK...","...KHKtlgLtKH...","....KKltlLKK....",".....KlLlLK.....",".....KLlLlK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...","...KKbbK.KbbKK.."]},"side":{"walkA":["................","................",".KeeK...........","KKehHKK.........",".KehhhhK........","..KehhhhhK......","...KhhhhhhK.....","...KhKKvvsK.....","...KhKcvsSK.....","...KhKvSssK.....","....KHKssK......","...KHKtltKFK....","...KHKlglKlK....","...KHKtltKK.....","....KKlLlK......",".....KLlLK......",".....KffKfK.....",".....KffKfK.....","....KllbKbbK....","...KKbbbK......."],"walkB":["................","................",".KeeK...........","KKehHKK.........",".KehhhhK........","..KehhhhhK......","...KhhhhhhK.....","...KhKKvvsK.....","...KhKcvsSK.....","...KhKvSssK.....","....KHKssK......","...KHKtltKFK....","...KHKlglKlK....","...KHKtltKK.....","....KKlLlK......",".....KLlLK......",".....KffKfK.....",".....KffKfK.....","....KllbKbbK....","........KbbK...."],"blink":["................","................",".KeeK...........","KKehHKK.........",".KehhhhK........","..KehhhhhK......","...KhhhhhhK.....","...KhKKvvsK.....","...KhKvvsSK.....","...KhKvSssK.....","....KHKssK......","...KHKtltKFK....","...KHKlglKlK....","...KHKtltKK.....","....KKlLlK......",".....KLlLK......",".....KffKfK.....",".....KffKfK.....","....KllbKbbK....","...KKbbbKbbK...."]},"up":{"walkA":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhhhhhhhhK...","...KHhhhhhhHK...","...KKhhKKhhKK...","..KHKlFFFFlKHK..","..KHKLqqqqLKHK..","..KHKlqKKqlKHK..","...KHKqqqqKHK...","...KHKlLLlKHK...","....KKlLlKK.....","....KLLLLLK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...","...KKbbK........"],"walkB":["................",".......KeK......","......KehHK.....",".....KehhhHK....","....KehhhhhHK...","...KehhhhhhhK...","...KhhhhhhhhK...","...KHhhhhhhHK...","...KKhhKKhhKK...","..KHKlFFFFlKHK..","..KHKLqqqqLKHK..","..KHKlqKKqlKHK..","...KHKqqqqKHK...","...KHKlLLlKHK...","....KKlLlKK.....","....KLLLLLK.....","....KffK.KffK...","....KffK.KffK...","....KlbK.KlbK...",".........KbbKK.."]}},"mage":{"down":{"walkA":[".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","..KKKKssssKKKK..","....KcsSscK.....","....KwsvvswK....","...KwwwwwwwwK...","...KwWwwwwWwK...","....KwWWWWwK....","....KidddiK.....","...KdKidciKdK...","..KsKDdcdDKsK...","....KdgggdK.....","...KdDcdcDdK....","..KDdcdddcdDK...","...KbbK........."],"walkB":[".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","..KKKKssssKKKK..","....KcsSscK.....","....KwsvvswK....","...KwwwwwwwwK...","...KwWwwwwWwK...","....KwWWWWwK....","....KidddiK.....","...KdKidciKdK...","..KsKDdcdDKsK...","....KdgggdK.....","...KdDcdcDdK....","..KDdcdddcdDK...","..........KbbK.."],"blink":[".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","..KKKKssssKKKK..","....KvsSsvK.....","....KwsvvswK....","...KwwwwwwwwK...","...KwWwwwwWwK...","....KwWWWWwK....","....KidddiK.....","...KdKidciKdK...","..KsKDdcdDKsK...","....KdgggdK.....","...KdDcdcDdK....","..KDdcdddcdDK...","...KbbK...KbbK.."]},"side":{"walkA":["................","................",".....KEK........","....KidDK.......","....KiddDK......","....KgcgdK......","..KKiddddDKK....",".KiddDDDDddDK...","..KKKvssKKK.....","....KcvsSK......","....KwvssK......","....KwwwsK......",".....KwWwK......",".....KidiKdK....","....KdDciKdK....","....KDdcdKK.....","....KdggdK......","....KdDddDK.....","...KDdcdcdDK....","....KbbK........"],"walkB":["................","................",".....KEK........","....KidDK.......","....KiddDK......","....KgcgdK......","..KKiddddDKK....",".KiddDDDDddDK...","..KKKvssKKK.....","....KcvsSK......","....KwvssK......","....KwwwsK......",".....KwWwK......",".....KidiKdK....","....KdDciKdK....","....KDdcdKK.....","....KdggdK......","....KdDddDK.....","...KDdcdcdDK....","........KbbK...."],"blink":["................","................",".....KEK........","....KidDK.......","....KiddDK......","....KgcgdK......","..KKiddddDKK....",".KiddDDDDddDK...","..KKKvssKKK.....","....KvvsSK......","....KwvssK......","....KwwwsK......",".....KwWwK......",".....KidiKdK....","....KdDciKdK....","....KDdcdKK.....","....KdggdK......","....KdDddDK.....","...KDdcdcdDK....","....KbbKKbbK...."]},"up":{"walkA":["................","................",".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","....KddddddK....","....KDddddDK....","....KidddiK.....","...KdKddddKdK...","..KsKdDDDdKsK...","....KdDcDdK.....","....KddcddK.....","....KdgggdK.....","...KdDdddDdK....","..KDdcdddcdDK...","...KbbK........."],"walkB":["................","................",".......KEK......","......KidDK.....","......KiddDK....",".....KiddddK....",".....KgcgggK....","..KKKiddddDKKK..",".KidddDDDDdddDK.","....KddddddK....","....KDddddDK....","....KidddiK.....","...KdKddddKdK...","..KsKdDDDdKsK...","....KdDcDdK.....","....KddcddK.....","....KdgggdK.....","...KdDdddDdK....","..KDdcdddcdDK...","..........KbbK.."]}}};
+    var _hlCache={};
+    function _hlGet(cls,custom){
+      var key=cls+'|'+JSON.stringify(custom||0);
+      if(_hlCache[key])return _hlCache[key];
+      if(typeof bakeGridSet!=='function'||typeof heroPal!=='function')return null;
+      var Fr=HLF[cls]; if(!Fr)return null;
+      var pal=heroPal(cls,custom), out={};
+      for(var v in Fr){
+        var spec={x:{a:Fr[v].walkA,b:Fr[v].walkB}}; if(Fr[v].blink)spec.x.bl=Fr[v].blink;
+        var o={}; bakeGridSet(spec,{x:pal},o); out[v]=o.x;
+      }
+      _hlCache[key]=out; return out;
     }
-  }catch(e){ try{console.warn('heroishd falhou',e);}catch(_){} }
+    window._heroFrame=function(view){
+      try{
+        if(typeof player==='undefined'||!player||player.hurtFlash>0.5)return null;
+        var set=_hlGet(player.cls,player.custom); if(!set||!set[view])return null;
+        if(player.moving){ var ph=Math.floor((player._bobPh||0)/Math.PI)%2; var fr=ph?set[view].b:set[view].a; return fr?fr.n:null; }
+        var bl=set[view].bl; if(bl){ var t=(typeof gameTime!=='undefined'?gameTime:0)%3.6; if(t<0.12)return bl.n; }
+        return null;
+      }catch(e){ return null; }
+    };
+    try{console.log('[heroislife] ciclo de andar + piscar ativos (custom-aware).');}catch(e){}
+  }catch(e){ try{console.warn('heroislife falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
