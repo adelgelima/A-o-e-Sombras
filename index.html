@@ -382,6 +382,25 @@
 .btn,.slotc,.slotc *,.langb,.tbtn,.stog,.stog *,.clsCard,.clsCard *,.sdel,.gbtn,button,.slot,.slot *,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:none}
 
 </style>
+
+<!-- ===================== FIREBASE (login Google + save na nuvem) ===================== -->
+<script>
+/* COLE A SUA CONFIG DO FIREBASE AQUI (Console > Config do projeto > SDK do app web).
+   Enquanto tiver "COLE_", o jogo roda normal (so local, sem nuvem). */
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCISsw7M_NK5Dn8aMgBU_P198m-bLGFWEU",
+  authDomain: "aco-e-sombras.firebaseapp.com",
+  projectId: "aco-e-sombras",
+  storageBucket: "aco-e-sombras.firebasestorage.app",
+  messagingSenderId: "457078596985",
+  appId: "1:457078596985:web:a70f9ab60f573b35047ba8",
+  measurementId: "G-L3MB6TZPEE"
+};
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<!-- ================================================================================= -->
 </head>
 <body>
 <div id="game">
@@ -8603,6 +8622,88 @@ try{(function(){
     try{console.log('[magias] +'+Object.keys(NS).length+' magias novas (nv 55-300), ofensivas/controle.');}catch(e){}
   }
   }catch(e){try{console.warn('magias falhou',e);}catch(_){}}
+
+  /* ================= LOGIN GOOGLE + SAVE NA NUVEM (Firebase) =================
+     OPCIONAL e OFFLINE-FIRST. Enquanto window.FIREBASE_CONFIG tiver "COLE_",
+     o jogo roda normal (so local). Ao preencher, sincroniza o blob dos 3 slots
+     por conta Google, resolvendo conflito por timestamp (o mais recente vence). */
+  try{
+    var FC=window.FIREBASE_CONFIG;
+    var _fbOn = FC && FC.apiKey && FC.apiKey.indexOf('COLE_')<0 && FC.projectId && typeof firebase!=='undefined';
+    if(_fbOn){
+      try{ firebase.initializeApp(FC); }catch(e){}
+      var _auth=firebase.auth(), _fdb=firebase.firestore(), _fuser=null;
+      var _cwBusy=false,_cwPending=false,_cwTimer=null;
+
+      function _sdb(){ try{var r=lsGet(SLOTS_KEY);return r?JSON.parse(r):null;}catch(e){return null;} }
+      function _sts(){ var d=_sdb(); return (d&&d._ts)||0; }
+
+      function _cloudWrite(){
+        if(!_fuser)return; if(_cwBusy){_cwPending=true;return;}
+        var d=_sdb(); if(!d)return;
+        if(!d._ts){ d._ts=Date.now(); try{lsSet(SLOTS_KEY,JSON.stringify(d));}catch(e){} }
+        _cwBusy=true;
+        _fdb.collection('saves').doc(_fuser.uid).set({blob:JSON.stringify(d),updatedAt:d._ts,name:_fuser.displayName||'',email:_fuser.email||''})
+          .then(function(){_cwBusy=false;if(_cwPending){_cwPending=false;_schedCloud();}})
+          .catch(function(){_cwBusy=false;}); /* offline: tenta no proximo save */
+      }
+      function _schedCloud(){ if(_cwTimer)clearTimeout(_cwTimer); _cwTimer=setTimeout(_cloudWrite,3500); }
+
+      /* wrap saveSlots: carimba _ts e agenda a sincronizacao */
+      if(typeof saveSlots==='function'){
+        var _origSS=saveSlots;
+        saveSlots=function(db){ try{ if(db&&typeof db==='object') db._ts=Date.now(); }catch(e){} _origSS(db); if(_fuser)_schedCloud(); };
+      }
+
+      /* ao logar / abrir: puxa o save mais recente da nuvem */
+      function _pull(){
+        if(!_fuser)return;
+        _fdb.collection('saves').doc(_fuser.uid).get().then(function(doc){
+          var localTS=_sts();
+          if(doc.exists){
+            var data=doc.data(), cloudTS=data.updatedAt||0;
+            if(cloudTS>localTS && data.blob){
+              try{ lsSet(SLOTS_KEY, data.blob); }catch(e){}
+              if(typeof running==='undefined' || !running){ _toast('Progresso da nuvem carregado.'); setTimeout(function(){try{location.reload();}catch(e){}},800); }
+              else { _toast('Ha progresso mais novo na nuvem. Volte ao menu para carregar.'); }
+              return;
+            } else if(localTS>cloudTS){ _schedCloud(); }
+          } else { _schedCloud(); } /* primeira vez: sobe o local */
+        }).catch(function(){});
+      }
+
+      _auth.onAuthStateChanged(function(u){ _fuser=u; _renderBtn(); if(u){ _pull(); } });
+      function _login(){ var p=new firebase.auth.GoogleAuthProvider(); _auth.signInWithPopup(p).catch(function(e){ try{_auth.signInWithRedirect(p);}catch(_){} }); }
+      function _logout(){ try{_auth.signOut();}catch(e){} }
+
+      /* ---- UI: botao flutuante (aparece so no menu) ---- */
+      var _btn=document.createElement('div');
+      _btn.id='fbLoginBtn';
+      _btn.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;display:none;';
+      if(document.body)document.body.appendChild(_btn);
+      var _toastEl=null;
+      function _toast(msg){ try{ if(!_toastEl){_toastEl=document.createElement('div');_toastEl.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(20,20,28,0.92);color:#e8e8f0;padding:8px 14px;border-radius:8px;font:13px sans-serif;border:1px solid #444;';document.body.appendChild(_toastEl);} _toastEl.textContent=msg;_toastEl.style.display='block';clearTimeout(_toastEl._t);_toastEl._t=setTimeout(function(){_toastEl.style.display='none';},3500);}catch(e){} }
+      function _renderBtn(){
+        if(_fuser){
+          _btn.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(20,20,28,0.9);border:1px solid #3a3a48;border-radius:20px;padding:4px 10px 4px 4px;color:#e8e8f0;font:12px sans-serif;">'
+            +(_fuser.photoURL?'<img src="'+_fuser.photoURL+'" style="width:24px;height:24px;border-radius:50%;">':'')
+            +'<span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(_fuser.displayName||_fuser.email||'Conta')+'</span>'
+            +'<button id="fbOut" style="background:#3a3a48;color:#e8e8f0;border:none;border-radius:12px;padding:3px 8px;cursor:pointer;font:12px sans-serif;">Sair</button></div>';
+          var o=document.getElementById('fbOut'); if(o)o.onclick=_logout;
+        } else {
+          _btn.innerHTML='<button id="fbIn" style="display:flex;align-items:center;gap:8px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:20px;padding:6px 14px;cursor:pointer;font:500 13px sans-serif;box-shadow:0 1px 3px rgba(0,0,0,0.3);">'
+            +'<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>'
+            +'Entrar com Google</button>';
+          var i=document.getElementById('fbIn'); if(i)i.onclick=_login;
+        }
+      }
+      _renderBtn();
+      setInterval(function(){ try{ _btn.style.display=(typeof running!=='undefined'&&running)?'none':'block'; }catch(e){} }, 800);
+      try{console.log('[firebase] login Google + save na nuvem ATIVO.');}catch(e){}
+    } else {
+      try{console.log('[firebase] config nao preenchida — jogo roda local (sem nuvem).');}catch(e){}
+    }
+  }catch(e){ try{console.warn('firebase falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
