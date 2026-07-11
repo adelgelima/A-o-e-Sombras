@@ -8854,6 +8854,51 @@ try{(function(){
     try{console.log('[ressurreicao] custo 20x + limite de 3 com ouro (zera no templo).');}catch(e){}
   }catch(e){ try{console.warn('ressurreicao falhou',e);}catch(_){} }
 
+  /* ===== MAIS CAVERNAS (entradas de masmorra) AO SUL DO MAPA =====
+     Injeta POIs type:'cave' na metade sul, no mesmo molde das existentes
+     (marcador + pisar aciona DungeonLayer.enter). Varredura em grade acha terra
+     andavel; pinta uma boca de caverna (chao andavel + cantos rochosos). */
+  try{
+    function _paintCaveSouth(cx,cy){
+      try{
+        for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++) setTile(cx+dx,cy+dy,T.cfloor); /* centro andavel = o POI */
+        setTile(cx-2,cy-2,T.cwall); setTile(cx+2,cy-2,T.cwall);   /* cantos rochosos (diagonais nao bloqueiam o acesso) */
+        setTile(cx-2,cy+2,T.cwall); setTile(cx+2,cy+2,T.cwall);
+      }catch(e){}
+    }
+    if(typeof POIManager!=='undefined' && POIManager.generate){
+      var _origGenPOI = POIManager.generate.bind(POIManager);
+      POIManager.generate = function(){
+        var r = _origGenPOI();
+        try{
+          var self=this, added=0;
+          var yLo=Math.floor(MAPH*0.55), yHi=MAPH-WOFF-6;  /* metade sul */
+          var STEP=14, MIND=40, MAXC=10;                    /* espacamento minimo entre cavernas e limite */
+          function _clear(x,y){                             /* longe de POIs/cavernas ja colocadas */
+            for(var k=0;k<self.pois.length;k++){var q=self.pois[k];if(Math.abs(q.x-x)<MIND&&Math.abs(q.y-y)<MIND)return false;}
+            return true;
+          }
+          for(var gy=yHi; gy>yLo && added<MAXC; gy-=STEP){
+            for(var gx=WOFF+18; gx<MAPW-WOFF-18 && added<MAXC; gx+=STEP){
+              var x=gx, y=gy;
+              if(typeof walkable==='function' && !walkable(x,y)) continue;
+              if(typeof isSafeZone==='function' && isSafeZone(x,y)) continue;
+              if(self._byTile && self._byTile.has(x+','+y)) continue;
+              if(!_clear(x,y)) continue;
+              _paintCaveSouth(x,y);
+              var p={ id:self.key(x,y), x:x, y:y, type:'cave' };
+              self.pois.push(p);
+              if(self._byTile) self._byTile.set(x+','+y, p);
+              added++;
+            }
+          }
+          try{console.log('[cavernas] +'+added+' cavernas ao sul do mapa.');}catch(e){}
+        }catch(e){}
+        return r;
+      };
+    }
+  }catch(e){ try{console.warn('cavernas sul falhou',e);}catch(_){} }
+
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
 
