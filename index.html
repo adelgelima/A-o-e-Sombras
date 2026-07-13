@@ -379,9 +379,10 @@
 .sb-item .sb-lk{font-size:10px;color:var(--ink-dim)}
 
 /* toque confiável no mobile: elementos clicaveis nao iniciam rolagem (impede clique engolido no Android) */
-.btn,.slotc,.slotc *,.langb,.tbtn,.stog,.stog *,.clsCard,.clsCard *,.sdel,.gbtn,button,.slot,.slot *,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:none}
+.btn,.langb,.tbtn,.stog,.stog *,.gbtn,button,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:none}
+.slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:pan-y}
 
-#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
+#title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
 </head>
 <body>
 <div id="game">
@@ -8315,18 +8316,29 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
 (function(){
   if(typeof document==='undefined')return;
   var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,[role=button]';
-  var synth=false, lastEl=null, lastAt=0;
+  var synth=false, lastEl=null, lastAt=0, downT=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
     var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
-    if(!t)return;
-    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.preventDefault(); e.stopPropagation(); return; }  /* painel recem-fechado: ignora TODOS os botoes */
+    if(!t){ downT=null; return; }
+    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.preventDefault(); e.stopPropagation(); downT=null; return; }
+    downT=t; downX=e.clientX; downY=e.clientY; moved=false;   /* NAO clica ainda: espera ver se e rolagem */
+  },true);
+  document.addEventListener('pointermove',function(e){
+    if(!downT)return;
+    if(Math.abs(e.clientX-downX)>10||Math.abs(e.clientY-downY)>10){ moved=true; downT=null; window._acScrolledAt=Date.now(); }  /* arrastou = rolagem */
+  },true);
+  document.addEventListener('pointerup',function(e){
+    if(!downT)return;
+    var t=downT; downT=null;
+    if(moved)return;   /* houve rolagem: nao dispara clique */
     lastEl=t; lastAt=Date.now();
     synth=true; try{ t.click(); }catch(_){}
     synth=false;
   },true);
   document.addEventListener('click',function(e){
     if(synth)return;
-    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }  /* escudo: barra o click nativo tambem */
+    if(window._acScrolledAt&&(Date.now()-window._acScrolledAt)<400){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }  /* acabou de rolar: ignora click */
+    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }
     if(lastEl&&(Date.now()-lastAt)<800){
       var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
       if(t===lastEl||(lastEl.contains&&lastEl.contains(e.target))||(t&&t.contains&&t.contains(lastEl))){
