@@ -4066,7 +4066,7 @@ function castSlot(slot){
   if(player.lvl<sp.lv){addMessage(tf('msg_skill_locked',{lv:sp.lv}),'sys');return;}
   const r=sp.cast();if(r!==false)cd[cdk]=sp.cd*(1-(player.cdr||0));
 }
-function openSpellbook(){if(typeof showSpellbook==='function')showSpellbook();}
+function openSpellbook(){if(window._acPanelShield&&Date.now()<window._acPanelShield)return;if(typeof showSpellbook==='function')showSpellbook();}
 
 function useSkill1(){castSlot(0);}
 function useSkill2(){castSlot(1);}
@@ -7672,7 +7672,7 @@ function assignSpell(id){
   if(typeof saveGame==='function')saveGame();
   renderSpellbook();
 }
-function showSpellbook(){if(typeof ensureLoadout==='function')ensureLoadout();_sbSel=0;renderSpellbook();const el=document.getElementById('spellbook');if(el)el.classList.remove('hidden');}
+function showSpellbook(){if(window._acPanelShield&&Date.now()<window._acPanelShield)return;if(typeof ensureLoadout==='function')ensureLoadout();_sbSel=0;renderSpellbook();const el=document.getElementById('spellbook');if(el)el.classList.remove('hidden');}
 function closeSpellbook(){const el=document.getElementById('spellbook');if(el)el.classList.add('hidden');updateLoadoutUI();}
 
 function refreshClassLabels(){
