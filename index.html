@@ -4231,7 +4231,7 @@ function handleTap(sx,sy){
   if(!hitM&&isTouch){for(const m of monsters){const d=dist(wx,wy,m.px,m.py);
     if(d<TILE*1.25&&d<best){best=d;hitM=m;}}}
   if(hitM){setTarget(hitM);return;}
-  for(const nn of npcs)if((Math.abs(tx-nn.x)+Math.abs(ty-nn.y))<=1){interactNpc(nn);return;}
+  /* interacao com NPC agora e via botao contextual 'Falar' (evita toque acidental) */
   if(walkable(tx,ty)){const p=findPath(player.tx,player.ty,tx,ty);
     if(p){player.path=p;player.target=null;
       addRing(tx*TILE+TILE/2,ty*TILE+TILE/2,CLASSES[player.cls].col,TILE*0.45,0.4);}}}
@@ -8313,16 +8313,22 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
 (function(){
   if(typeof document==='undefined')return;
   var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,[role=button]';
-  var synth=false,supEl=null,supUntil=0;
+  var synth=false, lastEl=null, lastAt=0;
   document.addEventListener('pointerdown',function(e){
     var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
     if(!t)return;
-    supEl=t;supUntil=Date.now()+900;
-    synth=true;try{t.click();}catch(_){}synth=false;
+    lastEl=t; lastAt=Date.now();
+    synth=true; try{ t.click(); }catch(_){}
+    synth=false;
   },true);
   document.addEventListener('click',function(e){
     if(synth)return;
-    if(supEl&&Date.now()<supUntil&&(e.target===supEl||(supEl.contains&&supEl.contains(e.target)))){e.stopPropagation();e.preventDefault();}
+    if(lastEl&&(Date.now()-lastAt)<800){
+      var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
+      if(t===lastEl||(lastEl.contains&&lastEl.contains(e.target))||(t&&t.contains&&t.contains(lastEl))){
+        e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
+      }
+    }
   },true);
 })();
 
@@ -8773,6 +8779,7 @@ try{(function(){
         }
       }
       _renderBtn();
+      try{ window._acReleaseSession=function(){ try{ _active=false; _wasRunning=false; if(_fuser&&_sref){ _sref().update({heartbeat:0}).catch(function(){}); } _renderBtn(); }catch(e){} }; }catch(e){}
       setInterval(function(){ try{ _btn.style.display=(typeof running!=='undefined'&&running)?'none':'block'; }catch(e){} }, 800);
 
       /* ---- overlay de bloqueio (heroi em uso em outro dispositivo) ---- */
@@ -10119,17 +10126,32 @@ try{(function(){
           +'<div style="color:#c9a24a;font-size:20px;padding-right:4px;">\u203A</div>';
         d.onclick=function(){
           try{
-            if(typeof backToHeroSelect==='function'){ backToHeroSelect(); }
-            else {
-              if(typeof running!=='undefined'){running=false;}
-              if(typeof saveGame==='function')saveGame();
-              var tt=document.getElementById('title'); if(tt)tt.classList.remove('hidden');
-              var sw2=document.getElementById('slotsWrap'); if(sw2)sw2.classList.remove('hidden');
-              var hud=document.getElementById('hud'); if(hud)hud.classList.add('hidden');
-              if(typeof renderSlots==='function')renderSlots();
-            }
             var st=document.getElementById('settings'); if(st)st.classList.add('hidden');
-          }catch(e){}
+            // 1) salva o herói atual NO SLOT (saveGame só grava se running=true, então salvar ANTES de parar)
+            if(typeof running!=='undefined'&&running&&typeof saveGame==='function'){ try{saveGame();}catch(e){} }
+            // 2) para o jogo e esconde HUD
+            if(typeof running!=='undefined'){running=false;}
+            if(typeof closeAllPanels==='function'){try{closeAllPanels();}catch(e){}}
+            var hud=document.getElementById('hud'); if(hud)hud.classList.add('hidden');
+            var ab=document.getElementById('attackBtn'); if(ab)ab.style.display='none';
+            // 3) mostra o título
+            var tt=document.getElementById('title'); if(tt)tt.classList.remove('hidden');
+            // re-encaixa o canvas para nao dar efeito de zoom/esticado sob o titulo
+            try{ if(typeof resize==='function')resize(); }catch(e){}
+            // limpa o canvas (evita mostrar o ultimo quadro congelado do jogo)
+            try{ var _cv=document.getElementById('game')&&document.querySelector('canvas'); if(_cv){var _c=_cv.getContext('2d'); if(_c)_c.clearRect(0,0,_cv.width,_cv.height);} }catch(e){}
+            // libera a sessao online do heroi (o heartbeat detecta running=false, mas forcamos ja)
+            try{ if(window._acReleaseSession)window._acReleaseSession(); }catch(e){}
+            // 4) FORÇA a lista de heróis visível e ESCONDE o formulário de criação
+            if(typeof renderSlots==='function'){try{renderSlots();}catch(e){}}
+            var sw2=document.getElementById('slotsWrap'); if(sw2)sw2.classList.remove('hidden');
+            var cw=document.getElementById('createWrap'); if(cw)cw.style.display='none';
+            var cc=document.getElementById('cancelCreate'); if(cc)cc.style.display='none';
+            // rótulo do cabeçalho, se existir
+            var ch=document.getElementById('chooseHdr');
+            if(ch){ var HD={pt:'Trocar de herói',en:'Switch hero',es:'Cambiar héroe',fr:'Changer de héros'};
+              var L=(typeof LANG!=='undefined'&&HD[LANG])?LANG:'pt'; ch.textContent=HD[L]; }
+          }catch(e){ try{console.warn('trocar heroi falhou',e);}catch(_){} }
         };
         // insere logo após o cabeçalho (topo das opções)
         var head=sw.querySelector('.shead');
@@ -10139,6 +10161,69 @@ try{(function(){
     setInterval(_addSwitchRow, 1400);
     try{console.log('[heroswitch] botao Trocar heroi adicionado as Configuracoes.');}catch(e){}
   }catch(e){ try{console.warn('heroswitch falhou',e);}catch(_){} }
+
+  /* ============ NPC: botão contextual "Falar" (evita toque acidental abrir janela) ============ */
+  try{
+    var _LBL={pt:'Falar com',en:'Talk to',es:'Hablar con',fr:'Parler à'};
+    var _btn=null, _cur=null;
+    function _ensure(){
+      if(_btn)return _btn;
+      _btn=document.createElement('div'); _btn.id='npcTalkBtn';
+      _btn.style.cssText='position:fixed;z-index:65;transform:transl(-50%,0);'
+        +'background:rgba(20,26,40,0.94);border:1px solid #c9a24a;color:#f3e9cf;'
+        +'padding:7px 14px;border-radius:20px;font-family:sans-serif;font-size:13px;font-weight:600;'
+        +'display:none;cursor:pointer;white-space:nowrap;pointer-events:auto;'
+        +'box-shadow:0 3px 12px rgba(0,0,0,.5);-webkit-tap-highlight-color:transparent;user-select:none;'
+        +'transition:transform .07s ease,filter .1s ease;';
+      _btn.addEventListener('pointerdown',function(e){
+        e.preventDefault(); e.stopPropagation();
+        _btn.style.transform='translate(-50%,0) scale(.94)'; _btn.style.filter='brightness(1.15)';
+        try{ if(_cur&&typeof interactNpc==='function')interactNpc(_cur); }catch(err){}
+      });
+      _btn.addEventListener('pointerup',function(){ _btn.style.transform='translate(-50%,0)'; _btn.style.filter=''; });
+      (document.body||document.documentElement).appendChild(_btn);
+      return _btn;
+    }
+    function _nearestAdjNpc(){
+      try{
+        if(typeof npcs==='undefined'||typeof player==='undefined'||!player)return null;
+        for(var i=0;i<npcs.length;i++){
+          var n=npcs[i];
+          if((Math.abs(player.tx-n.x)+Math.abs(player.ty-n.y))<=1) return n;  /* ortogonal, colado */
+        }
+      }catch(e){}
+      return null;
+    }
+    function _tick(){
+      try{
+        var b=_ensure();
+        var showable=(typeof running!=='undefined'&&running)&&!(window._acAnyPanel&&window._acAnyPanel());
+        var n=showable?_nearestAdjNpc():null;
+        if(!n){ if(b.style.display!=='none'){b.style.display='none';_cur=null;} return; }
+        _cur=n;
+        // posiciona acima do NPC (mundo -> tela via cam), respeitando escala do canvas
+        var cvv=document.querySelector('#game canvas')||document.querySelector('canvas');
+        if(!cvv||typeof cam==='undefined'||typeof TILE==='undefined'){ b.style.display='none'; return; }
+        var rect=cvv.getBoundingClientRect();
+        var sx=(n.x*TILE+TILE/2 - cam.x), sy=(n.y*TILE - cam.y);
+        var scaleX=rect.width/(cvv.width||rect.width), scaleY=rect.height/(cvv.height||rect.height);
+        // cvv.width pode estar em px de dispositivo; usa W/H logicos se existirem
+        if(typeof W!=='undefined'&&typeof H!=='undefined'&&W>0&&H>0){ scaleX=rect.width/W; scaleY=rect.height/H; }
+        var px=rect.left + sx*scaleX;
+        var py=rect.top + sy*scaleY - 16;
+        // limita à tela
+        px=Math.max(rect.left+50, Math.min(rect.right-50, px));
+        py=Math.max(rect.top+40, py);
+        var L=(typeof LANG!=='undefined'&&_LBL[LANG])?LANG:'pt';
+        var nm=(n.name||'NPC').split(',')[0];
+        b.textContent='\uD83D\uDCAC '+_LBL[L]+' '+nm;
+        b.style.left=px+'px'; b.style.top=py+'px';
+        if(b.style.display!=='block')b.style.display='block';
+      }catch(e){}
+    }
+    setInterval(_tick, 120);
+    try{console.log('[npctalk] botao contextual Falar ativo (sem toque acidental).');}catch(e){}
+  }catch(e){ try{console.warn('npctalk falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
