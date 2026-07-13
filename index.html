@@ -4059,7 +4059,8 @@ function ensureLoadout(){
   for(let i=0;i<3;i++){if(!player.loadout[i]){const nx=un.find(x=>player.loadout.indexOf(x)<0);if(nx)player.loadout[i]=nx;}}
 }
 function castSlot(slot){
-  if(player.dead)return;const cdk='s'+(slot+1);if(cd[cdk]>0)return;
+  if(player.dead)return;
+  if(window._acPanelShield&&Date.now()<window._acPanelShield)return;const cdk='s'+(slot+1);if(cd[cdk]>0)return;
   ensureLoadout();const id=player.loadout[slot];if(!id||!SPELLS[id])return;const sp=SPELLS[id];
   if(sp.cls!==player.cls)return;
   if(player.lvl<sp.lv){addMessage(tf('msg_skill_locked',{lv:sp.lv}),'sys');return;}
@@ -4084,6 +4085,7 @@ function renderSkillLocks(){['sk1','sk2','sk6','sk7'].forEach(id=>{const el=$(id
 
 
 function usePotion(kind){if(player.dead||cd.pot>0)return;
+  if(window._acPanelShield&&Date.now()<window._acPanelShield)return;
   const list=player.bag.filter(b=>{const it=itemById(b.id);return it&&it.kind===kind;});
   if(!list.length){addMessage(kind==='hp'?t('m_no_pot'):t('m_no_cure'),'sys');return;}
   if(kind==='cure'&&player.poison<=0){addMessage(t('m_not_pois'),'sys');return;}
@@ -7370,7 +7372,7 @@ function drawItemIcon(cnv,item){const g=cnv.getContext('2d');const sz=cnv.width;
   const ic=iconFor(item);const sc=Math.max(1,Math.floor(sz/18));const o=Math.floor((sz-18*sc)/2);
   g.drawImage(ic,o,o,18*sc,18*sc);}
 let invOpen=false;
-function toggleInv(){invOpen?closeInv():openInv();}
+function toggleInv(){if(window._acPanelShield&&Date.now()<window._acPanelShield)return;invOpen?closeInv():openInv();}
 function openInv(){closeAllPanels();invOpen=true;$('inv').classList.remove('hidden');renderInv();}
 function closeInv(){invOpen=false;$('inv').classList.add('hidden');hideTip();}
 function updateInvIfOpen(){if(invOpen)renderInv();}
@@ -7481,7 +7483,7 @@ function shopItems(kind){const w=WEAPONS[player.cls],o=OFFHANDS[player.cls];
 function openShop(kind='shop'){closeAllPanels();shopKind=kind;
   $('shopTitle').textContent=kind==='smith'?t('shop_smith'):kind==='psmith'?t('shop_psmith'):kind==='alch'?t('shop_alch'):kind==='wander'?t('shop_wander'):t('shop_merchant');
   $('shop').classList.remove('hidden');renderShop();}
-function closeShop(){$('shop').classList.add('hidden');}
+function closeShop(){$('shop').classList.add('hidden');window._acPanelShield=Date.now()+450;}
 function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRows');rows.innerHTML='';
   for(const id of shopItems(shopKind)){const it=itemById(id);const row=document.createElement('div');row.className='row';
     const c=document.createElement('canvas');c.width=40;c.height=40;drawItemIcon(c,it);row.appendChild(c);
@@ -7507,7 +7509,7 @@ function sellPrice(it){return Math.max(1,Math.round((it.val||10)*0.4));}
 function sellBagItem(it){const e=player.bag.find(b=>b.id===it.id);if(!e)return;
   const g=sellPrice(it);takeBag(it.id,1);player.gold+=g;SFX.gold();buzz(8);
   addMessage(tf('msg_sold',{name:itemName(it),g:g}),'good');renderShop();renderHUD();if(invOpen)renderInv();}
-function closeAllPanels(){invOpen=false;$('inv').classList.add('hidden');$('shop').classList.add('hidden');$('help').classList.add('hidden');$('bigmap').classList.add('hidden');$('quests').classList.add('hidden');$('settings').classList.add('hidden');hideTip();}
+function closeAllPanels(){window._acPanelShield=Date.now()+450;invOpen=false;$('inv').classList.add('hidden');$('shop').classList.add('hidden');$('help').classList.add('hidden');$('bigmap').classList.add('hidden');$('quests').classList.add('hidden');$('settings').classList.add('hidden');hideTip();}
 let _zoneTO=null;
 function showZone(nm){const el=$('zonetoast');
   const _d=DANGER[nm]||0;
@@ -8299,7 +8301,7 @@ function init(){
   (function(){const sw=$('attackBtn')&&$('attackBtn').querySelector?$('attackBtn').querySelector('.sw'):null;
     if(sw&&ICO.atk){sw.textContent='';try{sw.appendChild(ICO.atk);}catch(e){}}})();
   $('sk1').onclick=useSkill1;$('sk2').onclick=useSkill2;$('sk6').onclick=useSkill3;$('sk7').onclick=useSkill4;$('sk3').onclick=()=>usePotion('hp');$('sk4').onclick=()=>usePotion('cure');$('sk5').onclick=toggleInv;
-  $('attackBtn').addEventListener('pointerdown',e=>{e.preventDefault();
+  $('attackBtn').addEventListener('pointerdown',e=>{e.preventDefault();if(window._acPanelShield&&Date.now()<window._acPanelShield)return;
     let best=null,bd=1e9;for(const m of monsters){const d=cheby(m.tx,m.ty,player.tx,player.ty);if(d<=7&&d<bd){bd=d;best=m;}}
     if(best)setTarget(best);else addMessage(t('m_no_enemy'),'sys');});
   setBtnIcon($('attackBtn'),'atk','\uD83C\uDFAF');
@@ -10061,6 +10063,21 @@ try{(function(){
     setInterval(function(){
       try{ if(typeof AC!=='undefined'&&AC&&typeof soundOn!=='undefined'&&soundOn&&(AC.state==='suspended'||AC.state==='interrupted')&&!document.hidden)_resumeAudio(); }catch(e){}
     },1500);
+
+
+    /* ---------- reinicia o LOOP de render ao voltar à aba (Chrome suspende o rAF) ---------- */
+    function _kickLoop(){
+      try{
+        if(typeof running!=='undefined'&&running&&typeof loop==='function'){
+          // re-kicka o requestAnimationFrame (a cadeia pode ter morrido com a aba em background)
+          if(typeof lastT!=='undefined')lastT=0;   // evita salto de dt gigante
+          requestAnimationFrame(loop);
+        }
+      }catch(e){}
+    }
+    document.addEventListener('visibilitychange',function(){ if(!document.hidden)setTimeout(_kickLoop,50); });
+    window.addEventListener('focus',_kickLoop);
+    window.addEventListener('pageshow',_kickLoop);
 
     /* ---------- 2) botão "parar" toda ação contínua do herói ---------- */
     var _STOP_LBL={pt:'Parar',en:'Stop',es:'Parar',fr:'Arrêter'};
