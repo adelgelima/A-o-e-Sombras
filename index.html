@@ -381,7 +381,7 @@
 /* toque confiável no mobile: elementos clicaveis nao iniciam rolagem (impede clique engolido no Android) */
 .btn,.slotc,.slotc *,.langb,.tbtn,.stog,.stog *,.clsCard,.clsCard *,.sdel,.gbtn,button,.slot,.slot *,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:none}
 
-</style>
+#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
 </head>
 <body>
 <div id="game">
@@ -8319,12 +8319,14 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
   document.addEventListener('pointerdown',function(e){
     var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
     if(!t)return;
+    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.preventDefault(); e.stopPropagation(); return; }  /* painel recem-fechado: ignora TODOS os botoes */
     lastEl=t; lastAt=Date.now();
     synth=true; try{ t.click(); }catch(_){}
     synth=false;
   },true);
   document.addEventListener('click',function(e){
     if(synth)return;
+    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }  /* escudo: barra o click nativo tambem */
     if(lastEl&&(Date.now()-lastAt)<800){
       var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
       if(t===lastEl||(lastEl.contains&&lastEl.contains(e.target))||(t&&t.contains&&t.contains(lastEl))){
@@ -10241,6 +10243,20 @@ try{(function(){
     setInterval(_tick, 120);
     try{console.log('[npctalk] botao contextual Falar ativo (sem toque acidental).');}catch(e){}
   }catch(e){ try{console.warn('npctalk falhou',e);}catch(_){} }
+
+
+  /* ============ ESCUDO CSS: desativa a barra inferior por instantes ao fechar painel ============ */
+  try{
+    setInterval(function(){
+      try{
+        var on=(window._acPanelShield&&Date.now()<window._acPanelShield);
+        var b=document.body; if(!b)return;
+        if(on&&!b.classList.contains('acShield'))b.classList.add('acShield');
+        else if(!on&&b.classList.contains('acShield'))b.classList.remove('acShield');
+      }catch(e){}
+    }, 40);
+    try{console.log('[escudo] CSS pointer-events na barra durante janela de fechamento.');}catch(e){}
+  }catch(e){}
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
