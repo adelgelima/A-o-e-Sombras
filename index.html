@@ -10986,37 +10986,65 @@ try{(function(){
     try{console.log('[spelltip] tooltip de magia ativo (segurar para ver).');}catch(e){}
   }catch(e){ try{console.warn('spelltip falhou',e);}catch(_){} }
 
-  /* ============ CUSTOMIZAÇÃO DOS BOTÕES DE POÇÃO ============ */
+  /* ============ CUSTOMIZAÇÃO DOS BOTÕES DE POÇÃO (escolhe poção específica) ============ */
   try{
     var _PCL={
-      pt:{title:'Configurar botão',pref:'Prioridade de poção',weak:'Mais fraca primeiro',strong:'Mais forte primeiro',type:'Tipo',hp:'Vida',cure:'Antídoto',save:'Salvar',hold_hint:'Segure para configurar'},
-      en:{title:'Configure button',pref:'Potion priority',weak:'Weakest first',strong:'Strongest first',type:'Type',hp:'Health',cure:'Antidote',save:'Save',hold_hint:'Hold to configure'},
-      es:{title:'Configurar botón',pref:'Prioridad de poción',weak:'Más débil primero',strong:'Más fuerte primero',type:'Tipo',hp:'Vida',cure:'Antídoto',save:'Guardar',hold_hint:'Mantén para configurar'},
-      fr:{title:'Configurer le bouton',pref:'Priorité de potion',weak:'Plus faible d\\u2019abord',strong:'Plus forte d\\u2019abord',type:'Type',hp:'Vie',cure:'Antidote',save:'Enregistrer',hold_hint:'Maintenir pour configurer'}
+      pt:{title:'Configurar botão',choose:'Escolha a poção deste botão',auto_hp:'Vida (automático)',auto_cure:'Antídoto (automático)',auto_hint:'usa a disponível',save:'Salvar',none:'Nenhuma poção no inventário',restores:'Restaura',hp_word:'de vida',purges:'Remove veneno'},
+      en:{title:'Configure button',choose:'Choose this button\\u2019s potion',auto_hp:'Health (auto)',auto_cure:'Antidote (auto)',auto_hint:'uses available',save:'Save',none:'No potions in inventory',restores:'Restores',hp_word:'HP',purges:'Cures poison'},
+      es:{title:'Configurar botón',choose:'Elige la poción de este botón',auto_hp:'Vida (automático)',auto_cure:'Antídoto (automático)',auto_hint:'usa la disponible',save:'Guardar',none:'Sin pociones en el inventario',restores:'Restaura',hp_word:'de vida',purges:'Cura veneno'},
+      fr:{title:'Configurer le bouton',choose:'Choisissez la potion de ce bouton',auto_hp:'Vie (auto)',auto_cure:'Antidote (auto)',auto_hint:'utilise la disponible',save:'Enregistrer',none:'Aucune potion',restores:'Restaure',hp_word:'PV',purges:'Soigne le poison'}
     };
     function _PCT(){var l=(typeof LANG!=='undefined'&&_PCL[LANG])?LANG:'pt';return _PCL[l];}
 
-    /* config persistente: qual tipo e prioridade cada botão de poção usa */
+    /* config: cada botão guarda o ID da poção escolhida (ou 'auto_hp'/'auto_cure') */
     function _loadCfg(){
-      try{ var r=localStorage.getItem('ac_potioncfg'); if(r)return JSON.parse(r); }catch(e){}
-      return {sk3:{kind:'hp',strong:false},sk4:{kind:'cure',strong:false}};
+      try{ var r=localStorage.getItem('ac_potioncfg2'); if(r)return JSON.parse(r); }catch(e){}
+      return {sk3:'auto_hp',sk4:'auto_cure'};
     }
-    function _saveCfg(c){ try{ localStorage.setItem('ac_potioncfg',JSON.stringify(c)); }catch(e){} }
+    function _saveCfg(c){ try{ localStorage.setItem('ac_potioncfg2',JSON.stringify(c)); }catch(e){} }
     var _potCfg=_loadCfg();
     window._acPotCfg=_potCfg;
 
-    /* usa a poção conforme a config do botão (tipo + prioridade fraca/forte) */
+    /* lista as poções que existem no jogo (POTIONS) */
+    function _allPotions(){
+      try{ if(typeof POTIONS!=='undefined'&&Array.isArray(POTIONS))return POTIONS.slice(); }catch(e){}
+      return [];
+    }
+    /* quantas o jogador tem de uma poção */
+    function _countInBag(id){
+      try{ var e=player.bag.find(function(b){return b.id===id;}); return e?(e.count||1):0; }catch(e){return 0;}
+    }
+
+    /* usa a poção conforme a config do botão */
     function _usePotionCfg(btnId){
       try{
         if(typeof player==='undefined'||player.dead)return;
         if(typeof cd!=='undefined'&&cd.pot>0)return;
-        var cfg=_potCfg[btnId]||{kind:'hp',strong:false};
-        var kind=cfg.kind;
-        var list=player.bag.filter(function(b){var it=itemById(b.id);return it&&it.kind===kind;});
-        if(!list.length){ if(typeof addMessage==='function')addMessage(kind==='hp'?(typeof t==='function'?t('m_no_pot'):'Sem poção'):(typeof t==='function'?t('m_no_cure'):'Sem antídoto'),'sys'); return; }
+        var sel=_potCfg[btnId]||'auto_hp';
+        var kind, chosenId=null;
+        if(sel==='auto_hp'){kind='hp';}
+        else if(sel==='auto_cure'){kind='cure';}
+        else { var pit=(typeof itemById==='function')?itemById(sel):null; if(pit){kind=pit.kind;chosenId=sel;} else {kind='hp';} }
+
+        var list;
+        if(chosenId){
+          /* poção específica escolhida */
+          var has=_countInBag(chosenId);
+          if(!has){ if(typeof addMessage==='function')addMessage((typeof itemById==='function'?itemName(itemById(chosenId)):'Poção')+' \\u2014 0','sys'); 
+            /* cai para automático do mesmo tipo */
+            list=player.bag.filter(function(b){var it=itemById(b.id);return it&&it.kind===kind;});
+            if(!list.length){return;}
+          } else {
+            list=[{id:chosenId,count:has}];
+          }
+        } else {
+          list=player.bag.filter(function(b){var it=itemById(b.id);return it&&it.kind===kind;});
+          if(!list.length){ if(typeof addMessage==='function')addMessage(kind==='hp'?(typeof t==='function'?t('m_no_pot'):'Sem poção'):(typeof t==='function'?t('m_no_cure'):'Sem antídoto'),'sys'); return; }
+          /* automático: mais fraca primeiro (economiza as fortes) */
+          list.sort(function(a,b){return itemById(a.id).amt-itemById(b.id).amt;});
+        }
         if(kind==='cure'&&player.poison<=0){ if(typeof addMessage==='function')addMessage(typeof t==='function'?t('m_not_pois'):'Sem veneno','sys'); return; }
-        /* ordena por potência conforme a preferência */
-        list.sort(function(a,b){var d=itemById(a.id).amt-itemById(b.id).amt;return cfg.strong?-d:d;});
+
         var it=itemById(list[0].id);
         takeBag(it.id,1); if(typeof cd!=='undefined')cd.pot=1.0;
         if(kind==='hp'){ player.hp=Math.min(player.maxhp,player.hp+it.amt);
@@ -11032,61 +11060,81 @@ try{(function(){
     }
     window._acUsePotionCfg=_usePotionCfg;
 
-    /* painel de configuração do botão */
+    var HP_EMOJI='\u{1F9EA}';   /* 🧪 */
+    var CURE_EMOJI='\u{1F33F}'; /* 🌿 */
+
+    /* painel: lista poções do jogo (marca quantas você tem) + opções automáticas */
     function _openCfgPanel(btnId){
       try{
         _hideCfg();
         var L=_PCT();
-        var cfg=_potCfg[btnId]||{kind:'hp',strong:false};
+        var sel=_potCfg[btnId]||'auto_hp';
         var ov=document.createElement('div');
         ov.id='_potCfgOv';
         ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;padding:20px;';
         var card=document.createElement('div');
-        card.style.cssText='background:#1a1d26;border:1px solid #3a3f4e;border-radius:16px;padding:20px;max-width:340px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.5);';
-        var html='<div style="font:700 18px sans-serif;color:#e8c15a;text-align:center;margin-bottom:16px">'+L.title+'</div>';
-        /* tipo */
-        html+='<div style="font:600 13px sans-serif;color:#8a90a0;margin-bottom:6px">'+L.type+'</div>';
-        html+='<div style="display:flex;gap:8px;margin-bottom:16px">';
-        html+='<button class="_pcType" data-k="hp" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(cfg.kind==='hp'?'#e8c15a':'#3a3a48')+';background:'+(cfg.kind==='hp'?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(cfg.kind==='hp'?'#e8c15a':'#c8ccd4')+';font:600 14px sans-serif;cursor:pointer">\\uD83E\\uDDEA '+L.hp+'</button>';
-        html+='<button class="_pcType" data-k="cure" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(cfg.kind==='cure'?'#e8c15a':'#3a3a48')+';background:'+(cfg.kind==='cure'?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(cfg.kind==='cure'?'#e8c15a':'#c8ccd4')+';font:600 14px sans-serif;cursor:pointer">\\uD83C\\uDF3F '+L.cure+'</button>';
-        html+='</div>';
-        /* prioridade */
-        html+='<div style="font:600 13px sans-serif;color:#8a90a0;margin-bottom:6px">'+L.pref+'</div>';
-        html+='<div style="display:flex;gap:8px;margin-bottom:20px">';
-        html+='<button class="_pcPref" data-s="0" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(!cfg.strong?'#e8c15a':'#3a3a48')+';background:'+(!cfg.strong?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(!cfg.strong?'#e8c15a':'#c8ccd4')+';font:600 13px sans-serif;cursor:pointer">'+L.weak+'</button>';
-        html+='<button class="_pcPref" data-s="1" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(cfg.strong?'#e8c15a':'#3a3a48')+';background:'+(cfg.strong?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(cfg.strong?'#e8c15a':'#c8ccd4')+';font:600 13px sans-serif;cursor:pointer">'+L.strong+'</button>';
-        html+='</div>';
+        card.style.cssText='background:#1a1d26;border:1px solid #3a3f4e;border-radius:16px;padding:20px;max-width:360px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.5);';
+        var draft=sel;
+
+        var html='<div style="font:700 18px sans-serif;color:#e8c15a;text-align:center;margin-bottom:6px">'+L.title+'</div>';
+        html+='<div style="font:400 12px sans-serif;color:#8a90a0;text-align:center;margin-bottom:16px">'+L.choose+'</div>';
+        html+='<div id="_pcList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>';
         html+='<button id="_pcSave" style="width:100%;padding:14px;border-radius:10px;border:1px solid #e8c15a;background:#e8c15a;color:#1a1d26;font:700 15px sans-serif;cursor:pointer">'+L.save+'</button>';
         card.innerHTML=html;
         ov.appendChild(card);
         document.body.appendChild(ov);
-        var draft={kind:cfg.kind,strong:cfg.strong};
-        card.querySelectorAll('._pcType').forEach(function(b){b.onclick=function(){draft.kind=b.getAttribute('data-k');_openCfgPanelReflect(card,draft);};});
-        card.querySelectorAll('._pcPref').forEach(function(b){b.onclick=function(){draft.strong=b.getAttribute('data-s')==='1';_openCfgPanelReflect(card,draft);};});
-        card.querySelector('#_pcSave').onclick=function(){ _potCfg[btnId]={kind:draft.kind,strong:draft.strong}; _saveCfg(_potCfg); _updateBtnLabel(btnId); _hideCfg(); };
+
+        function _renderList(){
+          var listDiv=card.querySelector('#_pcList');
+          listDiv.innerHTML='';
+          /* opções automáticas primeiro */
+          var opts=[
+            {id:'auto_hp',emoji:HP_EMOJI,name:L.auto_hp,sub:L.auto_hint,count:null},
+            {id:'auto_cure',emoji:CURE_EMOJI,name:L.auto_cure,sub:L.auto_hint,count:null}
+          ];
+          /* depois cada poção específica do jogo */
+          _allPotions().forEach(function(p){
+            var cnt=_countInBag(p.id);
+            var sub=(p.kind==='cure')?L.purges:(L.restores+' '+p.amt+' '+L.hp_word);
+            opts.push({id:p.id,emoji:(p.kind==='cure'?CURE_EMOJI:HP_EMOJI),name:(typeof itemName==='function'?itemName(p):p.name),sub:sub,count:cnt});
+          });
+          opts.forEach(function(o){
+            var on=(draft===o.id);
+            var row=document.createElement('button');
+            row.style.cssText='display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;text-align:left;cursor:pointer;border:1px solid '+(on?'#e8c15a':'#3a3a48')+';background:'+(on?'rgba(232,193,90,0.14)':'#22252e')+';width:100%;';
+            var cntTxt=(o.count===null)?'':('<span style="margin-left:auto;flex-shrink:0;font:700 13px sans-serif;color:'+(o.count>0?'#e8c15a':'#6a7080')+'">x'+o.count+'</span>');
+            row.innerHTML='<span style="font-size:22px;flex-shrink:0">'+o.emoji+'</span>'+
+              '<span style="flex:1;min-width:0;overflow:hidden"><span style="display:block;font:600 14px sans-serif;color:'+(on?'#e8c15a':'#e8e8f0')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+o.name+'</span>'+
+              '<span style="display:block;font:400 11px sans-serif;color:#8a90a0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+o.sub+'</span></span>'+cntTxt;
+            row.onclick=function(e){ e.stopPropagation(); draft=o.id; _renderList(); };
+            listDiv.appendChild(row);
+          });
+        }
+        _renderList();
+
+        card.querySelector('#_pcSave').onclick=function(){ _potCfg[btnId]=draft; _saveCfg(_potCfg); _updateBtnLabel(btnId); _hideCfg(); };
         ov.onclick=function(e){ if(e.target===ov)_hideCfg(); };
       }catch(e){ try{console.warn('openCfg',e);}catch(_){} }
     }
-    function _openCfgPanelReflect(card,draft){
-      card.querySelectorAll('._pcType').forEach(function(b){var on=b.getAttribute('data-k')===draft.kind;b.style.borderColor=on?'#e8c15a':'#3a3a48';b.style.background=on?'rgba(232,193,90,0.16)':'#22252e';b.style.color=on?'#e8c15a':'#c8ccd4';});
-      card.querySelectorAll('._pcPref').forEach(function(b){var on=(b.getAttribute('data-s')==='1')===draft.strong;b.style.borderColor=on?'#e8c15a':'#3a3a48';b.style.background=on?'rgba(232,193,90,0.16)':'#22252e';b.style.color=on?'#e8c15a':'#c8ccd4';});
-    }
     function _hideCfg(){ var o=document.getElementById('_potCfgOv'); if(o&&o.parentNode)o.parentNode.removeChild(o); }
 
-    /* atualiza o ícone do botão conforme o tipo configurado */
+    /* atualiza o ícone do botão conforme a poção configurada */
     function _updateBtnLabel(btnId){
       try{
         var btn=document.getElementById(btnId); if(!btn)return;
-        var cfg=_potCfg[btnId]; if(!cfg)return;
+        var sel=_potCfg[btnId]; if(!sel)return;
+        var kind='hp';
+        if(sel==='auto_cure')kind='cure';
+        else if(sel!=='auto_hp'){ var it=(typeof itemById==='function')?itemById(sel):null; if(it)kind=it.kind; }
         if(typeof setBtnIcon==='function'&&typeof ICO!=='undefined'){
-          if(cfg.kind==='hp')setBtnIcon(btn,'hpp','\\uD83E\\uDDEA');
-          else setBtnIcon(btn,'cure','\\uD83C\\uDF3F');
+          if(kind==='hp')setBtnIcon(btn,'hpp','\u{1F9EA}');
+          else setBtnIcon(btn,'cure','\u{1F33F}');
         }
       }catch(e){}
     }
 
-    /* intercepta o clique dos botões de poção (sk3/sk4) e adiciona hold p/ configurar */
-    function _wireePotionBtns(){
+    /* intercepta clique dos botões de poção (sk3/sk4) + hold p/ configurar */
+    function _wirePotionBtns(){
       try{
         ['sk3','sk4'].forEach(function(btnId){
           var btn=document.getElementById(btnId);
@@ -11098,20 +11146,16 @@ try{(function(){
             holdT=setTimeout(function(){ holdT=null; didHold=true; _openCfgPanel(btnId); },500);
           });
           var clr=function(){ if(holdT){clearTimeout(holdT);holdT=null;} };
-          btn.addEventListener('pointerup',function(e){
-            clr();
-            if(!didHold){ /* clique normal: usa poção conforme config */ _usePotionCfg(btnId); }
-          });
+          btn.addEventListener('pointerup',function(e){ clr(); if(!didHold){ _usePotionCfg(btnId); } });
           btn.addEventListener('pointerleave',clr);
           btn.addEventListener('pointercancel',clr);
-          /* remove o onclick nativo para nao usar poção duas vezes */
           btn.onclick=null;
           _updateBtnLabel(btnId);
         });
       }catch(e){}
     }
-    setInterval(_wireePotionBtns, 900);
-    try{console.log('[potioncfg] botoes de pocao configuraveis (segure para configurar).');}catch(e){}
+    setInterval(_wirePotionBtns, 900);
+    try{console.log('[potioncfg] botoes de pocao: escolha pocao especifica (segure).');}catch(e){}
   }catch(e){ try{console.warn('potioncfg falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
