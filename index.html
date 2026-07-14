@@ -4558,6 +4558,7 @@ function updateProjectiles(dt){for(const p of projectiles){
     addParticles(p.x,p.y,1,{col:p.vis==='arrow'?'#d8d2c0':ELEM[p.el].c,spd:16,life:0.3,size:p.vis==='arrow'?1.6:2.5,glow:p.vis!=='arrow'});}
   const tx=Math.floor(p.x/TILE),ty=Math.floor(p.y/TILE);
   const hitWall=tileAt(tx,ty)===T.wall||tileAt(tx,ty)===T.dwall||tileAt(tx,ty)===T.pillar;
+  if(hitWall){ if(p.aoe)explodeAt(p.x,p.y); p.dead=true; continue; }   /* parede bloqueia SEMPRE (flecha nao atravessa) */
   if(p.friendly){
     let hit=null,bd=1e9;
     for(const m of monsters){const d=dist(p.x,p.y,m.px,m.py);if(d<TILE*0.5*m.d.size&&d<bd){bd=d;hit=m;}}
@@ -8047,13 +8048,14 @@ function openBless(){if(_blessOpen){var _bp=document.getElementById('bless');if(
   _blessOffer=[];const cp=pool.slice();
   while(_blessOffer.length<Math.min(3,cp.length))_blessOffer.push(cp.splice(Math.floor(Math.random()*cp.length),1)[0]);
   _blessOpen=true;
+  try{window._acPanelShield=0;}catch(_e){}   /* limpa o escudo p/ nao barrar as cartas de bencao */
   $('blessBody').innerHTML=_blessOffer.map(b=>`
     <div class="bcard" data-b="${b.id}">
       <div class="bic">${b.ic}</div>
       <div class="bt">${blessName(b)}${blessCount(b.id)?` <small>${t('lvl_short')} ${blessCount(b.id)+1}</small>`:''}</div>
       <div class="bd">${blessDesc(b)}</div>
     </div>`).join('');
-  $('blessBody').querySelectorAll('.bcard').forEach(c=>c.onclick=()=>pickBless(c.dataset.b));
+  $('blessBody').querySelectorAll('.bcard').forEach(function(c){ c.onclick=function(){pickBless(c.dataset.b);}; c.addEventListener('pointerup',function(ev){ ev.stopPropagation(); pickBless(c.dataset.b); }); });
   $('bless').classList.remove('hidden');}
 function pickBless(id){if(!_blessOpen)return;
   if(!meta.bless)meta.bless={};
