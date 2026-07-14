@@ -5441,7 +5441,13 @@ function bakeIcons(){try{
 const ICOMAP={knight:['heal','whirl','slam','rage'],ranger:['volley','dash','rain','ghost'],mage:['fire','nova','bolt','storm']};
 function setBtnIcon(el,key,fb){if(!el||!el.querySelector)return;const sp=el.querySelector('.ic');if(!sp)return;
   sp.textContent='';const c=ICO[key];
-  if(c&&sp.appendChild){try{sp.appendChild(c);return;}catch(e){}}
+  if(c&&sp.appendChild){try{
+    /* CLONA o canvas em vez de MOVER o original (senao outros botoes que usam o mesmo icone ficam vazios) */
+    var cc=document.createElement('canvas');cc.width=c.width;cc.height=c.height;
+    cc.style.cssText=c.style.cssText;
+    var cx=cc.getContext('2d');if(cx){cx.drawImage(c,0,0);}
+    sp.appendChild(cc);return;
+  }catch(e){}}
   sp.textContent=fb||'';}
 function sprMon(key){const hover=(key==='bat')?-6:0;
   return function(g,w,m){const set=monSpr[key];
@@ -10801,16 +10807,32 @@ try{(function(){
       try{
         var inv=document.getElementById('inv'); if(!inv)return;
         if(inv.querySelector('.qolSort'))return;
-        /* acha um cabeçalho ou área de título do inventário */
-        var host=inv.querySelector('.card')||inv.querySelector('.panel')||inv;
+        /* acha o cabecalho "Mochila" (h2) para colocar o botao AO LADO dele */
+        var mochilaHdr=null;
+        var h2s=inv.querySelectorAll('h2');
+        for(var i=0;i<h2s.length;i++){
+          var tx=h2s[i].textContent.trim().toUpperCase();
+          if(tx.indexOf('MOCHILA')>=0||tx.indexOf('BACKPACK')>=0||tx.indexOf('BAG')>=0||tx.indexOf('SAC')>=0){ mochilaHdr=h2s[i]; break; }
+        }
         var L=_QT();
         var btn=document.createElement('button');
         btn.className='qolSort';
-        btn.textContent='⇅ '+L.sort;
-        btn.style.cssText='position:absolute;top:10px;right:52px;z-index:5;background:#2a2f3e;border:1px solid #3a4050;color:#e8e8f0;border-radius:8px;padding:6px 10px;font:600 12px sans-serif;cursor:pointer;';
+        btn.textContent='\u21C5 '+L.sort;
         btn.onclick=function(e){e.stopPropagation();_sortBag();};
         btn.addEventListener('pointerdown',function(e){e.stopPropagation();});
-        host.appendChild(btn);
+        if(mochilaHdr){
+          /* transforma o cabecalho Mochila numa linha flex: titulo + botao */
+          mochilaHdr.style.display='flex';
+          mochilaHdr.style.alignItems='center';
+          mochilaHdr.style.justifyContent='space-between';
+          btn.style.cssText='background:#2a2f3e;border:1px solid #3a4050;color:#e8e8f0;border-radius:8px;padding:6px 12px;font:600 12px sans-serif;cursor:pointer;flex-shrink:0;margin-left:auto;';
+          mochilaHdr.appendChild(btn);
+        } else {
+          /* fallback: canto, mas ABAIXO do titulo (top maior) para nao sobrepor */
+          var host=inv.querySelector('.card')||inv.querySelector('.panel')||inv;
+          btn.style.cssText='position:absolute;top:56px;right:16px;z-index:5;background:#2a2f3e;border:1px solid #3a4050;color:#e8e8f0;border-radius:8px;padding:6px 12px;font:600 12px sans-serif;cursor:pointer;';
+          host.appendChild(btn);
+        }
       }catch(e){}
     }
 
@@ -10824,6 +10846,42 @@ try{(function(){
     }, 500);
     try{console.log('[QoL] vender-lixo + ordenar inventario ativos.');}catch(e){}
   }catch(e){ try{console.warn('QoL falhou',e);}catch(_){} }
+
+  /* ============ FIX: redesenha ícones dos botões ao voltar ao Chrome ============ */
+  try{
+    function _redrawAllBtnIcons(){
+      try{
+        if(typeof setBtnIcon!=='function'||typeof ICO==='undefined')return;
+        var $=function(id){return document.getElementById(id);};
+        /* re-seta os ícones fixos da barra */
+        if($('sk3'))setBtnIcon($('sk3'),'hpp','\uD83E\uDDEA');
+        if($('sk4'))setBtnIcon($('sk4'),'cure','\uD83C\uDF3F');
+        if($('sk5'))setBtnIcon($('sk5'),'bag','\uD83C\uDF92');
+        /* ícone de ataque (attackBtn tem .sw) */
+        try{
+          var ab=$('attackBtn');
+          if(ab&&ab.querySelector){
+            var sw=ab.querySelector('.sw');
+            if(sw&&ICO.atk){sw.textContent='';var cc=document.createElement('canvas');cc.width=ICO.atk.width;cc.height=ICO.atk.height;cc.style.cssText=ICO.atk.style.cssText;var cx=cc.getContext('2d');if(cx)cx.drawImage(ICO.atk,0,0);sw.appendChild(cc);}
+          }
+        }catch(e){}
+        /* re-renderiza skills/loadout e HUD (que redesenham os outros ícones) */
+        try{ if(typeof renderHUD==='function')renderHUD(); }catch(e){}
+        try{ if(typeof renderLoadout==='function')renderLoadout(); }catch(e){}
+        try{ if(typeof renderSkills==='function')renderSkills(); }catch(e){}
+      }catch(e){}
+    }
+
+    /* quando a aba volta a ficar visível (voltar do Chrome/multitarefa) */
+    document.addEventListener('visibilitychange',function(){
+      if(!document.hidden){ setTimeout(_redrawAllBtnIcons, 60); setTimeout(_redrawAllBtnIcons, 300); }
+    });
+    /* também no focus da janela e no pageshow (bfcache) */
+    window.addEventListener('focus',function(){ setTimeout(_redrawAllBtnIcons, 60); });
+    window.addEventListener('pageshow',function(){ setTimeout(_redrawAllBtnIcons, 60); });
+    window._acRedrawIcons=_redrawAllBtnIcons;
+    try{console.log('[iconrefresh] redesenho de icones ao voltar ativo.');}catch(e){}
+  }catch(e){ try{console.warn('iconrefresh falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
