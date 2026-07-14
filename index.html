@@ -5427,7 +5427,7 @@ function bakeIcons(){try{
   ICO.storm=mk((g,P)=>{P(g,11,3,6,6,K);P(g,12,4,4,4,'#bfaaff');P(g,13,4,2,2,'#e8dcff');P(g,8,8,3,3,'rgba(191,170,255,.7)');P(g,5,11,3,3,'rgba(191,170,255,.45)');P(g,2,14,3,3,'rgba(191,170,255,.25)');});
   ICO.hpp=mk((g,P)=>{P(g,8,1,4,3,'#8a7448');P(g,7,4,6,2,K);P(g,5,6,10,12,K);P(g,6,7,8,10,'#d84a4a');P(g,6,7,8,3,'rgba(255,255,255,.18)');P(g,7,9,2,6,'#ff9a8a');});
   ICO.cure=mk((g,P)=>{P(g,8,1,4,3,'#8a7448');P(g,7,4,6,2,K);P(g,5,6,10,12,K);P(g,6,7,8,10,'#57a04b');P(g,7,9,2,6,'#c8f0b0');P(g,12,3,5,5,'#78c164');P(g,13,4,2,4,'#2e5c31');});
-  ICO.bag=mk((g,P)=>{P(g,4,4,12,14,K);P(g,5,5,10,12,'#8a5a30');P(g,5,5,10,4,'#a8703c');P(g,8,9,4,4,'#e0b658');P(g,3,7,2,8,'#5c4426');P(g,15,7,2,8,'#5c4426');});
+  ICO.bag=mk((g,P)=>{P(g,7,3,2,3,K);P(g,11,3,2,3,K);P(g,7,3,6,1,K);P(g,4,6,12,12,K);P(g,5,7,10,10,'#3f7061');P(g,5,7,10,2,'#528a78');P(g,6,11,8,6,K);P(g,7,12,6,4,'#2f5749');P(g,9,13,2,2,'#e8c15a');P(g,6,9,1,7,'#2a4a40');P(g,13,9,1,7,'#2a4a40');P(g,6,7,2,1,'#6ba593');});
   ICO.atk=mk((g,P)=>{
     // retículo de mira 20x20, centrado (leitura: escolher alvo)
     const corners=[[5,5],[6,5],[5,6],  [14,5],[13,5],[14,6],  [5,14],[6,14],[5,13],  [14,14],[13,14],[14,13]];
@@ -7533,24 +7533,39 @@ function openShop(kind='shop'){closeAllPanels();shopKind=kind;
   $('shop').classList.remove('hidden');renderShop();}
 function closeShop(){$('shop').classList.add('hidden');window._acPanelShield=Date.now()+450;}
 function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRows');rows.innerHTML='';
-  for(const id of shopItems(shopKind)){const it=itemById(id);const row=document.createElement('div');row.className='row';
-    const c=document.createElement('canvas');c.width=40;c.height=40;drawItemIcon(c,it);row.appendChild(c);
-    const info=document.createElement('div');info.className='info';info.innerHTML=`<div class="n" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="d">${itemDesc(it)}</div>`;row.appendChild(info);
-    const price=document.createElement('span');price.className='price';price.textContent=it.val+' ⦿';row.appendChild(price);
-    const buy=document.createElement('button');buy.className='btn buy';buy.textContent='Comprar';buy.onclick=()=>buyItem(it);row.appendChild(buy);
-    rows.appendChild(row);}
-  /* --- VENDER (suas coisas: equipamentos, inclui os de outra vocacao marcados) --- */
-  const sellable=player.bag.filter(b=>{const it=itemById(b.id);return it&&itemKind(it)!=='potion';});
-  if(sellable.length){
-    const hdr=document.createElement('div');hdr.style.cssText='grid-column:1/-1;margin:10px 0 2px;font-size:11px;font-weight:700;color:var(--ink-dim);letter-spacing:.5px;text-transform:uppercase';hdr.textContent='Vender';rows.appendChild(hdr);
-    for(const b of sellable){const it=itemById(b.id);const row=document.createElement('div');row.className='row';
+  if(typeof window._shopTab==='undefined')window._shopTab='buy';
+  var _L=(typeof LANG!=='undefined'?LANG:'pt');
+  var _TB={pt:{buy:'Comprar',sell:'Vender',empty:'Nada para vender.'},en:{buy:'Buy',sell:'Sell',empty:'Nothing to sell.'},es:{buy:'Comprar',sell:'Vender',empty:'Nada que vender.'},fr:{buy:'Acheter',sell:'Vendre',empty:'Rien à vendre.'}}[_L]||{buy:'Comprar',sell:'Vender',empty:'Nada.'};
+  /* ---- ABAS ---- */
+  var tabBar=document.createElement('div');tabBar.style.cssText='grid-column:1/-1;display:flex;gap:6px;margin-bottom:10px;position:sticky;top:0;z-index:2;background:var(--panel,#171a22);padding-bottom:4px;';
+  function mkTab(id,label){var b=document.createElement('button');b.textContent=label;var on=window._shopTab===id;b.style.cssText='flex:1;padding:10px;border-radius:9px;font:700 14px sans-serif;cursor:pointer;border:1px solid '+(on?'#e8c15a':'#3a3a48')+';background:'+(on?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(on?'#e8c15a':'#8a90a0')+';';b.onclick=function(e){e.stopPropagation();window._shopTab=id;renderShop();};b.addEventListener('pointerdown',function(e){e.stopPropagation();});return b;}
+  tabBar.appendChild(mkTab('buy',_TB.buy));tabBar.appendChild(mkTab('sell',_TB.sell));rows.appendChild(tabBar);
+
+  function stepper(row,onGet){var box=document.createElement('div');box.style.cssText='display:inline-flex;align-items:center;border:1px solid #4a4a58;border-radius:8px;overflow:hidden;margin-right:6px;vertical-align:middle;';var q=1;var minus=document.createElement('button'),val=document.createElement('div'),plus=document.createElement('button');minus.textContent='\u2212';plus.textContent='+';val.textContent='1';var bs='width:28px;height:30px;border:0;background:#2a2a36;color:#e8e8f0;font:700 16px sans-serif;cursor:pointer;padding:0;';minus.style.cssText=bs;plus.style.cssText=bs;val.style.cssText='min-width:28px;text-align:center;color:#f3e9cf;font:700 13px sans-serif;background:#1c1c26;height:30px;line-height:30px;';[minus,plus].forEach(function(b){b.addEventListener('pointerdown',function(e){e.stopPropagation();});});minus.onclick=function(e){e.stopPropagation();q=Math.max(1,q-1);val.textContent=q;};plus.onclick=function(e){e.stopPropagation();q=Math.min(99,q+1);val.textContent=q;};box.appendChild(minus);box.appendChild(val);box.appendChild(plus);row._getQty=function(){return q;};return box;}
+
+  if(window._shopTab==='buy'){
+    /* ---- COMPRAR ---- */
+    for(const id of shopItems(shopKind)){const it=itemById(id);if(!it)continue;const row=document.createElement('div');row.className='row';row._item=it;
+      const c=document.createElement('canvas');c.width=40;c.height=40;drawItemIcon(c,it);row.appendChild(c);
+      const info=document.createElement('div');info.className='info';info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+'">'+itemName(it)+'</div><div class="d">'+itemDesc(it)+'</div>';row.appendChild(info);
+      const price=document.createElement('span');price.className='price';price.textContent=it.val+' \u29BF';row.appendChild(price);
+      row.appendChild(stepper(row));
+      const buy=document.createElement('button');buy.className='btn buy';buy.textContent=_TB.buy;buy.addEventListener('pointerdown',function(e){e.stopPropagation();});buy.onclick=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof buyItemN==='function')buyItemN(item,n);else buyItem(item);};})(it,row);row.appendChild(buy);
+      rows.appendChild(row);}
+  } else {
+    /* ---- VENDER ---- */
+    const sellable=player.bag.filter(b=>{const it=itemById(b.id);return it&&itemKind(it)!=='potion';});
+    if(!sellable.length){var em=document.createElement('div');em.style.cssText='grid-column:1/-1;text-align:center;color:#8a90a0;padding:24px 0;font-size:13px;';em.textContent=_TB.empty;rows.appendChild(em);}
+    for(const b of sellable){const it=itemById(b.id);const row=document.createElement('div');row.className='row';row._item=it;
       const c=document.createElement('canvas');c.width=40;c.height=40;drawItemIcon(c,it);row.appendChild(c);
       const off=(it.cls&&it.cls!==player.cls)?' \u2298':'';
       const info=document.createElement('div');info.className='info';info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+'">'+itemName(it)+off+'</div><div class="d">x'+b.count+'</div>';row.appendChild(info);
       const price=document.createElement('span');price.className='price';price.textContent='+'+sellPrice(it)+' \u29BF';row.appendChild(price);
-      const sell=document.createElement('button');sell.className='btn';sell.style.cssText='background:#7a5a2a;border-color:#a87a3a';sell.textContent='Vender';sell.onclick=()=>sellBagItem(it);row.appendChild(sell);
-      rows.appendChild(row);}}
+      row.appendChild(stepper(row));
+      const sell=document.createElement('button');sell.className='btn';sell.style.cssText='background:#7a5a2a;border-color:#a87a3a';sell.textContent=_TB.sell;sell.addEventListener('pointerdown',function(e){e.stopPropagation();});sell.onclick=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof sellBagItemN==='function')sellBagItemN(item,n);else sellBagItem(item);};})(it,row);row.appendChild(sell);
+      rows.appendChild(row);}
   }
+}
 function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
 function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
 function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
@@ -10474,109 +10489,8 @@ try{(function(){
     try{console.log('[variantes] UI de escolha ativa (criacao + configuracoes).');}catch(e){}
   }catch(e){ try{console.warn('variantes UI falhou',e);}catch(_){} }
 
-  /* ============ SELETOR DE QUANTIDADE na loja (comprar/vender N de uma vez) ============ */
-  try{
-    var _QLBL={pt:'Qtd',en:'Qty',es:'Cant',fr:'Qté'};
-    /* injeta CSS do stepper */
-    (function(){ if(document.getElementById('qtyCss'))return;
-      var st=document.createElement('style'); st.id='qtyCss';
-      st.textContent='.qtyBox{display:inline-flex;align-items:center;gap:0;margin-right:6px;border:1px solid #4a4a58;border-radius:8px;overflow:hidden;vertical-align:middle}'
-        +'.qtyBox button{width:26px;height:28px;border:0;background:#2a2a36;color:#e8e8f0;font:700 15px sans-serif;cursor:pointer;padding:0;line-height:28px;touch-action:manipulation}'
-        +'.qtyBox button:active{background:#3a3a48}'
-        +'.qtyBox .qv{min-width:26px;text-align:center;color:#f3e9cf;font:700 13px sans-serif;background:#1c1c26;height:28px;line-height:28px;padding:0 2px}';
-      (document.head||document.documentElement).appendChild(st);
-    })();
-
-    function _enhanceShop(){
-      try{
-        var rows=document.getElementById('shopRows'); if(!rows)return;
-        var list=rows.querySelectorAll('.row');
-        for(var i=0;i<list.length;i++){
-          var row=list[i];
-          if(row._qtyDone)continue;
-          var btn=row.querySelector('button.buy, button');
-          if(!btn)continue;
-          var isBuy=btn.classList.contains('buy')||btn.textContent.indexOf('Comprar')>=0||btn.textContent.indexOf('Buy')>=0;
-          /* cria o stepper */
-          var box=document.createElement('div'); box.className='qtyBox';
-          var minus=document.createElement('button'); minus.textContent='\u2212';
-          var val=document.createElement('div'); val.className='qv'; val.textContent='1';
-          var plus=document.createElement('button'); plus.textContent='+';
-          box.appendChild(minus); box.appendChild(val); box.appendChild(plus);
-          var qty=1;
-          minus.addEventListener('pointerdown',function(ev){ev.preventDefault();ev.stopPropagation();});
-          plus.addEventListener('pointerdown',function(ev){ev.preventDefault();ev.stopPropagation();});
-          (function(val){
-            minus.onclick=function(){ qty=Math.max(1,qty-1); val.textContent=qty; };
-            plus.onclick=function(){ qty=Math.min(99,qty+1); val.textContent=qty; };
-          })(val);
-          /* insere o stepper ANTES do botão */
-          btn.parentNode.insertBefore(box, btn);
-          /* recliga o botão para usar a quantidade */
-          var it=row._item;  /* pode não existir; recuperamos via índice abaixo */
-          row._qtyGet=function(){return qty;};
-          row._qtyDone=true;
-          /* substitui o onclick do botão para multiplicar */
-          var origClick=btn.onclick;
-          btn.onclick=function(e){
-            var n=row._qtyGet?row._qtyGet():1;
-            var item=row._item;
-            if(item){
-              if(isBuy){ if(typeof buyItemN==='function'){buyItemN(item,n);return;} }
-              else { if(typeof sellBagItemN==='function'){sellBagItemN(item,n);return;} }
-            }
-            if(origClick)origClick.call(btn,e);  /* fallback: 1 unidade */
-          };
-        }
-      }catch(e){}
-    }
-    /* o renderShop recria as linhas; precisamos anexar o item a cada row.
-       Envolvemos renderShop para marcar row._item e re-injetar o stepper. */
-    function _wrapRender(){
-      if(typeof renderShop!=='function'||renderShop._wrapped)return;
-      var _orig=renderShop;
-      window.renderShop=renderShop=function(){
-        _orig.apply(this,arguments);
-        /* após render, mapeia cada row ao seu item via a ordem de shopItems */
-        try{
-          var rows=document.getElementById('shopRows'); if(!rows)return;
-          var kinds=(typeof shopKind!=='undefined')?shopKind:'shop';
-          var ids=(typeof shopItems==='function')?shopItems(kinds):[];
-          var buyRows=[], sellRows=[];
-          var all=rows.querySelectorAll('.row');
-          /* itens de compra vêm primeiro (na ordem de ids); os de venda são da mochila */
-          var bi=0;
-          for(var i=0;i<all.length;i++){
-            var r=all[i];
-            var btn=r.querySelector('button');
-            if(!btn){continue;}
-            var isBuy=btn.classList.contains('buy')||btn.textContent.indexOf('Comprar')>=0||btn.textContent.indexOf('Buy')>=0;
-            if(isBuy && bi<ids.length){ r._item=(typeof itemById==='function')?itemById(ids[bi]):null; bi++; }
-            else if(!isBuy){
-              /* venda: acha o item da mochila por nome no info */
-              r._item=_matchBagItem(r);
-            }
-          }
-        }catch(e){}
-        _enhanceShop();
-      };
-      renderShop._wrapped=true;
-    }
-    function _matchBagItem(row){
-      try{
-        if(typeof player==='undefined'||!player.bag)return null;
-        var nm=row.querySelector('.info .n'); if(!nm)return null;
-        var txt=nm.textContent.trim();
-        for(var i=0;i<player.bag.length;i++){
-          var it=(typeof itemById==='function')?itemById(player.bag[i].id):null;
-          if(it&&(typeof itemName==='function'?itemName(it):'')===txt)return it;
-        }
-      }catch(e){}
-      return null;
-    }
-    var _t=setInterval(function(){ _wrapRender(); if(document.getElementById('shopRows'))_enhanceShop(); }, 500);
-    try{console.log('[loja] seletor de quantidade ativo (comprar/vender N).');}catch(e){}
-  }catch(e){ try{console.warn('shopqty falhou',e);}catch(_){} }
+  /* shopqty DESABILITADO: renderShop agora tem abas+stepper nativos */
+  (function(){})();
 
   /* ============ PLACAR ASSÍNCRONO (retenção D7 — usa Firebase já ligado) ============ */
   try{
