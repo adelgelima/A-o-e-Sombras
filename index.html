@@ -382,7 +382,7 @@
 .btn,.langb,.tbtn,.stog,.stog *,.gbtn,button,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:none}
 .slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:pan-y}
 
-#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}#title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
+#shopRows input[type=number]::-webkit-inner-spin-button,#shopRows input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}#title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
    https://console.firebase.google.com , ative Authentication (Google) e Firestore,
@@ -7547,7 +7547,7 @@ function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRo
   function mkTab(id,label){var b=document.createElement('button');b.textContent=label;var on=window._shopTab===id;b.style.cssText='flex:1;padding:10px;border-radius:9px;font:700 14px sans-serif;cursor:pointer;border:1px solid '+(on?'#e8c15a':'#3a3a48')+';background:'+(on?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(on?'#e8c15a':'#8a90a0')+';';b.onclick=function(e){e.stopPropagation();window._shopTab=id;renderShop();};b.addEventListener('pointerdown',function(e){e.stopPropagation();});return b;}
   tabBar.appendChild(mkTab('buy',_TB.buy));tabBar.appendChild(mkTab('sell',_TB.sell));rows.appendChild(tabBar);
 
-  function stepper(row,onGet){var box=document.createElement('div');box.style.cssText='display:inline-flex;align-items:center;border:1px solid #5a5a68;border-radius:9px;overflow:hidden;flex:0 0 auto;flex-shrink:0;';var q=1;var minus=document.createElement('button'),val=document.createElement('div'),plus=document.createElement('button');minus.textContent='\u2212';plus.textContent='+';val.textContent='1';var bs='width:34px;min-width:34px;height:38px;border:0;background:#33333f;color:#fff;font:700 20px sans-serif;cursor:pointer;padding:0;line-height:38px;flex-shrink:0;touch-action:manipulation;';minus.style.cssText=bs;plus.style.cssText=bs+'border-left:1px solid #4a4a58;';minus.style.cssText+='border-right:1px solid #4a4a58;';val.style.cssText='width:30px;min-width:30px;text-align:center;color:#f3e9cf;font:700 15px sans-serif;background:#1c1c26;height:38px;line-height:38px;flex-shrink:0;';[minus,plus].forEach(function(b){b.addEventListener('pointerdown',function(e){e.stopPropagation();e.preventDefault();});});minus.onclick=function(e){e.stopPropagation();q=Math.max(1,q-1);val.textContent=q;};plus.onclick=function(e){e.stopPropagation();q=Math.min(99,q+1);val.textContent=q;};box.appendChild(minus);box.appendChild(val);box.appendChild(plus);row._getQty=function(){return q;};return box;}
+  function stepper(row,onGet){var box=document.createElement('div');box.style.cssText='display:inline-flex;align-items:center;border:1px solid #5a5a68;border-radius:9px;overflow:hidden;flex:0 0 auto;flex-shrink:0;';var q=1;var minus=document.createElement('button'),val=document.createElement('input'),plus=document.createElement('button');minus.textContent='\u2212';plus.textContent='+';val.type='number';val.value='1';val.min='1';val.max='99';val.inputMode='numeric';val.setAttribute('aria-label','quantidade');var bs='width:34px;min-width:34px;height:38px;border:0;background:#33333f;color:#fff;font:700 20px sans-serif;cursor:pointer;padding:0;line-height:38px;flex-shrink:0;touch-action:manipulation;';minus.style.cssText=bs;plus.style.cssText=bs+'border-left:1px solid #4a4a58;';minus.style.cssText+='border-right:1px solid #4a4a58;';val.style.cssText='width:40px;min-width:40px;text-align:center;color:#f3e9cf;font:700 15px sans-serif;background:#1c1c26;height:38px;border:0;outline:0;flex-shrink:0;-moz-appearance:textfield;padding:0;';[minus,plus].forEach(function(b){b.addEventListener('pointerdown',function(e){e.stopPropagation();e.preventDefault();});});val.addEventListener('pointerdown',function(e){e.stopPropagation();});val.addEventListener('click',function(e){e.stopPropagation();val.select();});val.addEventListener('input',function(e){e.stopPropagation();var v=parseInt(val.value,10);if(!isNaN(v)){q=Math.max(1,Math.min(99,v));}});val.addEventListener('change',function(e){e.stopPropagation();var v=parseInt(val.value,10);if(isNaN(v)||v<1)v=1;if(v>99)v=99;q=v;val.value=q;});val.addEventListener('blur',function(){var v=parseInt(val.value,10);if(isNaN(v)||v<1)v=1;if(v>99)v=99;q=v;val.value=q;});minus.onclick=function(e){e.stopPropagation();q=Math.max(1,q-1);val.value=q;};plus.onclick=function(e){e.stopPropagation();q=Math.min(99,q+1);val.value=q;};box.appendChild(minus);box.appendChild(val);box.appendChild(plus);row._getQty=function(){var v=parseInt(val.value,10);return (isNaN(v)||v<1)?1:Math.min(99,v);};return box;}
 
   if(window._shopTab==='buy'){
     /* ---- COMPRAR ---- */
@@ -7572,6 +7572,10 @@ function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRo
       rows.appendChild(row);}
   }
 }
+function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
+function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
+function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
+function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
 function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
 function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
 function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
@@ -10882,6 +10886,233 @@ try{(function(){
     window._acRedrawIcons=_redrawAllBtnIcons;
     try{console.log('[iconrefresh] redesenho de icones ao voltar ativo.');}catch(e){}
   }catch(e){ try{console.warn('iconrefresh falhou',e);}catch(_){} }
+
+  /* ============ TOOLTIP DE MAGIA: segurar mostra atributos ============ */
+  try{
+    /* descrições das magias (não existem no SPELLS original) */
+    var _SPELL_DESC={
+      k_heal:{pt:'Restaura 35% da vida máxima + bônus por nível.',en:'Restores 35% max HP + level bonus.',es:'Restaura 35% de vida máx + bono de nivel.',fr:'Restaure 35% PV max + bonus de niveau.'},
+      k_swirl:{pt:'Golpe giratório que atinge inimigos ao redor.',en:'Spinning strike hitting nearby enemies.',es:'Golpe giratorio que golpea enemigos cercanos.',fr:'Coup tournant frappant les ennemis proches.'},
+      k_slam:{pt:'Impacto sísmico em área à frente.',en:'Seismic slam in an area ahead.',es:'Impacto sísmico en área frontal.',fr:'Impact sismique dans une zone devant.'},
+      k_fury:{pt:'Aumenta muito o dano por um tempo.',en:'Greatly boosts damage for a duration.',es:'Aumenta mucho el daño por un tiempo.',fr:'Augmente fortement les dégâts un moment.'},
+      k_charge:{pt:'Avança atravessando inimigos e os atordoa.',en:'Charges through enemies, stunning them.',es:'Embiste atravesando enemigos y los aturde.',fr:'Charge à travers les ennemis en les étourdissant.'},
+      k_bulwark:{pt:'Reduz drasticamente o dano recebido.',en:'Drastically reduces incoming damage.',es:'Reduce drásticamente el daño recibido.',fr:'Réduit drastiquement les dégâts subis.'},
+      k_quake:{pt:'Terremoto que atinge toda a tela.',en:'Earthquake hitting the whole screen.',es:'Terremoto que golpea toda la pantalla.',fr:'Séisme frappant tout l\\u2019écran.'},
+      k_execute:{pt:'Dano massivo em inimigos com pouca vida.',en:'Massive damage to low-HP enemies.',es:'Daño masivo a enemigos con poca vida.',fr:'Dégâts massifs aux ennemis à faible PV.'},
+      r_triple:{pt:'Dispara três flechas de uma vez.',en:'Fires three arrows at once.',es:'Dispara tres flechas a la vez.',fr:'Tire trois flèches à la fois.'},
+      r_dash:{pt:'Salta rapidamente para trás, evitando dano.',en:'Quickly dashes back, dodging damage.',es:'Salta rápido hacia atrás, evitando daño.',fr:'Bond rapide en arrière, esquive les dégâts.'},
+      r_poison:{pt:'Flechas envenenadas causam dano contínuo.',en:'Poison arrows deal damage over time.',es:'Flechas venenosas causan daño continuo.',fr:'Flèches empoisonnées, dégâts continus.'},
+      r_volley:{pt:'Rajada de várias flechas em leque.',en:'Volley of arrows in a fan.',es:'Ráfaga de flechas en abanico.',fr:'Volée de flèches en éventail.'},
+      r_aimed:{pt:'Tiro preciso de dano crítico elevado.',en:'Precise shot with high crit damage.',es:'Tiro preciso con alto daño crítico.',fr:'Tir précis à dégâts critiques élevés.'},
+      r_trap:{pt:'Coloca armadilha que prende inimigos.',en:'Places a trap that snares enemies.',es:'Coloca trampa que atrapa enemigos.',fr:'Pose un piège qui immobilise les ennemis.'},
+      r_rain:{pt:'Chuva de flechas em grande área.',en:'Arrow rain over a large area.',es:'Lluvia de flechas en gran área.',fr:'Pluie de flèches sur une grande zone.'},
+      r_shadow:{pt:'Rajada sombria que perfura inimigos.',en:'Shadow volley piercing enemies.',es:'Ráfaga sombría que perfora enemigos.',fr:'Volée d\\u2019ombre perçant les ennemis.'},
+      /* Ocultista (mage) — descrições genéricas por segurança */
+      m_bolt:{pt:'Projétil mágico básico.',en:'Basic magic bolt.',es:'Proyectil mágico básico.',fr:'Éclair magique de base.'}
+    };
+    function _spellDescOf(id){ var d=_SPELL_DESC[id]; if(!d)return ''; var l=(typeof LANG!=='undefined'&&d[LANG])?LANG:'pt'; return d[l]||d.pt||''; }
+    var _STL={pt:{lvl:'Nível',cd:'Recarga',sec:'s',empty:'Nenhuma magia equipada'},en:{lvl:'Level',cd:'Cooldown',sec:'s',empty:'No spell equipped'},es:{lvl:'Nivel',cd:'Recarga',sec:'s',empty:'Sin magia equipada'},fr:{lvl:'Niveau',cd:'Recharge',sec:'s',empty:'Aucun sort équipé'}};
+    function _STT(){var l=(typeof LANG!=='undefined'&&_STL[LANG])?LANG:'pt';return _STL[l];}
+
+    /* monta o HTML do tooltip de uma magia */
+    function _spellTipHtml(sp,id){
+      if(!sp)return '';
+      var L=_STT();
+      var nm=(typeof skillLabel==='function'&&sp.lb)?skillLabel(sp.lb):(sp.name||'Magia');
+      var h='<div class="tn" style="color:#b9a6ff">'+(sp.ic?sp.ic+' ':'')+nm+'</div>';
+      h+='<div class="st" style="margin-top:4px">';
+      h+=L.lvl+' <b>'+(sp.lv||1)+'</b>';
+      if(sp.cd)h+='<br>'+L.cd+' '+sp.cd+L.sec;
+      h+='</div>';
+      var d=_spellDescOf(id);
+      if(d)h+='<div class="desc" style="margin-top:6px">'+d+'</div>';
+      return h;
+    }
+
+    /* mostra o tooltip de magia (reusa o #tooltip do jogo) */
+    function _showSpellTip(e,sp,id){
+      try{
+        var tp=document.getElementById('tooltip'); if(!tp)return;
+        tp.innerHTML=_spellTipHtml(sp,id);
+        tp.style.display='block';
+        var r=tp.getBoundingClientRect();
+        var x=(e.clientX||0)+14,y=(e.clientY||0)+14;
+        if(x+r.width>window.innerWidth)x=(e.clientX||0)-r.width-14;
+        if(y+r.height>window.innerHeight)y=window.innerHeight-r.height-8;
+        tp.style.left=Math.max(4,x)+'px';tp.style.top=Math.max(4,y)+'px';
+      }catch(_){}
+    }
+    function _hideSpellTip(){try{var tp=document.getElementById('tooltip');if(tp)tp.style.display='none';}catch(_){}}
+
+    /* resolve qual magia está no slot sk6/sk7 pelo loadout */
+    function _spellInSlot(slotIdx){
+      try{
+        if(typeof player==='undefined'||!player.loadout)return null;
+        var id=player.loadout[slotIdx];
+        if(!id||typeof SPELLS==='undefined'||!SPELLS[id])return null;
+        var sp=SPELLS[id]; sp._id=id; return {sp:sp,id:id};
+      }catch(e){return null;}
+    }
+
+    /* aplica hold-tooltip a um botão de magia */
+    function _attachSpellTip(btnId, slotIdx){
+      var btn=document.getElementById(btnId);
+      if(!btn||btn._spellTipOn)return;
+      btn._spellTipOn=true;
+      var tipT=null;
+      btn.addEventListener('pointerdown',function(e){
+        var info=_spellInSlot(slotIdx); if(!info)return;
+        tipT=setTimeout(function(){ tipT=null; _showSpellTip(e,info.sp,info.id); }, 350);
+      });
+      var clr=function(){ if(tipT){clearTimeout(tipT);tipT=null;} };
+      btn.addEventListener('pointerup',function(){ clr(); setTimeout(_hideSpellTip,50); });
+      btn.addEventListener('pointerleave',function(){ clr(); _hideSpellTip(); });
+      btn.addEventListener('pointercancel',function(){ clr(); _hideSpellTip(); });
+      /* mouse hover no desktop */
+      btn.addEventListener('pointerenter',function(e){
+        if(e.pointerType==='mouse'){ var info=_spellInSlot(slotIdx); if(info)_showSpellTip(e,info.sp,info.id); }
+      });
+    }
+
+    /* liga nos 2 botões de magia da barra (sk6=slot0? na verdade sk6/sk7 = useSkill3/4 = loadout[?]) */
+    /* useSkill3 e useSkill4 mapeiam para loadout — sk6 e sk7. Slots do loadout: 0,1,2. Os botões de magia são 2 (sk6,sk7) + skill principal */
+    setInterval(function(){
+      try{
+        _attachSpellTip('sk6', 1);  /* useSkill3 ~ loadout[1] */
+        _attachSpellTip('sk7', 2);  /* useSkill4 ~ loadout[2] */
+        _attachSpellTip('sk2', 0);  /* skill principal ~ loadout[0], se existir */
+      }catch(e){}
+    }, 800);
+    try{console.log('[spelltip] tooltip de magia ativo (segurar para ver).');}catch(e){}
+  }catch(e){ try{console.warn('spelltip falhou',e);}catch(_){} }
+
+  /* ============ CUSTOMIZAÇÃO DOS BOTÕES DE POÇÃO ============ */
+  try{
+    var _PCL={
+      pt:{title:'Configurar botão',pref:'Prioridade de poção',weak:'Mais fraca primeiro',strong:'Mais forte primeiro',type:'Tipo',hp:'Vida',cure:'Antídoto',save:'Salvar',hold_hint:'Segure para configurar'},
+      en:{title:'Configure button',pref:'Potion priority',weak:'Weakest first',strong:'Strongest first',type:'Type',hp:'Health',cure:'Antidote',save:'Save',hold_hint:'Hold to configure'},
+      es:{title:'Configurar botón',pref:'Prioridad de poción',weak:'Más débil primero',strong:'Más fuerte primero',type:'Tipo',hp:'Vida',cure:'Antídoto',save:'Guardar',hold_hint:'Mantén para configurar'},
+      fr:{title:'Configurer le bouton',pref:'Priorité de potion',weak:'Plus faible d\\u2019abord',strong:'Plus forte d\\u2019abord',type:'Type',hp:'Vie',cure:'Antidote',save:'Enregistrer',hold_hint:'Maintenir pour configurer'}
+    };
+    function _PCT(){var l=(typeof LANG!=='undefined'&&_PCL[LANG])?LANG:'pt';return _PCL[l];}
+
+    /* config persistente: qual tipo e prioridade cada botão de poção usa */
+    function _loadCfg(){
+      try{ var r=localStorage.getItem('ac_potioncfg'); if(r)return JSON.parse(r); }catch(e){}
+      return {sk3:{kind:'hp',strong:false},sk4:{kind:'cure',strong:false}};
+    }
+    function _saveCfg(c){ try{ localStorage.setItem('ac_potioncfg',JSON.stringify(c)); }catch(e){} }
+    var _potCfg=_loadCfg();
+    window._acPotCfg=_potCfg;
+
+    /* usa a poção conforme a config do botão (tipo + prioridade fraca/forte) */
+    function _usePotionCfg(btnId){
+      try{
+        if(typeof player==='undefined'||player.dead)return;
+        if(typeof cd!=='undefined'&&cd.pot>0)return;
+        var cfg=_potCfg[btnId]||{kind:'hp',strong:false};
+        var kind=cfg.kind;
+        var list=player.bag.filter(function(b){var it=itemById(b.id);return it&&it.kind===kind;});
+        if(!list.length){ if(typeof addMessage==='function')addMessage(kind==='hp'?(typeof t==='function'?t('m_no_pot'):'Sem poção'):(typeof t==='function'?t('m_no_cure'):'Sem antídoto'),'sys'); return; }
+        if(kind==='cure'&&player.poison<=0){ if(typeof addMessage==='function')addMessage(typeof t==='function'?t('m_not_pois'):'Sem veneno','sys'); return; }
+        /* ordena por potência conforme a preferência */
+        list.sort(function(a,b){var d=itemById(a.id).amt-itemById(b.id).amt;return cfg.strong?-d:d;});
+        var it=itemById(list[0].id);
+        takeBag(it.id,1); if(typeof cd!=='undefined')cd.pot=1.0;
+        if(kind==='hp'){ player.hp=Math.min(player.maxhp,player.hp+it.amt);
+          if(typeof addFloater==='function')addFloater(player.px,player.py-16,'+'+it.amt,'#a9e6a0');
+          if(typeof SFX!=='undefined'&&SFX.heal)SFX.heal();
+        } else {
+          player.poison=0;
+          if(typeof addFloater==='function')addFloater(player.px,player.py-16,(typeof t==='function'?t('fl_purified'):'Curado'),'#a9e6a0');
+          if(typeof SFX!=='undefined'&&SFX.heal)SFX.heal();
+        }
+        if(typeof renderHUD==='function')renderHUD();
+      }catch(e){ try{console.warn('usePotionCfg',e);}catch(_){} }
+    }
+    window._acUsePotionCfg=_usePotionCfg;
+
+    /* painel de configuração do botão */
+    function _openCfgPanel(btnId){
+      try{
+        _hideCfg();
+        var L=_PCT();
+        var cfg=_potCfg[btnId]||{kind:'hp',strong:false};
+        var ov=document.createElement('div');
+        ov.id='_potCfgOv';
+        ov.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;padding:20px;';
+        var card=document.createElement('div');
+        card.style.cssText='background:#1a1d26;border:1px solid #3a3f4e;border-radius:16px;padding:20px;max-width:340px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.5);';
+        var html='<div style="font:700 18px sans-serif;color:#e8c15a;text-align:center;margin-bottom:16px">'+L.title+'</div>';
+        /* tipo */
+        html+='<div style="font:600 13px sans-serif;color:#8a90a0;margin-bottom:6px">'+L.type+'</div>';
+        html+='<div style="display:flex;gap:8px;margin-bottom:16px">';
+        html+='<button class="_pcType" data-k="hp" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(cfg.kind==='hp'?'#e8c15a':'#3a3a48')+';background:'+(cfg.kind==='hp'?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(cfg.kind==='hp'?'#e8c15a':'#c8ccd4')+';font:600 14px sans-serif;cursor:pointer">\\uD83E\\uDDEA '+L.hp+'</button>';
+        html+='<button class="_pcType" data-k="cure" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(cfg.kind==='cure'?'#e8c15a':'#3a3a48')+';background:'+(cfg.kind==='cure'?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(cfg.kind==='cure'?'#e8c15a':'#c8ccd4')+';font:600 14px sans-serif;cursor:pointer">\\uD83C\\uDF3F '+L.cure+'</button>';
+        html+='</div>';
+        /* prioridade */
+        html+='<div style="font:600 13px sans-serif;color:#8a90a0;margin-bottom:6px">'+L.pref+'</div>';
+        html+='<div style="display:flex;gap:8px;margin-bottom:20px">';
+        html+='<button class="_pcPref" data-s="0" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(!cfg.strong?'#e8c15a':'#3a3a48')+';background:'+(!cfg.strong?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(!cfg.strong?'#e8c15a':'#c8ccd4')+';font:600 13px sans-serif;cursor:pointer">'+L.weak+'</button>';
+        html+='<button class="_pcPref" data-s="1" style="flex:1;padding:12px;border-radius:9px;border:1px solid '+(cfg.strong?'#e8c15a':'#3a3a48')+';background:'+(cfg.strong?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(cfg.strong?'#e8c15a':'#c8ccd4')+';font:600 13px sans-serif;cursor:pointer">'+L.strong+'</button>';
+        html+='</div>';
+        html+='<button id="_pcSave" style="width:100%;padding:14px;border-radius:10px;border:1px solid #e8c15a;background:#e8c15a;color:#1a1d26;font:700 15px sans-serif;cursor:pointer">'+L.save+'</button>';
+        card.innerHTML=html;
+        ov.appendChild(card);
+        document.body.appendChild(ov);
+        var draft={kind:cfg.kind,strong:cfg.strong};
+        card.querySelectorAll('._pcType').forEach(function(b){b.onclick=function(){draft.kind=b.getAttribute('data-k');_openCfgPanelReflect(card,draft);};});
+        card.querySelectorAll('._pcPref').forEach(function(b){b.onclick=function(){draft.strong=b.getAttribute('data-s')==='1';_openCfgPanelReflect(card,draft);};});
+        card.querySelector('#_pcSave').onclick=function(){ _potCfg[btnId]={kind:draft.kind,strong:draft.strong}; _saveCfg(_potCfg); _updateBtnLabel(btnId); _hideCfg(); };
+        ov.onclick=function(e){ if(e.target===ov)_hideCfg(); };
+      }catch(e){ try{console.warn('openCfg',e);}catch(_){} }
+    }
+    function _openCfgPanelReflect(card,draft){
+      card.querySelectorAll('._pcType').forEach(function(b){var on=b.getAttribute('data-k')===draft.kind;b.style.borderColor=on?'#e8c15a':'#3a3a48';b.style.background=on?'rgba(232,193,90,0.16)':'#22252e';b.style.color=on?'#e8c15a':'#c8ccd4';});
+      card.querySelectorAll('._pcPref').forEach(function(b){var on=(b.getAttribute('data-s')==='1')===draft.strong;b.style.borderColor=on?'#e8c15a':'#3a3a48';b.style.background=on?'rgba(232,193,90,0.16)':'#22252e';b.style.color=on?'#e8c15a':'#c8ccd4';});
+    }
+    function _hideCfg(){ var o=document.getElementById('_potCfgOv'); if(o&&o.parentNode)o.parentNode.removeChild(o); }
+
+    /* atualiza o ícone do botão conforme o tipo configurado */
+    function _updateBtnLabel(btnId){
+      try{
+        var btn=document.getElementById(btnId); if(!btn)return;
+        var cfg=_potCfg[btnId]; if(!cfg)return;
+        if(typeof setBtnIcon==='function'&&typeof ICO!=='undefined'){
+          if(cfg.kind==='hp')setBtnIcon(btn,'hpp','\\uD83E\\uDDEA');
+          else setBtnIcon(btn,'cure','\\uD83C\\uDF3F');
+        }
+      }catch(e){}
+    }
+
+    /* intercepta o clique dos botões de poção (sk3/sk4) e adiciona hold p/ configurar */
+    function _wireePotionBtns(){
+      try{
+        ['sk3','sk4'].forEach(function(btnId){
+          var btn=document.getElementById(btnId);
+          if(!btn||btn._potCfgWired)return;
+          btn._potCfgWired=true;
+          var holdT=null,didHold=false;
+          btn.addEventListener('pointerdown',function(e){
+            didHold=false;
+            holdT=setTimeout(function(){ holdT=null; didHold=true; _openCfgPanel(btnId); },500);
+          });
+          var clr=function(){ if(holdT){clearTimeout(holdT);holdT=null;} };
+          btn.addEventListener('pointerup',function(e){
+            clr();
+            if(!didHold){ /* clique normal: usa poção conforme config */ _usePotionCfg(btnId); }
+          });
+          btn.addEventListener('pointerleave',clr);
+          btn.addEventListener('pointercancel',clr);
+          /* remove o onclick nativo para nao usar poção duas vezes */
+          btn.onclick=null;
+          _updateBtnLabel(btnId);
+        });
+      }catch(e){}
+    }
+    setInterval(_wireePotionBtns, 900);
+    try{console.log('[potioncfg] botoes de pocao configuraveis (segure para configurar).');}catch(e){}
+  }catch(e){ try{console.warn('potioncfg falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
