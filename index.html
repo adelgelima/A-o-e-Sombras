@@ -7484,6 +7484,28 @@ function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
   else stats=it.kind==='hp'?tf('tip_restores',{n:it.amt}):t('tip_purge');
   const kindLab=k==='weapon'?t('weapon'):k==='off'?classOff(it.cls||player.cls):k==='armor'?t('armor'):t('kind_consumable');
   tp.innerHTML=`<div class="tn" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="tr">${rarName(it.rar)} · ${kindLab}</div><div class="st">${stats}</div><div class="desc">${itemDesc(it)}</div>`;
+  try{
+    var _k=itemKind(it);
+    var _slotMap={weapon:'weapon',off:'shield',armor:'armor',head:'head',legs:'legs'};
+    var _es=_slotMap[_k];
+    if(_es&&player.equip){
+      var _eqId=player.equip[_es]; 
+      if(_eqId){
+        var _eq=itemById(_eqId);
+        if(_eq&&_eq!==it){
+          function _stat(o,key){return (o&&typeof o[key]==='number')?o[key]:0;}
+          var _cmp='';
+          function _line(lbl,a,b){ if(a===0&&b===0)return ''; var d=a-b; if(d===0)return''; var arr=d>0?'\u25B2':'\u25BC'; var col=d>0?'#5fca5f':'#d86a6a'; return '<div style="font-size:10px;color:'+col+'">'+arr+' '+lbl+' '+(d>0?'+':'')+d+' <span style="color:#6a7080">(vs '+b+')</span></div>'; }
+          _cmp+=_line((typeof t==='function'?t('tip_attack'):'Atk').replace(':',''), _stat(it,'atk'), _stat(_eq,'atk'));
+          _cmp+=_line((typeof t==='function'?t('tip_defense'):'Def').replace(':',''), _stat(it,'def'), _stat(_eq,'def'));
+          if(_cmp){ var _sd=tp.querySelector('.st'); if(_sd){ _sd.innerHTML+='<div style="margin-top:5px;border-top:1px solid #2a2f3e;padding-top:4px">'+_cmp+'</div>'; } }
+        }
+      } else {
+        /* nada equipado nesse slot: sinaliza que e um upgrade automatico */
+        var _sd2=tp.querySelector('.st'); if(_sd2&&(_stat(it,'atk')>0||_stat(it,'def')>0)){ _sd2.innerHTML+='<div style="margin-top:5px;font-size:10px;color:#5fca5f;border-top:1px solid #2a2f3e;padding-top:4px">\u25B2 '+(typeof t==='function'&&t('tip_slot_empty')!=='tip_slot_empty'?t('tip_slot_empty'):'Slot vazio')+'</div>'; }
+      }
+    }
+  }catch(_e){}
   tp.style.display='block';const r=tp.getBoundingClientRect();
   let x=e.clientX+14,y=e.clientY+14;if(x+r.width>window.innerWidth)x=e.clientX-r.width-14;if(y+r.height>window.innerHeight)y=window.innerHeight-r.height-8;
   tp.style.left=Math.max(4,x)+'px';tp.style.top=Math.max(4,y)+'px';}
@@ -10753,6 +10775,125 @@ try{(function(){
     setInterval(function(){ _register(); }, 1500);
     try{console.log('[herois-folha] arte animada do Claude Design ativa (idle/walk/attack).');}catch(e){}
   }catch(e){ try{console.warn('herois-folha falhou',e);}catch(_){} }
+
+  /* ============ QoL: vender lixo em massa + ordenar inventário ============ */
+  try{
+    var _QOLT={
+      pt:{sellCommon:'Vender comuns',sellAll:'Vender tudo',sort:'Ordenar',confirmSellC:'Vender todos os itens comuns/incomuns por {g} de ouro?',confirmSellA:'Vender TUDO (exceto equipado) por {g} de ouro?',nothing:'Nada para vender.'},
+      en:{sellCommon:'Sell common',sellAll:'Sell all',sort:'Sort',confirmSellC:'Sell all common/uncommon items for {g} gold?',confirmSellA:'Sell EVERYTHING (except equipped) for {g} gold?',nothing:'Nothing to sell.'},
+      es:{sellCommon:'Vender comunes',sellAll:'Vender todo',sort:'Ordenar',confirmSellC:'¿Vender todos los objetos comunes por {g} de oro?',confirmSellA:'¿Vender TODO (excepto equipado) por {g} de oro?',nothing:'Nada que vender.'},
+      fr:{sellCommon:'Vendre communs',sellAll:'Tout vendre',sort:'Trier',confirmSellC:'Vendre tous les objets communs pour {g} or ?',confirmSellA:'Tout vendre (sauf équipé) pour {g} or ?',nothing:'Rien à vendre.'}
+    };
+    function _QT(){var l=(typeof LANG!=='undefined'&&_QOLT[LANG])?LANG:'pt';return _QOLT[l];}
+
+    /* ---- #1 VENDER LIXO EM MASSA ---- */
+    /* vende itens da mochila por raridade. 'common' = common+uncommon; 'all' = tudo exceto potion */
+    function _bulkSell(tier){
+      try{
+        if(typeof player==='undefined'||!player.bag)return;
+        var L=_QT();
+        var junkRar = tier==='all' ? ['common','uncommon','rare','epic','legendary','mythic'] : ['common','uncommon'];
+        var toSell=player.bag.filter(function(b){
+          var it=(typeof itemById==='function')?itemById(b.id):null;
+          if(!it)return false;
+          if((typeof itemKind==='function'?itemKind(it):'')==='potion')return false;  /* nunca vende poção */
+          return junkRar.indexOf(it.rar)>=0;
+        });
+        if(!toSell.length){ if(typeof addMessage==='function')addMessage(L.nothing,'sys'); return; }
+        var total=0;
+        toSell.forEach(function(b){ var it=itemById(b.id); total+=(typeof sellPrice==='function'?sellPrice(it):0)*(b.count||1); });
+        var msg=(tier==='all'?L.confirmSellA:L.confirmSellC).replace('{g}',total);
+        var doSell=function(){
+          var gold=0, cnt=0;
+          toSell.forEach(function(b){
+            var it=itemById(b.id); var n=b.count||1;
+            for(var i=0;i<n;i++){ var g=(typeof sellPrice==='function'?sellPrice(it):0); if(typeof takeBag==='function')takeBag(it.id,1); player.gold+=g; gold+=g; cnt++; }
+          });
+          if(typeof SFX!=='undefined'&&SFX.gold)SFX.gold(); if(typeof buzz==='function')buzz(12);
+          if(typeof addMessage==='function')addMessage((tier==='all'?L.sellAll:L.sellCommon)+': +'+gold+' ⦿ ('+cnt+')','good');
+          if(typeof renderShop==='function')renderShop(); if(typeof renderHUD==='function')renderHUD();
+        };
+        if(window._acCfm)window._acCfm(msg,doSell); else if(confirm(msg))doSell();
+      }catch(e){}
+    }
+
+    /* injeta os botões de vender-lixo no topo da seção Vender da loja */
+    function _addBulkButtons(){
+      try{
+        var rows=document.getElementById('shopRows'); if(!rows)return;
+        if(rows.querySelector('.qolBulk'))return;   /* já injetado */
+        /* acha o cabeçalho "Vender" */
+        var hdrs=rows.querySelectorAll('div');
+        var sellHdr=null;
+        for(var i=0;i<hdrs.length;i++){
+          var tx=hdrs[i].textContent.trim().toUpperCase();
+          if((tx==='VENDER'||tx==='SELL'||tx==='VENDRE')&&hdrs[i].style.gridColumn){ sellHdr=hdrs[i]; break; }
+        }
+        if(!sellHdr)return;
+        var L=_QT();
+        var bar=document.createElement('div');
+        bar.className='qolBulk';
+        bar.style.cssText='grid-column:1/-1;display:flex;gap:6px;margin:4px 0 8px;';
+        var b1=document.createElement('button');
+        b1.textContent='🧹 '+L.sellCommon;
+        b1.style.cssText='flex:1;background:#5a4a2a;border:1px solid #8a6a3a;color:#f3e9cf;border-radius:8px;padding:8px;font:600 12px sans-serif;cursor:pointer;';
+        b1.onclick=function(e){e.stopPropagation();_bulkSell('common');};
+        b1.addEventListener('pointerdown',function(e){e.stopPropagation();});
+        bar.appendChild(b1);
+        /* insere logo após o cabeçalho Vender */
+        if(sellHdr.nextSibling)rows.insertBefore(bar,sellHdr.nextSibling); else rows.appendChild(bar);
+      }catch(e){}
+    }
+
+    /* ---- #3 ORDENAR INVENTÁRIO ---- */
+    /* ordena player.bag: por tipo, depois raridade (desc), depois valor (desc) */
+    var _RARORD={mythic:6,legendary:5,epic:4,rare:3,uncommon:2,common:1};
+    var _KINDORD={weapon:1,off:2,armor:3,head:4,legs:5,potion:6};
+    function _sortBag(){
+      try{
+        if(typeof player==='undefined'||!player.bag)return;
+        player.bag.sort(function(a,b){
+          var ia=itemById(a.id), ib=itemById(b.id);
+          if(!ia||!ib)return 0;
+          var ka=_KINDORD[itemKind(ia)]||9, kb=_KINDORD[itemKind(ib)]||9;
+          if(ka!==kb)return ka-kb;
+          var ra=_RARORD[ia.rar]||0, rb=_RARORD[ib.rar]||0;
+          if(ra!==rb)return rb-ra;
+          return (ib.val||0)-(ia.val||0);
+        });
+        if(typeof buzz==='function')buzz(6);
+        if(typeof renderInv==='function')renderInv();
+      }catch(e){}
+    }
+
+    /* injeta o botão Ordenar no painel de inventário */
+    function _addSortButton(){
+      try{
+        var inv=document.getElementById('inv'); if(!inv)return;
+        if(inv.querySelector('.qolSort'))return;
+        /* acha um cabeçalho ou área de título do inventário */
+        var host=inv.querySelector('.card')||inv.querySelector('.panel')||inv;
+        var L=_QT();
+        var btn=document.createElement('button');
+        btn.className='qolSort';
+        btn.textContent='⇅ '+L.sort;
+        btn.style.cssText='position:absolute;top:10px;right:52px;z-index:5;background:#2a2f3e;border:1px solid #3a4050;color:#e8e8f0;border-radius:8px;padding:6px 10px;font:600 12px sans-serif;cursor:pointer;';
+        btn.onclick=function(e){e.stopPropagation();_sortBag();};
+        btn.addEventListener('pointerdown',function(e){e.stopPropagation();});
+        host.appendChild(btn);
+      }catch(e){}
+    }
+
+    /* mantém os botões injetados conforme os painéis reabrem */
+    setInterval(function(){
+      try{
+        if(document.getElementById('shopRows'))_addBulkButtons();
+        var inv=document.getElementById('inv');
+        if(inv&&!inv.classList.contains('hidden'))_addSortButton();
+      }catch(e){}
+    }, 500);
+    try{console.log('[QoL] vender-lixo + ordenar inventario ativos.');}catch(e){}
+  }catch(e){ try{console.warn('QoL falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
