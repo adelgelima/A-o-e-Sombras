@@ -8697,6 +8697,10 @@ try{(function(){
     if(_fbOn){
       try{ firebase.initializeApp(FC); }catch(e){}
       var _auth=firebase.auth(), _fdb=firebase.firestore(), _fuser=null; try{window._acFbDb=_fdb;}catch(e){}
+      /* persistencia LOCAL: mantem logado entre recarregamentos */
+      try{ _auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
+      /* captura o retorno do login por REDIRECT (mobile: popup falha, usa redirect) */
+      try{ _auth.getRedirectResult().then(function(r){ if(r&&r.user){ _fuser=r.user; window._acFbUser=r.user; _lastUid='__force__'; _renderBtn(); } }).catch(function(){}); }catch(e){}
       var _cwBusy=false,_cwPending=false,_cwTimer=null;
       /* ---- trava de dispositivo ---- */
       var _sessId = Math.random().toString(36).slice(2)+Date.now().toString(36);
@@ -8775,7 +8779,7 @@ try{(function(){
       }
 
       _auth.onAuthStateChanged(function(u){
-        _fuser=u; window._acFbUser=u; try{window._acFbDb=_fdb;}catch(e){} _renderBtn(); if(u&&window._acSubmitScore)setTimeout(window._acSubmitScore,2000);
+        _fuser=u; window._acFbUser=u; try{window._acFbDb=_fdb;}catch(e){} _lastUid='__force__'; _renderBtn(); if(u&&window._acSubmitScore)setTimeout(window._acSubmitScore,2000);
         if(_sessUnsub){try{_sessUnsub();}catch(e){}_sessUnsub=null;}
         if(u){ _pull(); _listen(); }
         else { _active=false; _locked=false; _hideLock(); }
@@ -8802,6 +8806,7 @@ try{(function(){
       _btn=document.createElement('div');
       _btn.id='fbLoginBtn'; _btn.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;display:none;';
       if(document.body)document.body.appendChild(_btn);
+      _btn.addEventListener('click',function(e){ if(!_fuser){ e.preventDefault(); e.stopPropagation(); _login(); } });
       var _toastEl=null;
       function _toast(msg){ try{ if(!_toastEl){_toastEl=document.createElement('div');_toastEl.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(20,20,28,0.92);color:#e8e8f0;padding:8px 14px;border-radius:8px;font:13px sans-serif;border:1px solid #444;';document.body.appendChild(_toastEl);} _toastEl.textContent=msg;_toastEl.style.display='block';clearTimeout(_toastEl._t);_toastEl._t=setTimeout(function(){_toastEl.style.display='none';},3500);}catch(e){} }
       var _lastUid='__init__';
