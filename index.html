@@ -7522,6 +7522,10 @@ function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRo
       const sell=document.createElement('button');sell.className='btn';sell.style.cssText='background:#7a5a2a;border-color:#a87a3a';sell.textContent='Vender';sell.onclick=()=>sellBagItem(it);row.appendChild(sell);
       rows.appendChild(row);}}
   }
+function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
+function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
+function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
+function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
 function buyItem(it){if(player.gold<it.val){addMessage(t('need_gold'),'sys');return;}
   player.gold-=it.val;pushBag(it.id,1);SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)}),'good');renderShop();renderHUD();if(invOpen)renderInv();}
 function sellPrice(it){return Math.max(1,Math.round((it.val||10)*0.4));}
@@ -8793,12 +8797,18 @@ try{(function(){
       setInterval(function(){ try{ if(_fuser&&_active&&!_locked){ _sref().update({heartbeat:Date.now()}).catch(function(){}); } }catch(e){} },15000);
 
       /* ---- UI: botao de login (so no menu) ---- */
-      var _btn=document.createElement('div');
+      var _btn=document.getElementById('fbLoginBtn');
+      if(_btn){ try{return;}catch(e){} }   /* ja existe: nao recria (evita botoes duplicados piscando) */
+      _btn=document.createElement('div');
       _btn.id='fbLoginBtn'; _btn.style.cssText='position:fixed;top:8px;left:8px;z-index:99999;display:none;';
       if(document.body)document.body.appendChild(_btn);
       var _toastEl=null;
       function _toast(msg){ try{ if(!_toastEl){_toastEl=document.createElement('div');_toastEl.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(20,20,28,0.92);color:#e8e8f0;padding:8px 14px;border-radius:8px;font:13px sans-serif;border:1px solid #444;';document.body.appendChild(_toastEl);} _toastEl.textContent=msg;_toastEl.style.display='block';clearTimeout(_toastEl._t);_toastEl._t=setTimeout(function(){_toastEl.style.display='none';},3500);}catch(e){} }
+      var _lastUid='__init__';
       function _renderBtn(){
+        var uid=_fuser?(_fuser.uid||'user'):null;
+        if(uid===_lastUid)return;   /* estado do usuario nao mudou: nao re-renderiza (evita pisca) */
+        _lastUid=uid;
         if(_fuser){
           _btn.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(20,20,28,0.9);border:1px solid #3a3a48;border-radius:20px;padding:4px 10px 4px 4px;color:#e8e8f0;font:12px sans-serif;">'
             +(_fuser.photoURL?'<img src="'+_fuser.photoURL+'" style="width:24px;height:24px;border-radius:50%;">':'')
@@ -8814,7 +8824,7 @@ try{(function(){
       }
       _renderBtn();
       try{ window._acReleaseSession=function(){ try{ _active=false; _wasRunning=false; if(_fuser&&_sref){ _sref().update({heartbeat:0}).catch(function(){}); } _renderBtn(); }catch(e){} }; }catch(e){}
-      setInterval(function(){ try{ _btn.style.display=(typeof running!=='undefined'&&running)?'none':'block'; }catch(e){} }, 800);
+      var _lastVis=null; setInterval(function(){ try{ var vis=(typeof running!=='undefined'&&running)?'none':'block'; if(vis!==_lastVis){ _btn.style.display=vis; _lastVis=vis; } }catch(e){} }, 800);
 
       /* ---- overlay de bloqueio (heroi em uso em outro dispositivo) ---- */
       var _lockEl=null;
@@ -9074,6 +9084,7 @@ try{(function(){
     var _nm=function(it){ try{ return (typeof itemName==='function')? itemName(it) : ((it&&it.name)||'item'); }catch(e){ return 'item'; } };
 
     if(typeof buyItem==='function'){
+      try{window._acCfm=_cfm;}catch(e){}
       var _origBuy=buyItem;
       buyItem=function(it){
         if(!it)return;
@@ -10395,6 +10406,110 @@ try{(function(){
     }, 900);
     try{console.log('[variantes] UI de escolha ativa (criacao + configuracoes).');}catch(e){}
   }catch(e){ try{console.warn('variantes UI falhou',e);}catch(_){} }
+
+  /* ============ SELETOR DE QUANTIDADE na loja (comprar/vender N de uma vez) ============ */
+  try{
+    var _QLBL={pt:'Qtd',en:'Qty',es:'Cant',fr:'Qté'};
+    /* injeta CSS do stepper */
+    (function(){ if(document.getElementById('qtyCss'))return;
+      var st=document.createElement('style'); st.id='qtyCss';
+      st.textContent='.qtyBox{display:inline-flex;align-items:center;gap:0;margin-right:6px;border:1px solid #4a4a58;border-radius:8px;overflow:hidden;vertical-align:middle}'
+        +'.qtyBox button{width:26px;height:28px;border:0;background:#2a2a36;color:#e8e8f0;font:700 15px sans-serif;cursor:pointer;padding:0;line-height:28px;touch-action:manipulation}'
+        +'.qtyBox button:active{background:#3a3a48}'
+        +'.qtyBox .qv{min-width:26px;text-align:center;color:#f3e9cf;font:700 13px sans-serif;background:#1c1c26;height:28px;line-height:28px;padding:0 2px}';
+      (document.head||document.documentElement).appendChild(st);
+    })();
+
+    function _enhanceShop(){
+      try{
+        var rows=document.getElementById('shopRows'); if(!rows)return;
+        var list=rows.querySelectorAll('.row');
+        for(var i=0;i<list.length;i++){
+          var row=list[i];
+          if(row._qtyDone)continue;
+          var btn=row.querySelector('button.buy, button');
+          if(!btn)continue;
+          var isBuy=btn.classList.contains('buy')||btn.textContent.indexOf('Comprar')>=0||btn.textContent.indexOf('Buy')>=0;
+          /* cria o stepper */
+          var box=document.createElement('div'); box.className='qtyBox';
+          var minus=document.createElement('button'); minus.textContent='\u2212';
+          var val=document.createElement('div'); val.className='qv'; val.textContent='1';
+          var plus=document.createElement('button'); plus.textContent='+';
+          box.appendChild(minus); box.appendChild(val); box.appendChild(plus);
+          var qty=1;
+          minus.addEventListener('pointerdown',function(ev){ev.preventDefault();ev.stopPropagation();});
+          plus.addEventListener('pointerdown',function(ev){ev.preventDefault();ev.stopPropagation();});
+          (function(val){
+            minus.onclick=function(){ qty=Math.max(1,qty-1); val.textContent=qty; };
+            plus.onclick=function(){ qty=Math.min(99,qty+1); val.textContent=qty; };
+          })(val);
+          /* insere o stepper ANTES do botão */
+          btn.parentNode.insertBefore(box, btn);
+          /* recliga o botão para usar a quantidade */
+          var it=row._item;  /* pode não existir; recuperamos via índice abaixo */
+          row._qtyGet=function(){return qty;};
+          row._qtyDone=true;
+          /* substitui o onclick do botão para multiplicar */
+          var origClick=btn.onclick;
+          btn.onclick=function(e){
+            var n=row._qtyGet?row._qtyGet():1;
+            var item=row._item;
+            if(item){
+              if(isBuy){ if(typeof buyItemN==='function'){buyItemN(item,n);return;} }
+              else { if(typeof sellBagItemN==='function'){sellBagItemN(item,n);return;} }
+            }
+            if(origClick)origClick.call(btn,e);  /* fallback: 1 unidade */
+          };
+        }
+      }catch(e){}
+    }
+    /* o renderShop recria as linhas; precisamos anexar o item a cada row.
+       Envolvemos renderShop para marcar row._item e re-injetar o stepper. */
+    function _wrapRender(){
+      if(typeof renderShop!=='function'||renderShop._wrapped)return;
+      var _orig=renderShop;
+      window.renderShop=renderShop=function(){
+        _orig.apply(this,arguments);
+        /* após render, mapeia cada row ao seu item via a ordem de shopItems */
+        try{
+          var rows=document.getElementById('shopRows'); if(!rows)return;
+          var kinds=(typeof shopKind!=='undefined')?shopKind:'shop';
+          var ids=(typeof shopItems==='function')?shopItems(kinds):[];
+          var buyRows=[], sellRows=[];
+          var all=rows.querySelectorAll('.row');
+          /* itens de compra vêm primeiro (na ordem de ids); os de venda são da mochila */
+          var bi=0;
+          for(var i=0;i<all.length;i++){
+            var r=all[i];
+            var btn=r.querySelector('button');
+            if(!btn){continue;}
+            var isBuy=btn.classList.contains('buy')||btn.textContent.indexOf('Comprar')>=0||btn.textContent.indexOf('Buy')>=0;
+            if(isBuy && bi<ids.length){ r._item=(typeof itemById==='function')?itemById(ids[bi]):null; bi++; }
+            else if(!isBuy){
+              /* venda: acha o item da mochila por nome no info */
+              r._item=_matchBagItem(r);
+            }
+          }
+        }catch(e){}
+        _enhanceShop();
+      };
+      renderShop._wrapped=true;
+    }
+    function _matchBagItem(row){
+      try{
+        if(typeof player==='undefined'||!player.bag)return null;
+        var nm=row.querySelector('.info .n'); if(!nm)return null;
+        var txt=nm.textContent.trim();
+        for(var i=0;i<player.bag.length;i++){
+          var it=(typeof itemById==='function')?itemById(player.bag[i].id):null;
+          if(it&&(typeof itemName==='function'?itemName(it):'')===txt)return it;
+        }
+      }catch(e){}
+      return null;
+    }
+    var _t=setInterval(function(){ _wrapRender(); if(document.getElementById('shopRows'))_enhanceShop(); }, 500);
+    try{console.log('[loja] seletor de quantidade ativo (comprar/vender N).');}catch(e){}
+  }catch(e){ try{console.warn('shopqty falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
