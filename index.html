@@ -8784,7 +8784,28 @@ try{(function(){
         if(u){ _pull(); _listen(); }
         else { _active=false; _locked=false; _hideLock(); }
       });
-      function _login(){ var p=new firebase.auth.GoogleAuthProvider(); _auth.signInWithPopup(p).catch(function(e){ try{_auth.signInWithRedirect(p);}catch(_){} }); }
+      function _login(){
+        try{
+          var p=new firebase.auth.GoogleAuthProvider();
+          p.setCustomParameters({prompt:'select_account'});
+          _auth.signInWithPopup(p).then(function(res){
+            /* popup funcionou: trata o usuario DIRETAMENTE (nao depende de redirect) */
+            if(res&&res.user){ _fuser=res.user; window._acFbUser=res.user; _lastUid='__force__'; _renderBtn(); }
+          }).catch(function(e){
+            var code=(e&&e.code)||'';
+            /* popup bloqueado ou fechado: tenta redirect como ultimo recurso */
+            if(code==='auth/popup-blocked'||code==='auth/cancelled-popup-request'||code==='auth/operation-not-supported-in-this-environment'){
+              try{ _auth.signInWithRedirect(p); }catch(_){}
+            } else if(code==='auth/popup-closed-by-user'){
+              /* usuario fechou: nao faz nada */
+            } else {
+              /* erro real: mostra ao usuario (dominio nao autorizado, etc) */
+              try{ _toast('Login falhou: '+(code||'erro')); }catch(_){}
+              try{ console.warn('[login] erro:', code, e&&e.message); }catch(_){}
+            }
+          });
+        }catch(err){ try{ console.warn('[login] excecao:', err); }catch(_){} }
+      }
       function _logout(){ try{ _active=false; _auth.signOut(); }catch(e){} }
 
       /* ---- reivindica ao COMECAR a jogar; libera ao voltar ao menu ---- */
