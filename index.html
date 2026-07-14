@@ -383,7 +383,21 @@
 .slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:pan-y}
 
 #title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
-</head>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
+   Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
+   https://console.firebase.google.com , ative Authentication (Google) e Firestore,
+   e cole abaixo a config do seu projeto (Config do app Web). Enquanto os valores
+   comecarem com COLE_ , o jogo roda 100% offline e o botao de login fica oculto. */
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCISsw7M_NK5Dn8aMgBU_P198m-bLGFWEU",
+  authDomain: "aco-e-sombras.firebaseapp.com",
+  projectId: "aco-e-sombras",
+  storageBucket: "aco-e-sombras.firebasestorage.app",
+  messagingSenderId: "457078596985",
+  appId: "1:457078596985:web:a70f9ab60f573b35047ba8",
+  measurementId: "G-L3MB6TZPEE"
+};
+</script></head>
 <body>
 <div id="game">
   <canvas id="c"></canvas>
