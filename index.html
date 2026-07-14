@@ -5100,7 +5100,7 @@ function heroWeaponType(){
 function drawPlayer(ox,oy){
   const cx=Math.round((player.px-ox)/PIX)*PIX+(player.recoilX||0), cy=Math.round((player.py-oy)/PIX)*PIX+(player.recoilY||0);
   const view=player.face==='up'?'up':player.face==='down'?'down':'side';
-  const flip=(player.face==='left');
+  const flip=(window._acSheetFlip)?(player.face==='right'):(player.face==='left');
   player._bobPh=(player._bobPh||0)+ (player.moving?0.28:0.05);
   const amp=player.moving?1.8:0.6;
   const bob=Math.round(Math.abs(Math.sin(player._bobPh))*amp);
@@ -8194,7 +8194,7 @@ function syncSettings(){
 function openSettings(){closeAllPanels();syncSettings();$('settings').classList.remove('hidden');}
 function backToHeroSelect(){
   if(running&&typeof saveGame==='function')saveGame();          /* salva automaticamente antes de sair */
-  running=false;
+  running=false;try{window.running=false;}catch(e){}
   if(typeof closeAllPanels==='function')closeAllPanels();
   var hud=$('hud');if(hud)hud.classList.add('hidden');
   if(isTouch){var ab=$('attackBtn');if(ab)ab.style.display='none';}
@@ -8233,7 +8233,7 @@ function continueGame(slot){if(slot!=null)activeSlot=slot;const d=loadSave(activ
   $('pname').textContent=player.name;
   $('title').classList.add('hidden');$('hud').classList.remove('hidden');
   if(isTouch)$('attackBtn').style.display='flex';
-  running=true;lastT=0;renderHUD();renderBattle();
+  running=true;window.running=true;lastT=0;renderHUD();renderBattle();
   addMessage(tf('msg_welcome_back',{name:player.name}),'sys');
   onSessionStart();}
 function startGame(){if(running)return;initAudio();
@@ -8244,7 +8244,7 @@ function startGame(){if(running)return;initAudio();
   applyClass();  /* DEPOIS dos resets: a arma/itens iniciais sobrevivem (antes era zerado -> heroi sem arma) */
   $('title').classList.add('hidden');$('hud').classList.remove('hidden');
   if(isTouch)$('attackBtn').style.display='flex';
-  running=true;lastT=0;renderHUD();renderBattle();
+  running=true;window.running=true;lastT=0;renderHUD();renderBattle();
   addMessage(tf('msg_welcome',{name:player.name}),'sys');
   onSessionStart();}
 function init(){
@@ -8825,7 +8825,7 @@ try{(function(){
       _renderBtn();
       try{ window._acReleaseSession=function(){ try{ _active=false; _wasRunning=false; if(_fuser&&_sref){ _sref().update({heartbeat:0}).catch(function(){}); } _renderBtn(); }catch(e){} }; }catch(e){}
       var _lastVis=null;
-      function _syncBtnVis(){ try{ var vis=(typeof running!=='undefined'&&running)?'none':'block';
+      function _syncBtnVis(){ try{ var _run=(typeof window.running!=='undefined')?window.running:(typeof running!=='undefined'?running:false); var vis=_run?'none':'block';
         if(vis!==_lastVis){ _btn.style.display=vis; _lastVis=vis; if(vis==='block'&&!_btn.innerHTML){ _lastUid='__force__'; _renderBtn(); } }
         /* rede de seguranca: se visivel mas sem conteudo, re-renderiza */
         else if(vis==='block'&&!_btn.innerHTML){ _lastUid='__force__'; _renderBtn(); }
@@ -10670,6 +10670,7 @@ try{(function(){
         if(typeof heroPng==='undefined')return false;
         if(typeof USE_AI_HEROES!=='undefined'){ try{ USE_AI_HEROES=true; }catch(e){} }
         try{ window.USE_AI_HEROES=true; }catch(e){}
+        try{ window._acSheetFlip=true; }catch(e){}
         return true;
       }catch(e){ return false; }
     }
@@ -10678,6 +10679,7 @@ try{(function(){
     var _lastFrameKey='';
     function _tick(){
       try{
+        try{ if(typeof running!=='undefined')window.running=running; }catch(e){}
         if(typeof player==='undefined'||!player)return;
         var cls=player.cls; if(!_ready[cls])return;
         var img=_imgs[cls]; if(!img)return;
