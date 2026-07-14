@@ -2773,8 +2773,15 @@ function bakeStatics(){
     g.fillStyle=gr;g.fillRect(0,0,256,256);}
   const mkGlow=col=>{const c=mkC(96,96),g=c.getContext('2d');
     const gr=g.createRadialGradient(48,48,0,48,48,48);
-    gr.addColorStop(0,hexA(col,0.55));gr.addColorStop(1,hexA(col,0));
-    g.fillStyle=gr;g.fillRect(0,0,96,96);return c;};
+    gr.addColorStop(0,hexA(col,0.55));gr.addColorStop(0.7,hexA(col,0.12));gr.addColorStop(1,hexA(col,0));
+    g.fillStyle=gr;g.fillRect(0,0,96,96);
+    /* mascara circular: garante cantos transparentes mesmo se o gradiente falhar no dispositivo */
+    g.globalCompositeOperation='destination-in';
+    const mg=g.createRadialGradient(48,48,0,48,48,48);
+    mg.addColorStop(0,'rgba(0,0,0,1)');mg.addColorStop(0.85,'rgba(0,0,0,1)');mg.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=mg;g.beginPath();g.arc(48,48,48,0,Math.PI*2);g.fill();
+    g.globalCompositeOperation='source-over';
+    return c;};
   glowSpr={warm:mkGlow('#ffb060'),fire:mkGlow('#ff8a4a'),ice:mkGlow('#7fd4ff'),poison:mkGlow('#8fe08a'),holy:mkGlow('#ffe28a')};
 }
 function bakeVignettes(){
@@ -4114,7 +4121,7 @@ function hasLOS(x0,y0,x1,y1){
   let dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx-dy,x=x0,y=y0,guard=0;
   while(guard++<64){
     if(!(x===x0&&y===y0)&&!(x===x1&&y===y1)){const t=tileAt(x,y);
-      if(t===T.wall||t===T.dwall||t===T.pillar)return false;} /* igual à colisão do projétil: pedras/árvores não bloqueiam a mira (a flecha passa por cima) */
+      if(t===T.wall||t===T.dwall||t===T.pillar||t===T.cwall||t===T.roof)return false;} /* igual à colisão do projétil: pedras/árvores não bloqueiam a mira (a flecha passa por cima) */
     if(x===x1&&y===y1)return true;
     const e2=2*err;if(e2>-dy){err-=dy;x+=sx;}if(e2<dx){err+=dx;y+=sy;}}
   return false;}
@@ -4557,8 +4564,7 @@ function updateProjectiles(dt){for(const p of projectiles){
   p.trail-=dt;if(p.trail<=0){p.trail=0.03;
     addParticles(p.x,p.y,1,{col:p.vis==='arrow'?'#d8d2c0':ELEM[p.el].c,spd:16,life:0.3,size:p.vis==='arrow'?1.6:2.5,glow:p.vis!=='arrow'});}
   const tx=Math.floor(p.x/TILE),ty=Math.floor(p.y/TILE);
-  const hitWall=tileAt(tx,ty)===T.wall||tileAt(tx,ty)===T.dwall||tileAt(tx,ty)===T.pillar;
-  if(hitWall){ if(p.aoe)explodeAt(p.x,p.y); p.dead=true; continue; }   /* parede bloqueia SEMPRE (flecha nao atravessa) */
+  const _hwt=tileAt(tx,ty);const hitWall=_hwt===T.wall||_hwt===T.dwall||_hwt===T.pillar||_hwt===T.cwall||_hwt===T.roof;
   if(p.friendly){
     let hit=null,bd=1e9;
     for(const m of monsters){const d=dist(p.x,p.y,m.px,m.py);if(d<TILE*0.5*m.d.size&&d<bd){bd=d;hit=m;}}
