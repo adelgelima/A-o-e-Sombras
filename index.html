@@ -7577,7 +7577,7 @@ function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRo
       const info=document.createElement('div');info.className='info';info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+'">'+itemName(it)+'</div><div class="d">'+itemDesc(it)+'</div>';row.appendChild(info);
       const price=document.createElement('span');price.className='price';price.textContent=it.val+' \u29BF';row.appendChild(price);
       row.appendChild(stepper(row));
-      const buy=document.createElement('button');buy.className='btn buy';buy.textContent=_TB.buy;buy.addEventListener('pointerdown',function(e){e.stopPropagation();});buy.onclick=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof buyItemN==='function')buyItemN(item,n);else buyItem(item);};})(it,row);row.appendChild(buy);
+      const buy=document.createElement('button');buy.className='btn buy';buy.textContent=_TB.buy;buy.addEventListener('pointerdown',function(e){e.stopPropagation();});var _bf=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof buyItemN==='function')buyItemN(item,n);else buyItem(item);};})(it,row);buy.onclick=(window._acDbl?window._acDbl(_bf,500):_bf);row.appendChild(buy);
       rows.appendChild(row);}
   } else {
     /* ---- VENDER ---- */
@@ -7589,10 +7589,14 @@ function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRo
       const info=document.createElement('div');info.className='info';info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+'">'+itemName(it)+off+'</div><div class="d">x'+b.count+'</div>';row.appendChild(info);
       const price=document.createElement('span');price.className='price';price.textContent='+'+sellPrice(it)+' \u29BF';row.appendChild(price);
       row.appendChild(stepper(row));
-      const sell=document.createElement('button');sell.className='btn';sell.style.cssText='background:#7a5a2a;border-color:#a87a3a';sell.textContent=_TB.sell;sell.addEventListener('pointerdown',function(e){e.stopPropagation();});sell.onclick=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof sellBagItemN==='function')sellBagItemN(item,n);else sellBagItem(item);};})(it,row);row.appendChild(sell);
+      const sell=document.createElement('button');sell.className='btn';sell.style.cssText='background:#7a5a2a;border-color:#a87a3a';sell.textContent=_TB.sell;sell.addEventListener('pointerdown',function(e){e.stopPropagation();});var _sf=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof sellBagItemN==='function')sellBagItemN(item,n);else sellBagItem(item);};})(it,row);sell.onclick=(window._acDbl?window._acDbl(_sf,500):_sf);row.appendChild(sell);
       rows.appendChild(row);}
   }
 }
+function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
+function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
+function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
+function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
 function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
 function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
 function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
@@ -8115,9 +8119,9 @@ function openBless(){if(_blessOpen){var _bp=document.getElementById('bless');if(
       <div class="bt">${blessName(b)}${blessCount(b.id)?` <small>${t('lvl_short')} ${blessCount(b.id)+1}</small>`:''}</div>
       <div class="bd">${blessDesc(b)}</div>
     </div>`).join('');
-  $('blessBody').querySelectorAll('.bcard').forEach(function(c){ c.onclick=function(){pickBless(c.dataset.b);}; c.addEventListener('pointerup',function(ev){ ev.stopPropagation(); pickBless(c.dataset.b); }); });
+  $('blessBody').querySelectorAll('.bcard').forEach(function(c){ c.onclick=function(){pickBless(c.dataset.b);}; });
   $('bless').classList.remove('hidden');}
-function pickBless(id){if(!_blessOpen)return;
+function pickBless(id){if(!_blessOpen)return;if(window._pickBusy&&Date.now()-window._pickBusy<450)return;window._pickBusy=Date.now();
   if(!meta.bless)meta.bless={};
   meta.bless[id]=(meta.bless[id]||0)+1;
   const b=BLESS.find(x=>x.id===id);
@@ -8421,7 +8425,7 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
 /* === PONTE: dispara acao no POINTERDOWN (neste aparelho o click/pointerup e engolido em alguns elementos) === */
 (function(){
   if(typeof document==='undefined')return;
-  var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,[role=button]';
+  var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,.bcard,.brow,[role=button]';
   var synth=false, lastEl=null, lastAt=0, downT=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
     var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
@@ -10798,7 +10802,7 @@ try{(function(){
         var b1=document.createElement('button');
         b1.textContent='🧹 '+L.sellCommon;
         b1.style.cssText='flex:1;background:#5a4a2a;border:1px solid #8a6a3a;color:#f3e9cf;border-radius:8px;padding:8px;font:600 12px sans-serif;cursor:pointer;';
-        b1.onclick=function(e){e.stopPropagation();_bulkSell('common');};
+        var _bsf=function(e){e.stopPropagation();_bulkSell('common');};b1.onclick=(window._acDbl?window._acDbl(_bsf,600):_bsf);
         b1.addEventListener('pointerdown',function(e){e.stopPropagation();});
         bar.appendChild(b1);
         /* insere logo após o cabeçalho Vender */
@@ -11178,6 +11182,80 @@ try{(function(){
     setInterval(_wirePotionBtns, 900);
     try{console.log('[potioncfg] botoes de pocao: escolha pocao especifica (segure).');}catch(e){}
   }catch(e){ try{console.warn('potioncfg falhou',e);}catch(_){} }
+
+  /* ====== X para fechar painéis + proteção anti-duplo-clique ====== */
+  try{
+    /* ---- proteção anti-duplo-clique (debounce) ---- */
+    window._acDbl=function(fn,ms){
+      ms=ms||450; var last=0;
+      return function(e){
+        var now=Date.now();
+        if(now-last<ms){ try{e&&e.stopPropagation&&e.stopPropagation();}catch(_){} return; }
+        last=now;
+        return fn.apply(this,arguments);
+      };
+    };
+
+    /* ---- X nos painéis ---- */
+    /* mapeia overlay -> id do botao Fechar existente (reusa a logica do jogo) */
+    var _XMAP={ inv:'invClose', spellbook:'sbClose', shop:'shopClose', help:'helpClose',
+                settings:'setClose', quests:'qClose', bigmap:'bmClose', daily:null, bless:null };
+    /* title e death NAO recebem X (menu principal / precisa escolher) */
+
+    function _mkX(){
+      var b=document.createElement('button');
+      b.className='acPanelX';
+      b.setAttribute('aria-label','Fechar');
+      b.textContent='\u2715';   /* ✕ */
+      b.style.cssText='position:absolute;top:8px;right:8px;z-index:30;'+
+        'width:36px;height:36px;min-width:36px;padding:0;line-height:36px;text-align:center;'+
+        'border-radius:10px;border:1px solid #4a4a58;background:rgba(30,33,42,.92);'+
+        'color:#e8e8f0;font:700 17px sans-serif;cursor:pointer;flex-shrink:0;'+
+        'touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.4);';
+      return b;
+    }
+
+    function _closeOverlay(ovId, closeId){
+      try{
+        if(closeId){
+          var cb=document.getElementById(closeId);
+          if(cb){ cb.click(); return; }   /* usa o Fechar do proprio jogo */
+        }
+        /* sem botao proprio: esconde o overlay.
+           (para a bencao, o openBless se auto-recupera e _blessQ e preservado) */
+        var ov=document.getElementById(ovId);
+        if(ov)ov.classList.add('hidden');
+        try{ if(ovId==='bless'){ window._acPanelShield=0; } }catch(_){}
+      }catch(e){}
+    }
+
+    function _addX(){
+      try{
+        for(var ovId in _XMAP){
+          var ov=document.getElementById(ovId);
+          if(!ov)continue;
+          var card=ov.querySelector('.card')||ov.firstElementChild;
+          if(!card)continue;
+          if(card.querySelector('.acPanelX'))continue;   /* ja tem */
+          /* o card precisa ser 'relative' p/ o X ancorar no canto */
+          try{
+            var pos=window.getComputedStyle(card).position;
+            if(pos==='static')card.style.position='relative';
+          }catch(_){ card.style.position='relative'; }
+          var x=_mkX();
+          (function(id, cid){
+            x.onclick=window._acDbl(function(e){ if(e){e.stopPropagation();} _closeOverlay(id,cid); },350);
+          })(ovId, _XMAP[ovId]);
+          x.addEventListener('pointerdown',function(e){ e.stopPropagation(); });
+          card.appendChild(x);
+        }
+      }catch(e){}
+    }
+
+    setInterval(_addX, 700);
+    setTimeout(_addX, 400);
+    try{console.log('[panelx] X de fechar + anti-duplo-clique ativos.');}catch(e){}
+  }catch(e){ try{console.warn('panelx falhou',e);}catch(_){} }
 
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
