@@ -26,7 +26,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
   html,body{height:100%;overflow:hidden;background:#07080d;color:var(--ink);
-    font-family:var(--body);touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+    font-family:var(--body);touch-action:manipulation;overscroll-behavior:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
   #game{position:fixed;inset:0;overflow:hidden}
   canvas#c{position:absolute;inset:0;width:100%;height:100%;display:block}
   .panel{background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
@@ -379,10 +379,10 @@
 .sb-item .sb-lk{font-size:10px;color:var(--ink-dim)}
 
 /* toque confiável no mobile: elementos clicaveis nao iniciam rolagem (impede clique engolido no Android) */
-.btn,.langb,.tbtn,.stog,.stog *,.gbtn,button,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:none}
-.slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:pan-y}
+.btn,.langb,.tbtn,.stog,.stog *,.gbtn,button,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:manipulation}
+.slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:manipulation}
 
-#shopRows input[type=number]::-webkit-inner-spin-button,#shopRows input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}#title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}</style>
+#shopRows input[type=number]::-webkit-inner-spin-button,#shopRows input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}#title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}#c{touch-action:none}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
    https://console.firebase.google.com , ative Authentication (Google) e Firestore,
@@ -659,6 +659,9 @@ window.FIREBASE_CONFIG = {
   <div id="tooltip" class="panel"></div>
 </div>
 <script>
+/* util: interval de instalacao que PARA quando a tarefa termina (economia de CPU) */
+window._acUntil=function(fn,ms,giveUp){var n=0;var t=setInterval(function(){n++;var done=false;try{done=fn();}catch(e){}if(done||(giveUp&&n>=giveUp)){clearInterval(t);}},ms);return t;};
+
 window.AcoSombrasRuntime=window.AcoSombrasRuntime||{events:{on(){},emit(){}},state:{set(){},get(){}}};
 /*
  * 00-i18n.js
@@ -8062,7 +8065,17 @@ const DungeonLayer={
     this.active=true;this._build(depth);
     addMessage(t('dng_enter').replace('{d}',this.depth),'sys');shake(4);buzz(30);if(SFX.pickup)SFX.pickup();saveGame();
   },
-  descend(){if(!this.active||this.depth>=10)return;this._build(this.depth+1);const s=this._state();s.deepest=Math.max(s.deepest||1,this.depth);addMessage(t('dng_deeper').replace('{d}',this.depth),'dmg');shake(5);buzz(40);saveGame();},
+  descend(){if(!this.active)return;
+    /* ===== profundidade estendida (10 -> 40) com porta de nivel =====
+       Andares 1..10: livres, exatamente como antes (nada muda p/ quem ja joga).
+       Andares 11+: exigem nivel (D-10)*10  =>  11:nv10  20:nv100  30:nv200  40:nv300 */
+    var _nd=this.depth+1;
+    if(_nd>window._DNG_MAX){ addMessage(_dngT('max').replace('{d}',window._DNG_MAX),'sys'); this.downReady=false; return; }
+    var _req=_dngReq(_nd);
+    if(player.lvl<_req){ addMessage(_dngT('req').replace('{d}',_nd).replace('{n}',_req),'sys');
+      if(typeof centerMsg==='function')centerMsg(_dngT('reqShort').replace('{n}',_req));
+      try{buzz(20);}catch(_e){} this.downReady=false; return; }
+    this._build(_nd);const s=this._state();s.deepest=Math.max(s.deepest||1,this.depth);addMessage(t('dng_deeper').replace('{d}',this.depth),'dmg');shake(5);buzz(40);saveGame();},
   ascend(){if(!this.active)return;
     if(this.depth>1){this._build(this.depth-1);addMessage(t('dng_up_floor').replace('{n}',this.depth),'sys');shake(3);buzz(20);saveGame();}
     else this.leave();},
@@ -8592,33 +8605,61 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
 /* === PONTE: dispara acao no POINTERDOWN (neste aparelho o click/pointerup e engolido em alguns elementos) === */
 (function(){
   if(typeof document==='undefined')return;
+  /* ===== PONTE DE TOQUE v2 (generalizada) =====
+     Historico: cliques eram engolidos de forma intermitente no Chrome Android.
+     Causa provavel: heuristica de double-tap-zoom + touch-action:none no CSS antigo
+     (o proprio contorno colocado para "impedir clique engolido" podia suprimi-lo).
+     Correcao em duas frentes:
+       1) CSS: touch-action:manipulation nos clicaveis (preserva click, mata o delay);
+       2) esta ponte deixa de ser lista de permissao: cobre QUALQUER elemento clicavel
+          (SEL legada OU .onclick definido) e dispara o click sintetico no ALVO ORIGINAL
+          do toque (preserva handlers de clique-fora que checam e.target).
+     O click nativo, quando ocorrer, e suprimido pelo guarda de 800ms (sem duplo disparo). */
   var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,.bcard,.brow,#tracker,.tHead,[role=button]';
-  var synth=false, lastEl=null, lastAt=0, downT=null, downX=0, downY=0, moved=false;
+  function _clickable(n){
+    try{
+      var el=n;
+      while(el&&el!==document&&el!==document.documentElement){
+        if(el.nodeType===1){
+          if(el.disabled)return null;   /* botao desabilitado nao clica (nem repassa acima) */
+          if(el.matches&&el.matches(SEL))return el;
+          if(typeof el.onclick==='function')return el;
+        }
+        el=el.parentNode;
+      }
+    }catch(_e){}
+    return null;
+  }
+  window._acClickable=_clickable;
+  var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
-    var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
-    if(!t){ downT=null; return; }
-    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.preventDefault(); e.stopPropagation(); downT=null; return; }
-    downT=t; downX=e.clientX; downY=e.clientY; moved=false;   /* NAO clica ainda: espera ver se e rolagem */
+    if(e.pointerType==='mouse'&&e.button!==0){ downLeaf=null; return; }  /* so botao primario */
+    var t=_clickable(e.target);
+    if(!t){ downLeaf=null; return; }
+    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
+    downLeaf=e.target; downX=e.clientX; downY=e.clientY; moved=false;
   },true);
   document.addEventListener('pointermove',function(e){
-    if(!downT)return;
-    if(Math.abs(e.clientX-downX)>10||Math.abs(e.clientY-downY)>10){ moved=true; downT=null; window._acScrolledAt=Date.now(); }  /* arrastou = rolagem */
+    if(!downLeaf)return;
+    if(Math.abs(e.clientX-downX)>10||Math.abs(e.clientY-downY)>10){ moved=true; downLeaf=null; window._acScrolledAt=Date.now(); }
   },true);
   document.addEventListener('pointerup',function(e){
-    if(!downT)return;
-    var t=downT; downT=null;
-    if(moved)return;   /* houve rolagem: nao dispara clique */
-    lastEl=t; lastAt=Date.now();
-    synth=true; try{ t.click(); }catch(_){}
+    if(!downLeaf)return;
+    var leaf=downLeaf; downLeaf=null;
+    if(moved)return;
+    lastLeaf=leaf; lastAt=Date.now();
+    synth=true;
+    try{ leaf.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})); }
+    catch(_e){ try{ if(leaf.click)leaf.click(); }catch(__e){} }
     synth=false;
   },true);
   document.addEventListener('click',function(e){
     if(synth)return;
-    if(window._acScrolledAt&&(Date.now()-window._acScrolledAt)<400){ var _st=(e.target&&e.target.closest)?e.target.closest(SEL):null; if(_st){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; } }  /* rolou: ignora click SO em botoes da lista */
     if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }
-    if(lastEl&&(Date.now()-lastAt)<800){
-      var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
-      if(t===lastEl||(lastEl.contains&&lastEl.contains(e.target))||(t&&t.contains&&t.contains(lastEl))){
+    if(window._acScrolledAt&&(Date.now()-window._acScrolledAt)<400){ if(_clickable(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; } }
+    if(lastLeaf&&(Date.now()-lastAt)<800){
+      var t=e.target;
+      if(t===lastLeaf||(lastLeaf.contains&&lastLeaf.contains(t))||(t&&t.contains&&t.contains(lastLeaf))){
         e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
       }
     }
@@ -9757,7 +9798,7 @@ try{(function(){
     try{
       var st=document.createElement('style');
       st.textContent='.overlay > div{ -webkit-overflow-scrolling:touch; overscroll-behavior:contain; scrollbar-width:thin; }'
-        +'#shopRows,#bag,.slist{ touch-action:pan-y; }'
+        +'#shopRows,#bag,.slist{ touch-action:manipulation; }'
         +'.overlay > div::-webkit-scrollbar{ width:10px; }'
         +'.overlay > div::-webkit-scrollbar-thumb{ background:#4a4f5e; border-radius:6px; border:2px solid transparent; background-clip:padding-box; }'
         +'.overlay > div::-webkit-scrollbar-thumb:active{ background:#6a7080; }'
@@ -9920,10 +9961,20 @@ try{(function(){
   /* ============ P4: FORJA + EVENTOS AGENDADOS + GAMEPAD + ACESSIBILIDADE ============ */
   try{
     /* ================= FORJA (Ferreiro): +6% stats/nivel, max +5, custo escalonado ================= */
-    var FORGE_MAX=5, FORGE_PCT=0.06;
+    var FORGE_MAX=15, FORGE_PCT=0.06;
     function _forgeMap(){ try{ if(typeof meta!=='undefined'&&meta){ meta.forge=meta.forge||{}; return meta.forge; } }catch(e){} return {}; }
     window._forgeLvl=function(id){ try{ return (_forgeMap()[id]|0); }catch(e){ return 0; } };
-    function _forgeCost(it,k){ return Math.round((it.val||100)*(0.8+0.7*k)); }
+    /* ===== FORJA ESTENDIDA (+5 -> +15): dreno de ouro do fim de jogo =====
+       Ate o +5: EXATAMENTE como antes (+6%/nivel, mesmo custo) -> nada muda p/ quem ja jogou.
+       Do +6 ao +15: ganho cai p/ +3%/nivel e o custo vira exponencial (x1.55 por nivel),
+       virando um poco de ouro sem inflar o poder. */
+    function _forgePct(k){ var f=Math.min(k,5), e=Math.max(0,k-5); return 0.06*f + 0.03*e; }
+    window._forgePct=_forgePct;
+    function _forgeCost(it,k){
+      var base=(it.val||100)*(0.8+0.7*k);
+      if(k>=5) base*=Math.pow(1.55,k-4);
+      return Math.round(base);
+    }
     /* bonus aplicado via cadeia do recompute (alimenta tambem a mitigacao de armadura) */
     if(typeof recompute==='function'){
       var _prevRec=recompute;
@@ -9935,10 +9986,11 @@ try{(function(){
             var id=player.equip[slots[i]]; if(!id)continue;
             var k=window._forgeLvl(id); if(!k)continue;
             var it=itemById(id); if(!it)continue;
-            if(it.atk)player.atk+=it.atk*FORGE_PCT*k;
-            if(it.def)player.def+=it.def*FORGE_PCT*k;
-            if(it.arm)player.arm+=it.arm*FORGE_PCT*k;
-            if(it.hp){player.maxhp+=Math.round(it.hp*FORGE_PCT*k);}
+            var _fp=_forgePct(k);
+            if(it.atk)player.atk+=it.atk*_fp;
+            if(it.def)player.def+=it.def*_fp;
+            if(it.arm)player.arm+=it.arm*_fp;
+            if(it.hp){player.maxhp+=Math.round(it.hp*_fp);}
           }
           if(player.hp>player.maxhp)player.hp=player.maxhp;
         }catch(e){}
@@ -10063,7 +10115,8 @@ try{(function(){
     /* ================= GAMEPAD ================= */
     var GP={was:{},dirs:{w:false,a:false,s:false,d:false},announced:false};
     function _gpBtn(gp,i){ var b=gp.buttons&&gp.buttons[i]; return !!(b&&(b.pressed||b.value>0.5)); }
-    setInterval(function(){
+    /* gamepad: poll de 60ms SO enquanto houver controle conectado (antes: para sempre) */
+    var _gpPoll=function(){
       try{
         var gps=(navigator.getGamepads&&navigator.getGamepads())||[]; var gp=null;
         for(var i=0;i<gps.length;i++){ if(gps[i]&&gps[i].connected){gp=gps[i];break;} }
@@ -10085,7 +10138,16 @@ try{(function(){
           if(edge(8)){ var bm=document.getElementById('bigmap'); if(bm){ if(bm.classList.contains('hidden')&&typeof openBigMap==='function')openBigMap(); else if(typeof closeAllPanels==='function')closeAllPanels(); } }
         } else { for(var i2=0;i2<16;i2++)GP.was[i2]=_gpBtn(gp,i2); }
       }catch(e){}
-    },60);
+    };
+    var _gpTimer=null;
+    function _gpStart(){ if(!_gpTimer)_gpTimer=setInterval(_gpPoll,60); }
+    function _gpStop(){ if(_gpTimer){clearInterval(_gpTimer);_gpTimer=null;} }
+    window.addEventListener('gamepadconnected',_gpStart);
+    window.addEventListener('gamepaddisconnected',function(){
+      try{ var g=(navigator.getGamepads&&navigator.getGamepads())||[]; var any=false;
+        for(var q=0;q<g.length;q++)if(g[q])any=true; if(!any)_gpStop(); }catch(e){_gpStop();}
+    });
+    try{ var g0=(navigator.getGamepads&&navigator.getGamepads())||[]; for(var q0=0;q0<g0.length;q0++)if(g0[q0]){_gpStart();break;} }catch(e){}
 
     /* ================= ACESSIBILIDADE: texto grande + cores acessiveis ================= */
     var ACS={big:false,cb:false};
@@ -10639,17 +10701,28 @@ try{(function(){
   }catch(e){ try{console.warn('npctalk falhou',e);}catch(_){} }
 
 
-  /* ============ ESCUDO CSS: desativa a barra inferior por instantes ao fechar painel ============ */
+  /* ============ ESCUDO CSS v2 (event-driven) ============
+     Antes: um setInterval de 40ms (25 acordadas de CPU/s, para sempre) fazia polling
+     de window._acPanelShield para ligar/desligar a classe .acShield no body.
+     Agora: um setter em _acPanelShield aplica a classe na hora e agenda UM setTimeout
+     exato para remover. Zero polling; mesmo comportamento. */
   try{
-    setInterval(function(){
-      try{
-        var on=(window._acPanelShield&&Date.now()<window._acPanelShield);
+    (function(){
+      var _shv=window._acPanelShield||0, _sht=null;
+      function _apply(){
+        var on=(_shv&&Date.now()<_shv);
         var b=document.body; if(!b)return;
-        if(on&&!b.classList.contains('acShield'))b.classList.add('acShield');
-        else if(!on&&b.classList.contains('acShield'))b.classList.remove('acShield');
-      }catch(e){}
-    }, 40);
-    try{console.log('[escudo] CSS pointer-events na barra durante janela de fechamento.');}catch(e){}
+        if(on){ b.classList.add('acShield');
+          if(_sht)clearTimeout(_sht);
+          _sht=setTimeout(function(){_sht=null;_apply();}, Math.max(10,_shv-Date.now()+5));
+        } else { b.classList.remove('acShield'); }
+      }
+      Object.defineProperty(window,'_acPanelShield',{configurable:true,
+        get:function(){return _shv;},
+        set:function(v){_shv=v||0;_apply();}});
+      _apply();
+      try{console.log('[escudo] v2 event-driven (sem polling).');}catch(e){}
+    })();
   }catch(e){}
 
   /* ============ UI DE VARIANTES: escolha do Estilo do herói (I/II) ============ */
@@ -11209,13 +11282,11 @@ try{(function(){
 
     /* liga nos 2 botões de magia da barra (sk6=slot0? na verdade sk6/sk7 = useSkill3/4 = loadout[?]) */
     /* useSkill3 e useSkill4 mapeiam para loadout — sk6 e sk7. Slots do loadout: 0,1,2. Os botões de magia são 2 (sk6,sk7) + skill principal */
-    setInterval(function(){
-      try{
-        _attachSpellTip('sk6', 1);  /* useSkill3 ~ loadout[1] */
-        _attachSpellTip('sk7', 2);  /* useSkill4 ~ loadout[2] */
-        _attachSpellTip('sk2', 0);  /* skill principal ~ loadout[0], se existir */
-      }catch(e){}
-    }, 800);
+    window._acUntil(function(){
+      _attachSpellTip('sk6',1);_attachSpellTip('sk7',2);_attachSpellTip('sk2',0);
+      var a=document.getElementById('sk6'),b=document.getElementById('sk7');
+      return !!(a&&a._spellTipOn&&b&&b._spellTipOn);   /* feito: para o timer */
+    }, 800, 40);
     try{console.log('[spelltip] tooltip de magia ativo (segurar para ver).');}catch(e){}
   }catch(e){ try{console.warn('spelltip falhou',e);}catch(_){} }
 
@@ -11387,7 +11458,9 @@ try{(function(){
         });
       }catch(e){}
     }
-    setInterval(_wirePotionBtns, 900);
+    window._acUntil(function(){_wirePotionBtns();
+      var a=document.getElementById('sk3'),b=document.getElementById('sk4');
+      return !!(a&&a._potCfgWired&&b&&b._potCfgWired);}, 900, 40);
     try{console.log('[potioncfg] botoes de pocao: escolha pocao especifica (segure).');}catch(e){}
   }catch(e){ try{console.warn('potioncfg falhou',e);}catch(_){} }
 
@@ -11471,7 +11544,43 @@ try{(function(){
       }catch(e){}
     }
 
-    setInterval(_addX, 700);
+    /* ---- protege TODOS os botoes de fechar / comprar / vender contra duplo clique ---- */
+    var _GUARD=['invClose','sbClose','shopClose','helpClose','setClose','qClose','bmClose','lbClose',
+                'dailyClose','blessClose','deathClose'];
+    function _guardBtns(){
+      try{
+        /* botoes de fechar por id */
+        for(var i=0;i<_GUARD.length;i++){
+          var b=document.getElementById(_GUARD[i]);
+          if(b&&!b._acGuard&&typeof b.onclick==='function'){
+            b._acGuard=true; b.onclick=window._acDbl(b.onclick,400);
+          }
+        }
+        /* qualquer botao de fechar dentro de um overlay (pega os que nao tem id) */
+        var ovs=document.querySelectorAll('.overlay');
+        for(var k=0;k<ovs.length;k++){
+          var bs=ovs[k].querySelectorAll('button');
+          for(var j=0;j<bs.length;j++){
+            var bb=bs[j];
+            if(bb._acGuard||typeof bb.onclick!=='function')continue;
+            var tx=(bb.textContent||'').trim().toLowerCase();
+            /* so os de fechar/comprar/vender: nao mexe em abas, steppers, cartas */
+            if(/fechar|close|cerrar|fermer|comprar|vender|buy|sell|acheter|vendre/.test(tx)){
+              bb._acGuard=true; bb.onclick=window._acDbl(bb.onclick,400);
+            }
+          }
+        }
+      }catch(e){}
+    }
+    setInterval(_guardBtns, 800);
+    setTimeout(_guardBtns, 500);
+
+    window._acUntil(function(){_addX();
+      var done=true;
+      for(var k in _XMAP){var ov=document.getElementById(k);if(!ov)continue;
+        var card=ov.querySelector('.card')||ov.firstElementChild;if(!card)continue;
+        if(!card.querySelector('.acPanelX')&&!_hasTopClose(ov,card)){done=false;break;}}
+      return done;}, 700, 60);
     setTimeout(_addX, 400);
     try{console.log('[panelx] X de fechar + anti-duplo-clique ativos.');}catch(e){}
   }catch(e){ try{console.warn('panelx falhou',e);}catch(_){} }
@@ -11479,6 +11588,17 @@ try{(function(){
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
 
+
+/* ===== masmorra: profundidade maxima e porta de nivel ===== */
+window._DNG_MAX=40;
+function _dngReq(d){ return d<=10?0:(d-10)*10; }   /* 11:10 | 20:100 | 30:200 | 40:300 */
+var _DNG_L={
+ pt:{req:'A escada para o andar {d} exige n\u00edvel {n}.',reqShort:'Precisa do n\u00edvel {n}',max:'Este \u00e9 o andar mais fundo ({d}).'},
+ en:{req:'The stairs to floor {d} require level {n}.',reqShort:'Requires level {n}',max:'This is the deepest floor ({d}).'},
+ es:{req:'La escalera al piso {d} exige nivel {n}.',reqShort:'Requiere nivel {n}',max:'Este es el piso m\u00e1s profundo ({d}).'},
+ fr:{req:'L\u2019escalier vers l\u2019\u00e9tage {d} exige le niveau {n}.',reqShort:'Niveau {n} requis',max:'C\u2019est l\u2019\u00e9tage le plus profond ({d}).'}
+};
+function _dngT(k){ var l=(typeof LANG!=='undefined'&&_DNG_L[LANG])?LANG:'pt'; return _DNG_L[l][k]; }
 
 /* ===== i18n dos perks de vocacao ===== */
 try{ Object.assign(BLESS_I18N,{
