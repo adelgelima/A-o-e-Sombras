@@ -4430,6 +4430,17 @@ function update(dt){if(_blessOpen)return;
         player.chaseT=0;
       }else{
         player.chaseT+=dt;
+        /* ===== destrava alvo INALCANCAVEL (parede / outra sala) =====
+           sem linha de visao E sem caminho = nao da pra chegar: larga e ataca quem da. */
+        var _tLos=(cheby(player.tx,player.ty,m.tx,m.ty)<=1)||hasLOS(player.tx,player.ty,m.tx,m.ty);
+        var _tPath=!!(player.path&&player.path.length);
+        if(_tLos||_tPath){ player._stuckT=0; }
+        else{ player._stuckT=(player._stuckT||0)+dt;
+          if(player._stuckT>1.2){ var _alt=null,_ad=1e9;
+            for(const o of monsters){ if(o.dead||o===m)continue;
+              var _od=cheby(player.tx,player.ty,o.tx,o.ty);
+              if(_od<=player.rng&&(_od<=1||hasLOS(player.tx,player.ty,o.tx,o.ty))&&_od<_ad){_ad=_od;_alt=o;} }
+            player.target=_alt||null; player.autoTgt=true; player._stuckT=0; } }
         if(chaseOn&&!iv&&((!player.moving&&!player.path.length)||player.chaseT>0.6)){
           player.chaseT=0;approachTarget(m);
           if(player.autoTgt&&(!player.path||!player.path.length)&&!isSafeZone(player.tx,player.ty)){
@@ -8531,7 +8542,13 @@ function init(){
     if(sw&&ICO.atk){sw.textContent='';try{sw.appendChild(ICO.atk);}catch(e){}}})();
   $('sk1').onclick=useSkill1;$('sk2').onclick=useSkill2;$('sk6').onclick=useSkill3;$('sk7').onclick=useSkill4;$('sk3').onclick=()=>usePotion('hp');$('sk4').onclick=()=>usePotion('cure');$('sk5').onclick=toggleInv;
   $('attackBtn').addEventListener('pointerdown',e=>{e.preventDefault();if(window._acPanelShield&&Date.now()<window._acPanelShield)return;
-    let best=null,bd=1e9;for(const m of monsters){const d=cheby(m.tx,m.ty,player.tx,player.ty);if(d<=7&&d<bd){bd=d;best=m;}}
+    let best=null,bd=1e9;
+    for(const m of monsters){ if(m.dead)continue;
+      if(m.tx===player.tx&&m.ty===player.ty)continue;
+      const d=cheby(m.tx,m.ty,player.tx,player.ty);
+      if(d>7)continue;
+      if(d>1&&!hasLOS(player.tx,player.ty,m.tx,m.ty))continue;   /* atras de parede/outra sala: nao mira */
+      if(d<bd){bd=d;best=m;} }
     if(best)setTarget(best);else addMessage(t('m_no_enemy'),'sys');});
   setBtnIcon($('attackBtn'),'atk','\uD83C\uDFAF');
   requestAnimationFrame(loop);
