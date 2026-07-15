@@ -4798,7 +4798,7 @@ function render(){
     const _lb=t('dng_floor').replace('{n}',DungeonLayer.depth), _tw=ctx.measureText(_lb).width;
     var _by=(typeof getSafeTop==='function'?getSafeTop():0)+8;
     /* desce o badge se ele colidiria com o painel HUD (topo-esquerda, ~150px largura) */
-    var _bx=W/2; if(W/2-_tw/2-12 < 300){ _by=166; }   /* tela estreita: painel cobre o topo, desce o badge */
+    var _bx=W/2; if(W/2-_tw/2-12 < 300){ _by=Math.max(40,H-150); }   /* tela estreita: vai p/ o rodape (acima da barra), fora do campo de visao */
     ctx.fillStyle='rgba(12,10,18,.82)';ctx.fillRect(_bx-_tw/2-12,_by,_tw+24,26);
     ctx.strokeStyle='rgba(155,140,255,.5)';ctx.lineWidth=1;ctx.strokeRect(_bx-_tw/2-11.5,_by+0.5,_tw+23,25);
     ctx.fillStyle='#d8cfff';ctx.fillText(_lb,_bx,_by+5);ctx.restore();
@@ -8233,6 +8233,17 @@ function pickBless(id){if(!_blessOpen)return;if(window._pickBusy&&Date.now()-win
   addMessage(tf('msg_bless_recv',{name:blessName(b)}),'good');
   SFX.level();buzz([15,25,15]);saveGame();
   if(_blessQ>0)openBless();}
+/* ===== DESTRAVA DA BENCAO =====
+   update(dt) faz 'if(_blessOpen)return' => o jogo PAUSA enquanto a bencao esta aberta.
+   Se o painel for fechado sem escolher, _blessOpen ficava true e o jogo travava para sempre. */
+window._acCloseBless=function(){ try{ _blessOpen=false; var p=document.getElementById('bless'); if(p)p.classList.add('hidden'); }catch(e){} };
+/* fecha ao tocar FORA do card (mantem _blessQ: a bencao volta no proximo nivel) */
+try{ var _blEl=document.getElementById('bless');
+  if(_blEl){ _blEl.addEventListener('pointerup',function(e){ if(e.target===_blEl){ window._acCloseBless(); } },false); }
+}catch(e){}
+/* rede de seguranca: painel escondido + _blessOpen true = jogo pausado sem motivo -> destrava */
+setInterval(function(){ try{ if(_blessOpen){ var p=document.getElementById('bless');
+  if(p&&p.classList.contains('hidden')){ _blessOpen=false; try{console.log('[destrava] bencao presa: jogo liberado.');}catch(_){} } } }catch(e){} },400);
 const QDEFS={
  snow:{t:'Cace 8 feras nos Picos Uivantes',n:8},
  ash:{t:'Cace 8 feras nas Cinzas de Vorrak',n:8},
@@ -11364,11 +11375,11 @@ try{(function(){
           var cb=document.getElementById(closeId);
           if(cb){ cb.click(); return; }   /* usa o Fechar do proprio jogo */
         }
-        /* sem botao proprio: esconde o overlay.
-           (para a bencao, o openBless se auto-recupera e _blessQ e preservado) */
+        /* a BENCAO pausa o jogo (update: if(_blessOpen)return). Fechar so escondendo
+           deixaria o jogo travado para sempre -> usa o fechamento que destrava. */
+        if(ovId==='bless'&&window._acCloseBless){ window._acCloseBless(); try{window._acPanelShield=0;}catch(_){} return; }
         var ov=document.getElementById(ovId);
         if(ov)ov.classList.add('hidden');
-        try{ if(ovId==='bless'){ window._acPanelShield=0; } }catch(_){}
       }catch(e){}
     }
 
