@@ -3597,15 +3597,24 @@ function recompute(){
   player.cdr=(o&&o.cdr?o.cdr:0)+(h&&h.cdr?h.cdr:0)+(l&&l.cdr?l.cdr:0);
   player.fireRes=(o&&o.fireRes?o.fireRes:0)+(a&&a.fireRes?a.fireRes:0);
   const bl=(meta&&meta.bless)?meta.bless:{};
-  player.atk=Math.round(player.atk*(1+0.08*(bl.dano||0)));
-  player.maxhp=Math.round(player.maxhp*(1+0.12*(bl.vida||0)));
-  player.cdr=Math.min(0.65,player.cdr+0.07*(bl.recarga||0));
-  player.critC=0.12+player.skill*0.002+0.05*(bl.crit||0);
-  player.critD=1.6+0.25*(bl.critdmg||0);
-  player.goldMul=1+0.12*(bl.ouro||0);
-  player.orbHeal=0.12+0.05*(bl.orbe||0);
-  player.thorns=0.08*(bl.espinhos||0);
-  player.lifesteal=0.03*(bl.vamp||0);
+  /* ===== BENCAOS =====
+     _bv: os primeiros 'cap' stacks valem cheio (balanceamento original preservado);
+          os extras (progressao nv50->300) valem 1/3 => cresce sem explodir.
+     _cp: perks de vocacao, lineares (mx baixo). */
+  function _bv(id,base,cap){var n=(bl[id]||0);var f=Math.min(n,cap),e=Math.max(0,n-cap);return base*f+base*0.34*e;}
+  function _cp(id,base){return base*(bl[id]||0);}
+  player.atk=Math.round(player.atk*(1+_bv('dano',0.08,6)+_cp('k_furia',0.05)+_cp('m_poder',0.06)+_cp('r_veneno',0.04)));
+  player.maxhp=Math.round(player.maxhp*(1+_bv('vida',0.12,6)+_cp('k_couro',0.08)));
+  player.cdr=Math.min(0.70,player.cdr+_bv('recarga',0.07,5)+_cp('m_arcano',0.04));
+  player.critC=Math.min(0.75,0.12+player.skill*0.002+_bv('crit',0.05,5)+_cp('r_mira',0.03));
+  player.critD=Math.min(5.0,1.6+_bv('critdmg',0.25,5)+_cp('r_perfura',0.15)+_cp('m_foco',0.10));
+  player.goldMul=1+_bv('ouro',0.12,5);
+  player.orbHeal=0.12+_bv('orbe',0.05,4)+_cp('m_essencia',0.04);
+  player.thorns=Math.min(1.2,_bv('espinhos',0.08,5)+_cp('k_retribui',0.05));
+  player.lifesteal=Math.min(0.45,_bv('vamp',0.03,4)+_cp('k_sede',0.02)+_cp('m_vinculo',0.02));
+  player.atkspd=player.atkspd*(1+_cp('r_cadencia',0.04)+_cp('k_golpe',0.03));
+  player.arm=(player.arm||0)+2*((bl.k_muralha||0)+(bl.m_manto||0));
+  player.rng=(player.rng||1)+(bl.r_alcance||0);
   const sh=(meta&&meta.shrine)?meta.shrine:{};                       /* bônus PERMANENTES de santuário */
   player.atk+=4*(sh.forca||0);player.maxhp+=30*(sh.vida||0);
   player.critC+=0.03*(sh.crit||0);player.goldMul+=0.15*(sh.ouro||0);
@@ -8212,20 +8221,43 @@ const SaveLoad={
   }
 };
 const BLESS=[
- {id:'dano',ic:'&#9876;&#65039;',t:'Fio Cruel',d:'+8% de dano',mx:6},
- {id:'vida',ic:'&#10084;&#65039;',t:'Vigor de Pedravau',d:'+12% de vida m\u00e1xima',mx:6},
- {id:'recarga',ic:'&#9203;',t:'Mente C\u00e9lere',d:'-7% de recarga das habilidades',mx:5},
- {id:'passo',ic:'&#128168;',t:'Passo do Breu',d:'+6% de velocidade de movimento',mx:4},
- {id:'crit',ic:'&#127919;',t:'Olho do Ca\u00e7ador',d:'+5% de chance cr\u00edtica',mx:5},
- {id:'critdmg',ic:'&#128165;',t:'Golpe Devastador',d:'+25% de dano cr\u00edtico',mx:5},
- {id:'orbe',ic:'&#128308;',t:'Ess\u00eancia Voraz',d:'Orbes de vida curam +5%',mx:4},
- {id:'ouro',ic:'&#128176;',t:'M\u00e3o de Midas',d:'+12% de ouro saqueado',mx:5},
- {id:'espinhos',ic:'&#127807;',t:'Pele de Espinhos',d:'Reflete 8% do dano sofrido',mx:5},
- {id:'vamp',ic:'&#129656;',t:'Sede Sombria',d:'Cura 3% do dano que voc\u00ea causa',mx:4}];
+ /* ---------- GERAIS (todas as vocacoes) ---------- */
+ {id:'dano',ic:'&#9876;&#65039;',t:'Fio Cruel',d:'+8% de dano',mx:25},
+ {id:'vida',ic:'&#10084;&#65039;',t:'Vigor de Pedravau',d:'+12% de vida m\u00e1xima',mx:25},
+ {id:'recarga',ic:'&#9203;',t:'Mente C\u00e9lere',d:'-7% de recarga das habilidades',mx:25},
+ {id:'passo',ic:'&#128168;',t:'Passo do Breu',d:'+6% de velocidade de movimento',mx:25},
+ {id:'crit',ic:'&#127919;',t:'Olho do Ca\u00e7ador',d:'+5% de chance cr\u00edtica',mx:25},
+ {id:'critdmg',ic:'&#128165;',t:'Golpe Devastador',d:'+25% de dano cr\u00edtico',mx:25},
+ {id:'orbe',ic:'&#128308;',t:'Ess\u00eancia Voraz',d:'Orbes de vida curam +5%',mx:25},
+ {id:'ouro',ic:'&#128176;',t:'M\u00e3o de Midas',d:'+12% de ouro saqueado',mx:25},
+ {id:'espinhos',ic:'&#127807;',t:'Pele de Espinhos',d:'Reflete 8% do dano sofrido',mx:25},
+ {id:'vamp',ic:'&#129656;',t:'Sede Sombria',d:'Cura 3% do dano que voc\u00ea causa',mx:25},
+ /* ---------- CAVALEIRO (tanque / corpo-a-corpo) ---------- */
+ {id:'k_furia',cls:'knight',ic:'&#128293;',t:'F\u00faria de Ferro',d:'+5% de dano',mx:10},
+ {id:'k_couro',cls:'knight',ic:'&#128737;&#65039;',t:'Couro Curtido',d:'+8% de vida m\u00e1xima',mx:10},
+ {id:'k_muralha',cls:'knight',ic:'&#129704;',t:'Muralha',d:'+2 de armadura',mx:12},
+ {id:'k_retribui',cls:'knight',ic:'&#9889;',t:'Retribui\u00e7\u00e3o',d:'Reflete +5% do dano sofrido',mx:8},
+ {id:'k_sede',cls:'knight',ic:'&#127838;',t:'Sede de Batalha',d:'+2% de roubo de vida',mx:8},
+ {id:'k_golpe',cls:'knight',ic:'&#9876;&#65039;',t:'Golpe R\u00e1pido',d:'+3% de velocidade de ataque',mx:8},
+ /* ---------- ARQUEIRA (dist\u00e2ncia / cr\u00edtico) ---------- */
+ {id:'r_cadencia',cls:'ranger',ic:'&#127993;',t:'Cad\u00eancia',d:'+4% de velocidade de ataque',mx:10},
+ {id:'r_mira',cls:'ranger',ic:'&#127919;',t:'Mira Firme',d:'+3% de chance cr\u00edtica',mx:10},
+ {id:'r_perfura',cls:'ranger',ic:'&#128165;',t:'Ponta Perfurante',d:'+15% de dano cr\u00edtico',mx:10},
+ {id:'r_agil',cls:'ranger',ic:'&#128168;',t:'P\u00e9s Leves',d:'+4% de velocidade de movimento',mx:8},
+ {id:'r_alcance',cls:'ranger',ic:'&#128207;',t:'Longo Alcance',d:'+1 de alcance',mx:2},
+ {id:'r_veneno',cls:'ranger',ic:'&#127807;',t:'Ponta Envenenada',d:'+4% de dano',mx:10},
+ /* ---------- MAGO (magia / recarga) ---------- */
+ {id:'m_arcano',cls:'mage',ic:'&#128302;',t:'Fluxo Arcano',d:'-4% de recarga das habilidades',mx:10},
+ {id:'m_poder',cls:'mage',ic:'&#10024;',t:'Poder Arcano',d:'+6% de dano',mx:10},
+ {id:'m_manto',cls:'mage',ic:'&#129526;',t:'Manto R\u00fanico',d:'+2 de armadura',mx:8},
+ {id:'m_essencia',cls:'mage',ic:'&#128308;',t:'Ess\u00eancia Densa',d:'Orbes de vida curam +4%',mx:8},
+ {id:'m_vinculo',cls:'mage',ic:'&#129656;',t:'V\u00ednculo Vital',d:'+2% de roubo de vida',mx:8},
+ {id:'m_foco',cls:'mage',ic:'&#128165;',t:'Foco Mortal',d:'+10% de dano cr\u00edtico',mx:10}
+];
 let _blessQ=0,_blessOpen=false,_blessOffer=[];
 function blessCount(id){return (meta.bless&&meta.bless[id])||0;}
 function openBless(){if(_blessOpen){var _bp=document.getElementById('bless');if(_bp&&_bp.classList.contains('hidden')){_blessOpen=false;}else return;}
-  const pool=BLESS.filter(b=>blessCount(b.id)<b.mx);
+  const pool=BLESS.filter(b=>blessCount(b.id)<b.mx&&(!b.cls||b.cls===player.cls));  /* perks de vocacao so p/ a classe certa */
   if(!pool.length){_blessQ=0;return;}
   _blessOffer=[];const cp=pool.slice();
   while(_blessOffer.length<Math.min(3,cp.length))_blessOffer.push(cp.splice(Math.floor(Math.random()*cp.length),1)[0]);
@@ -11447,6 +11479,28 @@ try{(function(){
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
 
+
+/* ===== i18n dos perks de vocacao ===== */
+try{ Object.assign(BLESS_I18N,{
+ k_furia:{name:{pt:'F\u00faria de Ferro',en:'Iron Fury',es:'Furia de Hierro',fr:'Fureur de Fer'},desc:{pt:'+5% de dano',en:'+5% damage',es:'+5% de da\u00f1o',fr:'+5% de d\u00e9g\u00e2ts'}},
+ k_couro:{name:{pt:'Couro Curtido',en:'Tanned Hide',es:'Cuero Curtido',fr:'Cuir Tann\u00e9'},desc:{pt:'+8% de vida m\u00e1xima',en:'+8% max HP',es:'+8% de vida m\u00e1x',fr:'+8% PV max'}},
+ k_muralha:{name:{pt:'Muralha',en:'Bulwark',es:'Muralla',fr:'Rempart'},desc:{pt:'+2 de armadura',en:'+2 armor',es:'+2 de armadura',fr:'+2 armure'}},
+ k_retribui:{name:{pt:'Retribui\u00e7\u00e3o',en:'Retribution',es:'Retribuci\u00f3n',fr:'R\u00e9tribution'},desc:{pt:'Reflete +5% do dano sofrido',en:'Reflects +5% damage taken',es:'Refleja +5% del da\u00f1o',fr:'Renvoie +5% des d\u00e9g\u00e2ts'}},
+ k_sede:{name:{pt:'Sede de Batalha',en:'Battle Thirst',es:'Sed de Batalla',fr:'Soif de Bataille'},desc:{pt:'+2% de roubo de vida',en:'+2% lifesteal',es:'+2% de robo de vida',fr:'+2% vol de vie'}},
+ k_golpe:{name:{pt:'Golpe R\u00e1pido',en:'Swift Strike',es:'Golpe R\u00e1pido',fr:'Frappe Rapide'},desc:{pt:'+3% de velocidade de ataque',en:'+3% attack speed',es:'+3% de vel. de ataque',fr:'+3% vitesse d\u2019attaque'}},
+ r_cadencia:{name:{pt:'Cad\u00eancia',en:'Cadence',es:'Cadencia',fr:'Cadence'},desc:{pt:'+4% de velocidade de ataque',en:'+4% attack speed',es:'+4% de vel. de ataque',fr:'+4% vitesse d\u2019attaque'}},
+ r_mira:{name:{pt:'Mira Firme',en:'Steady Aim',es:'Puntería Firme',fr:'Vis\u00e9e Ferme'},desc:{pt:'+3% de chance cr\u00edtica',en:'+3% crit chance',es:'+3% de prob. cr\u00edtica',fr:'+3% chance critique'}},
+ r_perfura:{name:{pt:'Ponta Perfurante',en:'Piercing Tip',es:'Punta Perforante',fr:'Pointe Per\u00e7ante'},desc:{pt:'+15% de dano cr\u00edtico',en:'+15% crit damage',es:'+15% de da\u00f1o cr\u00edtico',fr:'+15% d\u00e9g\u00e2ts critiques'}},
+ r_agil:{name:{pt:'P\u00e9s Leves',en:'Light Feet',es:'Pies Ligeros',fr:'Pieds L\u00e9gers'},desc:{pt:'+4% de velocidade de movimento',en:'+4% move speed',es:'+4% de vel. de movimiento',fr:'+4% vitesse de d\u00e9placement'}},
+ r_alcance:{name:{pt:'Longo Alcance',en:'Long Range',es:'Largo Alcance',fr:'Longue Port\u00e9e'},desc:{pt:'+1 de alcance',en:'+1 range',es:'+1 de alcance',fr:'+1 de port\u00e9e'}},
+ r_veneno:{name:{pt:'Ponta Envenenada',en:'Poisoned Tip',es:'Punta Envenenada',fr:'Pointe Empoisonn\u00e9e'},desc:{pt:'+4% de dano',en:'+4% damage',es:'+4% de da\u00f1o',fr:'+4% de d\u00e9g\u00e2ts'}},
+ m_arcano:{name:{pt:'Fluxo Arcano',en:'Arcane Flow',es:'Flujo Arcano',fr:'Flux Arcanique'},desc:{pt:'-4% de recarga',en:'-4% cooldown',es:'-4% de recarga',fr:'-4% de recharge'}},
+ m_poder:{name:{pt:'Poder Arcano',en:'Arcane Power',es:'Poder Arcano',fr:'Puissance Arcanique'},desc:{pt:'+6% de dano',en:'+6% damage',es:'+6% de da\u00f1o',fr:'+6% de d\u00e9g\u00e2ts'}},
+ m_manto:{name:{pt:'Manto R\u00fanico',en:'Runic Mantle',es:'Manto R\u00fanico',fr:'Manteau Runique'},desc:{pt:'+2 de armadura',en:'+2 armor',es:'+2 de armadura',fr:'+2 armure'}},
+ m_essencia:{name:{pt:'Ess\u00eancia Densa',en:'Dense Essence',es:'Esencia Densa',fr:'Essence Dense'},desc:{pt:'Orbes curam +4%',en:'Orbs heal +4%',es:'Orbes curan +4%',fr:'Orbes soignent +4%'}},
+ m_vinculo:{name:{pt:'V\u00ednculo Vital',en:'Vital Bond',es:'V\u00ednculo Vital',fr:'Lien Vital'},desc:{pt:'+2% de roubo de vida',en:'+2% lifesteal',es:'+2% de robo de vida',fr:'+2% vol de vie'}},
+ m_foco:{name:{pt:'Foco Mortal',en:'Deadly Focus',es:'Foco Mortal',fr:'Focus Mortel'},desc:{pt:'+10% de dano cr\u00edtico',en:'+10% crit damage',es:'+10% de da\u00f1o cr\u00edtico',fr:'+10% d\u00e9g\u00e2ts critiques'}}
+}); }catch(e){}
 
 /* ===== posicao do indicador de andar: medida real (nao chute) =====
    #log (loot) fica em bottom:130+sab, altura 84. #skillbar em bottom:12+sab, altura ~72.
