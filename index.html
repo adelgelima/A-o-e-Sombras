@@ -1712,7 +1712,7 @@ function genContinent(){
       for(let d=1;d<=2&&!sh;d++){if(LV(sm[i-d])>l||LV(sm[i-d*w])>l)sh=-1;}   /* degrau acima a O/N (2 tiles) -> sombra */
       if(!sh)for(let d=1;d<=2&&!sh;d++){if(LV(sm[i+d])<l||LV(sm[i+d*w])<l)sh=1;}  /* degrau abaixo a L/S (2 tiles) -> luz */
       if(sh)shadeA[i]=sh*(0.85+l*0.04);}})();
-  _genRivers();_genPasses();_genBeaches();_genCliffs();_genIslets();_genCrossings();(function(){var gx=219, y0=VIL.y+VIL.h+1;for(var y=y0;y<y0+64&&y<MAPH-2;y++){var t=map[y*MAPW+gx];if(t===T.water||t===T.rock||t===T.cliff||t===T.tree||t===T.deadtree||t===T.wall||t===T.dwall){for(var w=-1;w<=1;w++){var xx=gx+w; if(xx>0&&xx<MAPW){var tt=map[y*MAPW+xx]; if(tt===T.water||tt===T.rock||tt===T.cliff)map[y*MAPW+xx]=T.stone; else if(tt===T.tree||tt===T.deadtree||tt===T.wall||tt===T.dwall)map[y*MAPW+xx]=T.grass;}}}}try{console.log('[ponte-sul] corredor garantido da vila para o sul.');}catch(e){}})();}
+  _genRivers();_genPasses();_genBeaches();_genCliffs();_genIslets();_genCrossings();}
 const BIOME_ZONE={}; /* legado (não usado) */
 function _biomeAt(){return 'meadow';} /* legado */
 function genExpansion(){
@@ -2337,6 +2337,27 @@ function genWorld(){
   placeLandmarks();
   scatterMicro();
   placeRoads();
+  /* ===== PONTE SUL DE PEDRAVAU (VIL ja deslocado por shiftWorldRefs; terreno finalizado) ===== */
+  (function(){
+    try{
+      var gx=VIL.x+Math.floor(VIL.w/2);           /* centro real da vila no mapa */
+      var y0=VIL.y+VIL.h;                          /* borda sul da vila */
+      var yEnd=Math.min(MAPH-3, y0+130);           /* longe o bastante p/ cruzar toda a agua */
+      var carved=0;
+      for(var y=y0; y<=yEnd; y++){
+        for(var w=-1; w<=1; w++){
+          var xx=gx+w;
+          if(xx<=0||xx>=MAPW-1)continue;
+          var i=y*MAPW+xx, t=map[i];
+          if(WALKABLE[t])continue;                             /* ja passa: nao mexe */
+          if(t===T.water||t===T.rock||t===T.cliff)map[i]=T.stone;  /* ponte de pedra sobre agua */
+          else map[i]=T.grass;                                  /* arvore/muro -> grama */
+          carved++;
+        }
+      }
+      try{console.log('[ponte-sul] x='+(gx-1)+'..'+(gx+1)+' y='+y0+'..'+yEnd+' ('+carved+' tiles abertos)');}catch(e){}
+    }catch(e){}
+  })();
   spawns=spawns.filter(sp=>_reachableArea(sp.x,sp.y,120)>=120); /* remove spawns em bolsoes isolados (inacessiveis) */
   for(const c of CHESTS){const t=tileAt(c.x,c.y);
     if(t===T.water)setTile(c.x,c.y,T.sand);
