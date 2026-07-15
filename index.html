@@ -4798,7 +4798,7 @@ function render(){
     const _lb=t('dng_floor').replace('{n}',DungeonLayer.depth), _tw=ctx.measureText(_lb).width;
     var _by=(typeof getSafeTop==='function'?getSafeTop():0)+8;
     /* desce o badge se ele colidiria com o painel HUD (topo-esquerda, ~150px largura) */
-    var _bx=W/2; if(W/2-_tw/2-12 < 300){ _by=Math.max(40,H-150); }   /* tela estreita: vai p/ o rodape (acima da barra), fora do campo de visao */
+    var _bx=W/2; if(W/2-_tw/2-12 < 300){ _by=_acBadgeY(H); }   /* tela estreita: encaixa no vao entre o log de loot e a barra */
     ctx.fillStyle='rgba(12,10,18,.82)';ctx.fillRect(_bx-_tw/2-12,_by,_tw+24,26);
     ctx.strokeStyle='rgba(155,140,255,.5)';ctx.lineWidth=1;ctx.strokeRect(_bx-_tw/2-11.5,_by+0.5,_tw+23,25);
     ctx.fillStyle='#d8cfff';ctx.fillText(_lb,_bx,_by+5);ctx.restore();
@@ -5596,6 +5596,9 @@ function updateInvasion(dt){
     }else invasionCd=25;}
 }
 function updateWander(dt){
+  /* mascates orfaos (sobraram de troca de heroi / regeneracao do mundo): remove */
+  try{ for(var _wi=npcs.length-1;_wi>=0;_wi--){ var _wn=npcs[_wi];
+    if(_wn&&_wn.kind==='wander'&&_wn!==wanderNpc){ npcs.splice(_wi,1); } } }catch(_e){}
   if(wanderNpc){
     wanderLeave-=dt;
     if(wanderLeave<=0){const i=npcs.indexOf(wanderNpc);if(i>=0)npcs.splice(i,1);wanderNpc=null;wanderCd=rnd(360,240);
@@ -5607,6 +5610,8 @@ function updateWander(dt){
     for(const off of [[8,7],[9,6],[7,8],[10,7],[8,9],[6,7]]){const x=VIL.x+off[0],y=VIL.y+off[1];
       if(walkable(x,y)&&!npcs.some(n=>n.x===x&&n.y===y)){sx=x;sy=y;found=true;break;}}
     if(!found){wanderCd=20;return;}
+    /* trava dupla: nunca cria um 2o mascate se ja existir algum no array */
+    try{ if(npcs.some(function(n){return n&&n.kind==='wander';})){ wanderCd=20; return; } }catch(_e){}
     meta.wanderVisit=(meta.wanderVisit||0)+1;
     wanderNpc={x:sx,y:sy,kind:'wander',name:'Corvo, o Mascate'};npcs.push(wanderNpc);
     wanderLeave=170;wanderCd=rnd(420,300);
@@ -11425,6 +11430,29 @@ try{(function(){
   try{console.log('[bestiario v6] '+Object.keys(C).length+' criaturas + cavernas infinitas + respawn -50%.');}catch(e){}
 })();}catch(e){try{console.warn('bestiario falhou',e);}catch(_){}}
 
+
+/* ===== posicao do indicador de andar: medida real (nao chute) =====
+   #log (loot) fica em bottom:130+sab, altura 84. #skillbar em bottom:12+sab, altura ~72.
+   O badge entra no vao entre os dois; se nao couber, encosta acima da barra. */
+var _badgeYc=null,_badgeHc=-1;
+function _acBadgeY(H){
+  if(_badgeYc!==null&&_badgeHc===H)return _badgeYc;
+  /* reservas do CSS: #log bottom:130 alt:84 | #skillbar bottom:12 alt:~72 */
+  var y=Math.max(40,H-120);
+  try{
+    var lg=document.getElementById('log'), sk=document.getElementById('skillbar');
+    var lgR=lg?lg.getBoundingClientRect():null, skR=sk?sk.getBoundingClientRect():null;
+    /* so aceita medida VALIDA; senao usa a reserva do CSS */
+    var lgB=(lgR&&lgR.bottom>10&&lgR.bottom<H)?lgR.bottom:(H-130);
+    var skT=(skR&&skR.top>10&&skR.top<H)?skR.top:(H-84);
+    if(skT<=lgB)skT=H-84;
+    var cand=lgB+10;
+    if(cand+26<=skT-8) y=cand;
+    else y=Math.max(40,skT-8-26);
+  }catch(e){}
+  _badgeYc=y;_badgeHc=H;return y;
+}
+try{ window.addEventListener('resize',function(){_badgeYc=null;_badgeHc=-1;}); }catch(e){}
 </script>
 </body>
 </html>
