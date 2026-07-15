@@ -7562,53 +7562,155 @@ function closeShop(){$('shop').classList.add('hidden');window._acPanelShield=Dat
 function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRows');rows.innerHTML='';
   if(typeof window._shopTab==='undefined')window._shopTab='buy';
   var _L=(typeof LANG!=='undefined'?LANG:'pt');
-  var _TB={pt:{buy:'Comprar',sell:'Vender',empty:'Nada para vender.'},en:{buy:'Buy',sell:'Sell',empty:'Nothing to sell.'},es:{buy:'Comprar',sell:'Vender',empty:'Nada que vender.'},fr:{buy:'Acheter',sell:'Vendre',empty:'Rien à vendre.'}}[_L]||{buy:'Comprar',sell:'Vender',empty:'Nada.'};
-  /* ---- ABAS ---- */
-  var tabBar=document.createElement('div');tabBar.style.cssText='grid-column:1/-1;display:flex;gap:6px;margin-bottom:10px;position:sticky;top:0;z-index:2;background:var(--panel,#171a22);padding-bottom:4px;';
-  function mkTab(id,label){var b=document.createElement('button');b.textContent=label;var on=window._shopTab===id;b.style.cssText='flex:1;padding:10px;border-radius:9px;font:700 14px sans-serif;cursor:pointer;border:1px solid '+(on?'#e8c15a':'#3a3a48')+';background:'+(on?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(on?'#e8c15a':'#8a90a0')+';';b.onclick=function(e){e.stopPropagation();window._shopTab=id;renderShop();};b.addEventListener('pointerdown',function(e){e.stopPropagation();});return b;}
+  var _TB={
+    pt:{buy:'Comprar',sell:'Vender',empty:'Nada para vender.',sellall:'Vender tudo (menos poções)',each:'cada',max:'máx',nogold:'Ouro insuficiente'},
+    en:{buy:'Buy',sell:'Sell',empty:'Nothing to sell.',sellall:'Sell all (except potions)',each:'each',max:'max',nogold:'Not enough gold'},
+    es:{buy:'Comprar',sell:'Vender',empty:'Nada que vender.',sellall:'Vender todo (menos pociones)',each:'c/u',max:'máx',nogold:'Oro insuficiente'},
+    fr:{buy:'Acheter',sell:'Vendre',empty:'Rien à vendre.',sellall:'Tout vendre (sauf potions)',each:'pièce',max:'max',nogold:'Or insuffisant'}
+  }[_L]||{buy:'Comprar',sell:'Vender',empty:'Nada.',sellall:'Vender tudo',each:'cada',max:'máx',nogold:'Sem ouro'};
+
+  /* ---------- ABAS ---------- */
+  var tabBar=document.createElement('div');
+  tabBar.style.cssText='grid-column:1/-1;display:flex;gap:6px;margin-bottom:10px;position:sticky;top:0;z-index:2;background:var(--panel,#171a22);padding-bottom:4px;';
+  function mkTab(id,label){var b=document.createElement('button');b.textContent=label;var on=window._shopTab===id;
+    b.style.cssText='flex:1;padding:10px;border-radius:9px;font:700 14px sans-serif;cursor:pointer;border:1px solid '+(on?'#e8c15a':'#3a3a48')+';background:'+(on?'rgba(232,193,90,0.16)':'#22252e')+';color:'+(on?'#e8c15a':'#8a90a0')+';';
+    b.onclick=function(e){e.stopPropagation();window._shopTab=id;renderShop();};
+    b.addEventListener('pointerdown',function(e){e.stopPropagation();});return b;}
   tabBar.appendChild(mkTab('buy',_TB.buy));tabBar.appendChild(mkTab('sell',_TB.sell));rows.appendChild(tabBar);
 
-  function stepper(row,onGet){var box=document.createElement('div');box.style.cssText='display:inline-flex;align-items:center;border:1px solid #5a5a68;border-radius:9px;overflow:hidden;flex:0 0 auto;flex-shrink:0;';var q=1;var minus=document.createElement('button'),val=document.createElement('input'),plus=document.createElement('button');minus.textContent='\u2212';plus.textContent='+';val.type='number';val.value='1';val.min='1';val.max='99';val.inputMode='numeric';val.setAttribute('aria-label','quantidade');var bs='width:34px;min-width:34px;height:38px;border:0;background:#33333f;color:#fff;font:700 20px sans-serif;cursor:pointer;padding:0;line-height:38px;flex-shrink:0;touch-action:manipulation;';minus.style.cssText=bs;plus.style.cssText=bs+'border-left:1px solid #4a4a58;';minus.style.cssText+='border-right:1px solid #4a4a58;';val.style.cssText='width:40px;min-width:40px;text-align:center;color:#f3e9cf;font:700 15px sans-serif;background:#1c1c26;height:38px;border:0;outline:0;flex-shrink:0;-moz-appearance:textfield;padding:0;';[minus,plus].forEach(function(b){b.addEventListener('pointerdown',function(e){e.stopPropagation();e.preventDefault();});});val.addEventListener('pointerdown',function(e){e.stopPropagation();});val.addEventListener('click',function(e){e.stopPropagation();val.select();});val.addEventListener('input',function(e){e.stopPropagation();var v=parseInt(val.value,10);if(!isNaN(v)){q=Math.max(1,Math.min(99,v));}});val.addEventListener('change',function(e){e.stopPropagation();var v=parseInt(val.value,10);if(isNaN(v)||v<1)v=1;if(v>99)v=99;q=v;val.value=q;});val.addEventListener('blur',function(){var v=parseInt(val.value,10);if(isNaN(v)||v<1)v=1;if(v>99)v=99;q=v;val.value=q;});minus.onclick=function(e){e.stopPropagation();q=Math.max(1,q-1);val.value=q;};plus.onclick=function(e){e.stopPropagation();q=Math.min(99,q+1);val.value=q;};box.appendChild(minus);box.appendChild(val);box.appendChild(plus);row._getQty=function(){var v=parseInt(val.value,10);return (isNaN(v)||v<1)?1:Math.min(99,v);};return box;}
+  /* ---------- STEPPER (com limite maximo real) ---------- */
+  function stepper(row,maxQty){
+    maxQty=Math.max(1,maxQty||99);
+    var box=document.createElement('div');
+    box.style.cssText='display:inline-flex;align-items:center;border:1px solid #5a5a68;border-radius:9px;overflow:hidden;flex:0 0 auto;';
+    var q=1;
+    var minus=document.createElement('button'),val=document.createElement('input'),plus=document.createElement('button');
+    minus.textContent='\u2212';plus.textContent='+';
+    val.type='number';val.value='1';val.min='1';val.max=String(maxQty);val.inputMode='numeric';val.setAttribute('aria-label','quantidade');
+    var bs='width:36px;min-width:36px;height:40px;border:0;background:#33333f;color:#fff;font:700 21px sans-serif;cursor:pointer;padding:0;line-height:40px;flex-shrink:0;touch-action:manipulation;';
+    minus.style.cssText=bs+'border-right:1px solid #4a4a58;';
+    plus.style.cssText=bs+'border-left:1px solid #4a4a58;';
+    val.style.cssText='width:46px;min-width:46px;text-align:center;color:#f3e9cf;font:700 16px sans-serif;background:#1c1c26;height:40px;border:0;outline:0;flex-shrink:0;-moz-appearance:textfield;padding:0;';
+    function clamp(v){if(isNaN(v)||v<1)v=1;if(v>maxQty)v=maxQty;return v;}
+    [minus,plus].forEach(function(b){b.addEventListener('pointerdown',function(e){e.stopPropagation();e.preventDefault();});});
+    val.addEventListener('pointerdown',function(e){e.stopPropagation();});
+    val.addEventListener('click',function(e){e.stopPropagation();val.select();});
+    val.addEventListener('input',function(e){e.stopPropagation();var v=parseInt(val.value,10);if(!isNaN(v))q=clamp(v);});
+    val.addEventListener('change',function(e){e.stopPropagation();q=clamp(parseInt(val.value,10));val.value=q;});
+    val.addEventListener('blur',function(){q=clamp(parseInt(val.value,10));val.value=q;});
+    minus.onclick=function(e){e.stopPropagation();q=Math.max(1,q-1);val.value=q;};
+    plus.onclick=function(e){e.stopPropagation();q=Math.min(maxQty,q+1);val.value=q;};
+    box.appendChild(minus);box.appendChild(val);box.appendChild(plus);
+    row._getQty=function(){return clamp(parseInt(val.value,10));};
+    return box;
+  }
+
+  /* ---------- MONTA UMA LINHA (2 niveis: info em cima, acoes embaixo) ---------- */
+  function mkRow(it,opts){
+    var row=document.createElement('div');row.className='row';row._item=it;
+    row.style.cssText='display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px;';
+    /* --- nivel 1: icone + nome/detalhe + preco --- */
+    var top=document.createElement('div');
+    top.style.cssText='display:flex;align-items:center;gap:9px;width:100%;';
+    var c=document.createElement('canvas');c.width=40;c.height=40;c.style.cssText='flex:0 0 auto;';
+    drawItemIcon(c,it);top.appendChild(c);
+    var info=document.createElement('div');info.className='info';
+    info.style.cssText='flex:1 1 auto;min-width:0;overflow:hidden;';
+    info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700;font-size:13px">'+opts.name+'</div>'+
+                   '<div class="d" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:#8a90a0">'+opts.sub+'</div>';
+    top.appendChild(info);
+    var price=document.createElement('span');price.className='price';
+    price.style.cssText='flex:0 0 auto;white-space:nowrap;font:700 13px sans-serif;color:'+opts.priceColor+';';
+    price.textContent=opts.priceText;
+    top.appendChild(price);
+    row.appendChild(top);
+    /* --- nivel 2: stepper + botao --- */
+    var bot=document.createElement('div');
+    bot.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;';
+    bot.appendChild(stepper(row,opts.maxQty));
+    var act=document.createElement('button');act.className='btn';
+    act.textContent=opts.btnLabel;
+    act.style.cssText='flex:1 1 auto;max-width:150px;padding:11px 8px;border-radius:9px;font:700 13px sans-serif;white-space:nowrap;cursor:pointer;'+(opts.btnStyle||'');
+    act.addEventListener('pointerdown',function(e){e.stopPropagation();});
+    act.onclick=(window._acDbl?window._acDbl(opts.onAct,500):opts.onAct);
+    bot.appendChild(act);
+    row.appendChild(bot);
+    return row;
+  }
 
   if(window._shopTab==='buy'){
-    /* ---- COMPRAR ---- */
-    for(const id of shopItems(shopKind)){const it=itemById(id);if(!it)continue;const row=document.createElement('div');row.className='row';row._item=it;
-      const c=document.createElement('canvas');c.width=40;c.height=40;drawItemIcon(c,it);row.appendChild(c);
-      const info=document.createElement('div');info.className='info';info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+'">'+itemName(it)+'</div><div class="d">'+itemDesc(it)+'</div>';row.appendChild(info);
-      const price=document.createElement('span');price.className='price';price.textContent=it.val+' \u29BF';row.appendChild(price);
-      row.appendChild(stepper(row));
-      const buy=document.createElement('button');buy.className='btn buy';buy.textContent=_TB.buy;buy.addEventListener('pointerdown',function(e){e.stopPropagation();});var _bf=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof buyItemN==='function')buyItemN(item,n);else buyItem(item);};})(it,row);buy.onclick=(window._acDbl?window._acDbl(_bf,500):_bf);row.appendChild(buy);
-      rows.appendChild(row);}
+    /* ================= COMPRAR ================= */
+    for(const id of shopItems(shopKind)){
+      const it=itemById(id);if(!it)continue;
+      const row=mkRow(it,{
+        name:itemName(it),
+        sub:itemDesc(it),
+        priceText:it.val+' \u29BF',
+        priceColor:'#e8c15a',
+        maxQty:99,
+        btnLabel:_TB.buy,
+        btnStyle:'background:transparent;border:1px solid #a87a3a;color:#e8c15a;',
+        onAct:(function(item){return function(e){e.stopPropagation();var n=row._getQty?row._getQty():1;
+          if(typeof buyItemN==='function')buyItemN(item,n);else buyItem(item);};})(it)
+      });
+      rows.appendChild(row);
+    }
   } else {
-    /* ---- VENDER ---- */
+    /* ================= VENDER ================= */
     const sellable=player.bag.filter(b=>{const it=itemById(b.id);return it&&itemKind(it)!=='potion';});
-    if(!sellable.length){var em=document.createElement('div');em.style.cssText='grid-column:1/-1;text-align:center;color:#8a90a0;padding:24px 0;font-size:13px;';em.textContent=_TB.empty;rows.appendChild(em);}
-    for(const b of sellable){const it=itemById(b.id);const row=document.createElement('div');row.className='row';row._item=it;
-      const c=document.createElement('canvas');c.width=40;c.height=40;drawItemIcon(c,it);row.appendChild(c);
-      const off=(it.cls&&it.cls!==player.cls)?' \u2298':'';
-      const info=document.createElement('div');info.className='info';info.innerHTML='<div class="n" style="color:'+RAR[it.rar].c+'">'+itemName(it)+off+'</div><div class="d">x'+b.count+'</div>';row.appendChild(info);
-      const price=document.createElement('span');price.className='price';price.textContent='+'+sellPrice(it)+' \u29BF';row.appendChild(price);
-      row.appendChild(stepper(row));
-      const sell=document.createElement('button');sell.className='btn';sell.style.cssText='background:#7a5a2a;border-color:#a87a3a';sell.textContent=_TB.sell;sell.addEventListener('pointerdown',function(e){e.stopPropagation();});var _sf=(function(item,r){return function(e){e.stopPropagation();var n=r._getQty?r._getQty():1;if(typeof sellBagItemN==='function')sellBagItemN(item,n);else sellBagItem(item);};})(it,row);sell.onclick=(window._acDbl?window._acDbl(_sf,500):_sf);row.appendChild(sell);
-      rows.appendChild(row);}
+    if(!sellable.length){
+      var em=document.createElement('div');
+      em.style.cssText='grid-column:1/-1;text-align:center;color:#8a90a0;padding:24px 0;font-size:13px;';
+      em.textContent=_TB.empty;rows.appendChild(em);
+    } else {
+      /* --- botao VENDER TUDO (menos pocoes) --- */
+      var totAll=0,cntAll=0;
+      sellable.forEach(function(b){var it=itemById(b.id);if(!it)return;var n=b.count||1;totAll+=sellPrice(it)*n;cntAll+=n;});
+      var allBtn=document.createElement('button');
+      allBtn.style.cssText='grid-column:1/-1;width:100%;padding:11px;margin-bottom:9px;border-radius:9px;'+
+        'border:1px solid #a87a3a;background:rgba(168,122,58,.18);color:#e8c15a;font:700 13px sans-serif;cursor:pointer;';
+      allBtn.textContent=_TB.sellall+'  \u2192  +'+totAll+' \u29BF';
+      allBtn.addEventListener('pointerdown',function(e){e.stopPropagation();});
+      var _allf=function(e){
+        if(e)e.stopPropagation();
+        var doIt=function(){
+          var sold=0,gold=0;
+          sellable.slice().forEach(function(b){
+            var it=itemById(b.id);if(!it)return;
+            var n=b.count||1;
+            for(var i=0;i<n;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}
+          });
+          if(sold>0){try{SFX.gold();buzz(12);}catch(_){}
+            addMessage((_L==='en'?'Sold ':_L==='es'?'Vendido ':_L==='fr'?'Vendu ':'Vendeu ')+sold+' \u2192 +'+gold+' \u29BF','good');
+            renderShop();renderHUD();if(invOpen)renderInv();}
+        };
+        var msg=_TB.sellall+' ('+cntAll+') \u2192 +'+totAll+' \u29BF?';
+        if(window._acCfm)window._acCfm(msg,doIt);else doIt();
+      };
+      allBtn.onclick=(window._acDbl?window._acDbl(_allf,800):_allf);
+      rows.appendChild(allBtn);
+
+      for(const b of sellable){
+        const it=itemById(b.id);
+        const have=b.count||1;
+        const off=(it.cls&&it.cls!==player.cls)?' \u2298':'';
+        const unit=sellPrice(it);
+        const row=mkRow(it,{
+          name:itemName(it)+off,
+          sub:'x'+have+'  \u00b7  '+unit+' \u29BF '+_TB.each,
+          priceText:'+'+unit+' \u29BF',
+          priceColor:'#8fe08a',
+          maxQty:have,
+          btnLabel:_TB.sell,
+          btnStyle:'background:#7a5a2a;border:1px solid #a87a3a;color:#f3e9cf;',
+          onAct:(function(item){return function(e){e.stopPropagation();var n=row._getQty?row._getQty():1;
+            if(typeof sellBagItemN==='function')sellBagItemN(item,n);else sellBagItem(item);};})(it)
+        });
+        rows.appendChild(row);
+      }
+    }
   }
 }
-function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
-function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
-function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
-function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
-function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
-function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
-function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
-function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
-function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
-function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
-function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
-function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
-function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
-function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
-function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
-function sellBagItemN(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var real=Math.min(n,have);var tot=(typeof sellPrice==='function'?sellPrice(it):0)*real;if(window._acCfm){window._acCfm('Vender '+itemName(it)+(real>1?' x'+real:'')+' por '+tot+' de ouro?',function(){_sellCore(it,n);});}else _sellCore(it,n);}
 function _buyCore(it,n){n=Math.max(1,n|0);var bought=0;for(var i=0;i<n;i++){if(player.gold<it.val)break;player.gold-=it.val;pushBag(it.id,1);bought++;}if(bought>0){SFX.gold();buzz(10);addMessage(tf('msg_bought',{name:itemName(it)})+(bought>1?' x'+bought:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}else addMessage(t('need_gold'),'sys');}
 function _sellCore(it,n){n=Math.max(1,n|0);var e=player.bag.find(b=>b.id===it.id);if(!e)return;var have=e.count||1;var sold=0,gold=0;for(var i=0;i<n&&i<have;i++){var g=sellPrice(it);takeBag(it.id,1);player.gold+=g;gold+=g;sold++;}if(sold>0){SFX.gold();buzz(8);addMessage(tf('msg_sold',{name:itemName(it),g:gold})+(sold>1?' x'+sold:''),'good');renderShop();renderHUD();if(invOpen)renderInv();}}
 function buyItemN(it,n){n=Math.max(1,n|0);if(player.gold<(it.val||0)){addMessage(t('need_gold'),'sys');return;}if(window._acCfm){window._acCfm('Comprar '+itemName(it)+(n>1?' x'+n:'')+' por '+((it.val||0)*n)+' de ouro?',function(){_buyCore(it,n);});}else _buyCore(it,n);}
@@ -8425,7 +8527,7 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
 /* === PONTE: dispara acao no POINTERDOWN (neste aparelho o click/pointerup e engolido em alguns elementos) === */
 (function(){
   if(typeof document==='undefined')return;
-  var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,.bcard,.brow,[role=button]';
+  var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,.bcard,.brow,#tracker,.tHead,[role=button]';
   var synth=false, lastEl=null, lastAt=0, downT=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
     var t=(e.target&&e.target.closest)?e.target.closest(SEL):null;
@@ -11236,7 +11338,8 @@ try{(function(){
           if(!ov)continue;
           var card=ov.querySelector('.card')||ov.firstElementChild;
           if(!card)continue;
-          if(card.querySelector('.acPanelX'))continue;   /* ja tem */
+          if(card.querySelector('.acPanelX'))continue;   /* ja tem o meu */
+          if(ov.querySelector('.sx'))continue;           /* o painel JA tem X proprio (ex: Configuracoes) */
           /* o card precisa ser 'relative' p/ o X ancorar no canto */
           try{
             var pos=window.getComputedStyle(card).position;
