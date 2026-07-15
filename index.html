@@ -9542,19 +9542,60 @@ try{(function(){
 
     /* ---- chip discreto no HUD ---- */
     var _chip=null,_chipTxt='';
-    function _mqChipShow(on){ try{ if(_chip){ var hide=(window._acAnyPanel&&window._acAnyPanel()); _chip.style.display=(on&&!hide)?'block':'none'; } }catch(e){} }
+    var _chipVis=false;
+    function _mqChipShow(on){ try{ if(_chip){ var hide=(window._acAnyPanel&&window._acAnyPanel()); _chipVis=!!(on&&!hide); _chip.style.display=_chipVis?'flex':'none'; } }catch(e){} }
+    /* ---- estado minimizado (persistente) ---- */
+    function _mqIsMin(){ try{ return localStorage.getItem('ac_mqmin')==='1'; }catch(e){ return false; } }
+    function _mqSetMin(v){ try{ localStorage.setItem('ac_mqmin', v?'1':'0'); }catch(e){} _mqApplyMin(); }
+    var _MQ_BASE='position:fixed;top:122px;left:10px;z-index:60;background:rgba(22,22,30,0.86);border:1px solid #4a4432;border-left:3px solid #c9a24a;border-radius:8px;font:11.5px sans-serif;color:#e6e0cc;pointer-events:auto;line-height:1.35;box-shadow:0 3px 10px rgba(0,0,0,.35);';
+    function _mqApplyMin(){
+      try{
+        if(!_chip)return;
+        var min=_mqIsMin();
+        var txt=_chip.querySelector('.mqTxt');
+        var btn=_chip.querySelector('.mqMin');
+        if(min){
+          _chip.style.cssText=_MQ_BASE+'width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;';
+          _chip.style.display=_chipVis?'flex':'none';
+          if(txt)txt.style.display='none';
+          if(btn){ btn.textContent='\uD83D\uDCDC'; btn.style.cssText=_MQ_BTN+'width:32px;height:32px;font-size:15px;'; btn.setAttribute('aria-label','Expandir missao'); }
+        } else {
+          _chip.style.cssText=_MQ_BASE+'max-width:56vw;padding:5px 6px 5px 10px;display:flex;align-items:center;gap:6px;';
+          _chip.style.display=_chipVis?'flex':'none';
+          if(txt)txt.style.display='inline';
+          if(btn){ btn.textContent='\u2212'; btn.style.cssText=_MQ_BTN+'width:24px;height:24px;font-size:15px;'; btn.setAttribute('aria-label','Minimizar missao'); }
+        }
+      }catch(e){}
+    }
+    var _MQ_BTN='flex:0 0 auto;border:1px solid #4a4432;background:rgba(255,255,255,.05);color:#c9a24a;border-radius:6px;padding:0;line-height:1;cursor:pointer;touch-action:manipulation;';
+
     function _mqChipUpdate(){
       try{
         if(_mq()>=5){ if(_chip&&_chip.parentNode){_chip.parentNode.removeChild(_chip);_chip=null;} return; }
         if(!_chip){
           _chip=document.createElement('div');
           _chip.id='mqChip';
-          _chip.style.cssText='position:fixed;top:122px;left:10px;z-index:60;max-width:52vw;background:rgba(22,22,30,0.86);border:1px solid #4a4432;border-left:3px solid #c9a24a;border-radius:8px;padding:6px 10px;font:11.5px sans-serif;color:#e6e0cc;pointer-events:auto;cursor:pointer;line-height:1.35;display:none;box-shadow:0 3px 10px rgba(0,0,0,.35);';
+          _chip.style.cssText=_MQ_BASE+'max-width:56vw;padding:5px 6px 5px 10px;display:none;align-items:center;gap:6px;';
+          /* texto da missao: toca para abrir o painel */
+          var txt=document.createElement('span');
+          txt.className='mqTxt';
+          txt.style.cssText='flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';
+          txt.onclick=function(e){ if(e)e.stopPropagation(); try{ if(typeof openQuests==='function')openQuests(); }catch(_){} };
+          _chip.appendChild(txt);
+          /* botao minimizar/expandir (<button> => a ponte de toque trata) */
+          var mn=document.createElement('button');
+          mn.className='mqMin';
+          mn.style.cssText=_MQ_BTN+'width:24px;height:24px;font-size:15px;';
+          mn.textContent='\u2212';
+          mn.addEventListener('pointerdown',function(e){ e.stopPropagation(); });
+          mn.onclick=function(e){ if(e)e.stopPropagation(); _mqSetMin(!_mqIsMin()); };
+          _chip.appendChild(mn);
           (document.body||document.documentElement).appendChild(_chip);
-          _chip.onclick=function(){ try{ if(typeof openQuests==='function')openQuests(); }catch(e){} };
+          _mqApplyMin();
         }
         var t='\uD83D\uDCDC ▸ '+MQ_T().steps[_mq()];
-        if(t!==_chipTxt){ _chipTxt=t; _chip.textContent=t; }
+        if(t!==_chipTxt){ _chipTxt=t; var _tx=_chip.querySelector('.mqTxt'); if(_tx)_tx.textContent=t; }
+        _mqApplyMin();
       }catch(e){}
     }
 
@@ -11331,6 +11372,16 @@ try{(function(){
       }catch(e){}
     }
 
+    /* o painel ja tem um fechar no TOPO? (X nativo .sx, ou botao no cabecalho) */
+    function _hasTopClose(ov,card){
+      try{
+        if(ov.querySelector('.sx'))return true;              /* X nativo (Configuracoes) */
+        var head=card.firstElementChild;                      /* cabecalho do painel */
+        if(head&&head.querySelector&&head.querySelector('button'))return true;  /* ja tem botao no cabecalho (Missoes) */
+      }catch(e){}
+      return false;
+    }
+
     function _addX(){
       try{
         for(var ovId in _XMAP){
@@ -11339,7 +11390,7 @@ try{(function(){
           var card=ov.querySelector('.card')||ov.firstElementChild;
           if(!card)continue;
           if(card.querySelector('.acPanelX'))continue;   /* ja tem o meu */
-          if(ov.querySelector('.sx'))continue;           /* o painel JA tem X proprio (ex: Configuracoes) */
+          if(_hasTopClose(ov,card))continue;             /* ja tem fechar no TOPO: nao duplica */
           /* o card precisa ser 'relative' p/ o X ancorar no canto */
           try{
             var pos=window.getComputedStyle(card).position;
