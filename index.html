@@ -1091,8 +1091,8 @@ const ARMORS=[
  {id:'a3',name:'Placa do Sentinela',rar:'rare',arm:12,hp:60,req:14,val:6000,desc:'Ferro dos pés à cabeça.'},
  {id:'a4',name:'Placa Rúnica',rar:'rare',arm:16,hp:90,req:19,val:12000,desc:'Runas antigas desviam o pior.',fireRes:.2},
  {id:'a5',name:'Couraça de Cinzas',rar:'epic',arm:20,hp:130,req:23,val:22000,desc:'Temperada no covil de Vorrak.',fireRes:.45},
- {id:'a6',name:'Casaco de Brumal',rar:'rare',def:16,req:14,val:5200,desc:'Peles do norte costuradas contra o frio.'},
- {id:'a7',name:'Coura\u00e7a Cinzenta',rar:'epic',def:22,req:19,val:11000,desc:'Forjada nas cinzas que n\u00e3o esfriam.'},
+ {id:'a6',name:'Casaco de Brumal',rar:'rare',arm:10,hp:70,req:14,val:5200,desc:'Peles do norte costuradas contra o frio.'},
+ {id:'a7',name:'Coura\u00e7a Cinzenta',rar:'epic',arm:18,hp:95,req:19,val:11000,desc:'Forjada nas cinzas que n\u00e3o esfriam.'},
  {id:'a8',name:'Placa do Soberano',rar:'mythic',arm:26,hp:180,req:34,val:42000,desc:'Só reis caídos a vestiram.',fireRes:.3},
  {id:'a9',name:'Égide do Vale',rar:'mythic',arm:33,hp:250,req:41,val:75000,desc:'O próprio Vale a protege.',fireRes:.45},
  {id:'a10',name:'Manto do Primeiro Forjado',rar:'mythic',arm:42,hp:340,req:50,val:120000,desc:'Tecido na forja que criou o mundo.',fireRes:.55}];
@@ -3595,8 +3595,8 @@ function recompute(){
   player.atk=(w?w.atk:2)+(o&&o.atkb?o.atkb:0);
   player.atkspd=(w?w.spd:0.9)+(o&&o.aspd?o.aspd:0)+(h&&h.aspd?h.aspd:0)+(l&&l.aspd?l.aspd:0);
   player.el=w?w.el:'none'; player.rng=w?w.rng:1; player.wfx=w?(w.fx||null):null;
-  player.def=(w?w.def:0)+(o?o.def:0); player.arm=(a?a.arm:0)+(h&&h.arm?h.arm:0)+(l&&l.arm?l.arm:0);
-  player.maxhp=C.hp0+player.lvl*C.hpL+(a?a.hp:0)+(h&&h.hp?h.hp:0)+(l&&l.hp?l.hp:0);
+  player.def=(w?w.def:0)+(o?o.def:0); player.arm=(a&&a.arm?a.arm:0)+(h&&h.arm?h.arm:0)+(l&&l.arm?l.arm:0);  /* mesma guarda p/ armadura */
+  player.maxhp=C.hp0+player.lvl*C.hpL+(a&&a.hp?a.hp:0)+(h&&h.hp?h.hp:0)+(l&&l.hp?l.hp:0);  /* guarda: item sem campo hp virava NaN (a6/a7) */
   player.cdr=(o&&o.cdr?o.cdr:0)+(h&&h.cdr?h.cdr:0)+(l&&l.cdr?l.cdr:0);
   player.fireRes=(o&&o.fireRes?o.fireRes:0)+(a&&a.fireRes?a.fireRes:0);
   const bl=(meta&&meta.bless)?meta.bless:{};
@@ -8631,12 +8631,29 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
     return null;
   }
   window._acClickable=_clickable;
+  /* ===== ESCUDO ALINHADO AO CSS =====
+     O escudo existe para o toque que FECHA um painel nao vazar no que esta embaixo.
+     O CSS ja declara a intencao exata:
+       body.acShield #skillbar, body.acShield #attackBtn { pointer-events:none }
+     A ponte bloqueava TUDO por 450ms -- muito mais largo que a intencao -- e matava
+     botoes de HUD que o jogador toca de proposito (ex.: pergaminho de missoes logo
+     apos fechar um painel). Agora so blinda os mesmos alvos do CSS. */
+  function _shielded(n){
+    if(!(window._acPanelShield&&Date.now()<window._acPanelShield))return false;
+    try{ var el=n;
+      while(el&&el.nodeType===1){
+        if(el.id==='skillbar'||el.id==='attackBtn')return true;
+        el=el.parentNode;
+      }
+    }catch(_e){}
+    return false;
+  }
   var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
     if(e.pointerType==='mouse'&&e.button!==0){ downLeaf=null; return; }  /* so botao primario */
     var t=_clickable(e.target);
     if(!t){ downLeaf=null; return; }
-    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
+    if(_shielded(e.target)){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
     downLeaf=e.target; downX=e.clientX; downY=e.clientY; moved=false;
   },true);
   document.addEventListener('pointermove',function(e){
@@ -8655,7 +8672,7 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
   },true);
   document.addEventListener('click',function(e){
     if(synth)return;
-    if(window._acPanelShield&&Date.now()<window._acPanelShield){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }
+    if(_shielded(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }
     if(window._acScrolledAt&&(Date.now()-window._acScrolledAt)<400){ if(_clickable(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; } }
     if(lastLeaf&&(Date.now()-lastAt)<800){
       var t=e.target;
