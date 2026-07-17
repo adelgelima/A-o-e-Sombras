@@ -441,7 +441,7 @@ window.FIREBASE_CONFIG = {
       <div id="tracker" class="hidden"></div>
       <div id="afkChip" class="hidden">&#9679; AFK</div>
       <div id="tools">
-        <div class="tbtn" id="btnQuests" title="Missões" style="position:relative">&#9873;<span id="qBadge"></span></div>
+        <div class="tbtn" id="btnQuests" title="Missões" style="position:relative">&#128220;<span id="qBadge"></span></div>
         <div class="tbtn" id="btnGear" title="Configurações">&#9881;</div>
         <div class="tbtn" id="btnChase" title="Perseguir alvo">&#127939;</div>
         <div style="display:none">
@@ -8665,10 +8665,10 @@ function renderTracker(){const el=$('tracker');if(!el)return;
   const nDone=items.filter(i=>i.done).length;
   if(!trackerOpen){
     el.classList.add('collapsed');
-    el.innerHTML='<span class="tIcon">&#128220;</span>'+(nDone>0?'<span class="tDot">'+nDone+'</span>':'');
+    el.innerHTML='<span class="tIcon">&#9745;</span>'+(nDone>0?'<span class="tDot">'+nDone+'</span>':'');
   }else{
     el.classList.remove('collapsed');
-    let html='<div class="tHead"><span>&#128220; '+t('quests_title')+'</span><span class="tClose">&#9650;</span></div>';
+    let html='<div class="tHead"><span>'+t('quests_title')+'</span><span class="tClose">&#9650;</span></div>';
     html+=items.map(i=>'<div class="tItem'+(i.done?' done':'')+'">'+(i.done?'&#10003; ':i.icon+' ')+i.label+' <b>'+i.pg+'/'+i.need+'</b></div>').join('');
     el.innerHTML=html;}}
 function openQuests(){closeAllPanels();renderQuests();$('quests').classList.remove('hidden');}
@@ -8679,14 +8679,26 @@ function syncSettings(){
   const ss=$('sicSound');if(ss)ss.innerHTML=soundOn?'&#9834;':'&#9835;';}
 function openSettings(){closeAllPanels();syncSettings();$('settings').classList.remove('hidden');}
 function backToHeroSelect(){
-  if(running&&typeof saveGame==='function')saveGame();          /* salva automaticamente antes de sair */
+  /* ===== TROCA DE HEROI (refeita) =====
+     Bug anterior: o HUD do heroi que saiu deixava restos para o proximo -- a linha de
+     missao (#mqLine) ficava no painel de stats com texto velho/vazio. Agora a saida
+     limpa TUDO que e por-heroi, e o escudo cobre a troca de tela para o clique nativo
+     do toque nao cair num card de heroi e selecionar sozinho. */
+  try{ if(running&&typeof saveGame==='function')saveGame(); }catch(e){}
   running=false;try{window.running=false;}catch(e){}
-  if(typeof closeAllPanels==='function')closeAllPanels();
+  try{ if(typeof closeAllPanels==='function')closeAllPanels(); }catch(e){}
+  try{ window._acPanelShield=Date.now()+500; }catch(e){}
+  /* limpa restos por-heroi do HUD */
+  try{ var ml=document.getElementById('mqLine'); if(ml&&ml.parentNode)ml.parentNode.removeChild(ml); }catch(e){}
+  try{ var tr=document.getElementById('tracker'); if(tr){tr.classList.add('hidden');tr.innerHTML='';} }catch(e){}
+  try{ var qb=document.getElementById('qBadge'); if(qb){qb.textContent='';qb.style.display='none';} }catch(e){}
+  try{ if(typeof logLines!=='undefined'){logLines.length=0; if(typeof renderLog==='function')renderLog();} }catch(e){}
+  try{ if(typeof hideJoy==='function'){ if(typeof joy!=='undefined'){joy.active=false;} hideJoy(); } }catch(e){}
   var hud=$('hud');if(hud)hud.classList.add('hidden');
   if(isTouch){var ab=$('attackBtn');if(ab)ab.style.display='none';}
   var tt=$('title');if(tt)tt.classList.remove('hidden');
-  var sw=$('slotsWrap');if(sw)sw.classList.remove('hidden');   /* mostra a lista de herois */
-  if(typeof renderSlots==='function')renderSlots();             /* atualiza a lista de herois salvos */
+  var sw=$('slotsWrap');if(sw)sw.classList.remove('hidden');
+  try{ if(typeof renderSlots==='function')renderSlots(); }catch(e){}
 }
 function onSessionStart(){rollQuests();dailyCheck();if(meta.rested>0)addMessage(tf('msg_rest_bonus',{n:meta.rested}),'good');updateQBadge();saveGame();}
 function continueGame(slot){if(slot!=null)activeSlot=slot;const d=loadSave(activeSlot);if(!d)return;initAudio();
@@ -8885,7 +8897,7 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
     }catch(_e){}
     return true;   /* mapa, scrim da overlay, skillbar, attackBtn: protegidos na janela */
   }
-  var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downX=0, downY=0, moved=false;
+  var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downHost=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
     if(e.pointerType==='mouse'&&e.button!==0){ downLeaf=null; return; }  /* so botao primario */
     /* O ESCUDO VEM PRIMEIRO. Antes, o teste de "clicavel" rodava antes e dava return
@@ -8895,21 +8907,35 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
        impede o pointerdown do proprio canvas. */
     if(_shielded(e.target)){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
     var t=_clickable(e.target);
-    if(!t){ downLeaf=null; return; }
-    downLeaf=e.target; downX=e.clientX; downY=e.clientY; moved=false;
+    if(!t){ downLeaf=null; downHost=null; return; }
+    downLeaf=e.target; downHost=t; downX=e.clientX; downY=e.clientY; moved=false;
   },true);
   document.addEventListener('pointermove',function(e){
     if(!downLeaf)return;
-    if(Math.abs(e.clientX-downX)>10||Math.abs(e.clientY-downY)>10){ moved=true; downLeaf=null; window._acScrolledAt=Date.now(); }
+    if(Math.abs(e.clientX-downX)>10||Math.abs(e.clientY-downY)>10){ moved=true; downLeaf=null; downHost=null; window._acScrolledAt=Date.now(); }
   },true);
   document.addEventListener('pointerup',function(e){
     if(!downLeaf)return;
-    var leaf=downLeaf; downLeaf=null;
+    var leaf=downLeaf, host=downHost; downLeaf=null; downHost=null;
     if(moved)return;
-    lastLeaf=leaf; lastAt=Date.now();
+    /* ===== SOBREVIVER A RE-RENDER =====
+       Varios paineis se redesenham sozinhos com innerHTML (renderTracker roda 1x/s,
+       renderHUD por frame). Se esse redesenho cair ENTRE o pointerdown e o pointerup,
+       o elemento guardado vira orfao e o clique sintetico morria no vazio -- o toque
+       "nao fazia nada", de forma intermitente. Agora: se o alvo sumiu, procuramos o
+       elemento equivalente no MESMO ponto da tela (e o e.target resultante continua
+       correto para handlers que usam closest(), como o cabecalho do tracker). */
+    var tgt=null;
+    if(leaf&&document.contains(leaf)) tgt=leaf;
+    else{
+      try{ var at=document.elementFromPoint(e.clientX,e.clientY); if(at&&_clickable(at)) tgt=at; }catch(_e){}
+      if(!tgt&&host&&document.contains(host)) tgt=host;
+    }
+    if(!tgt)return;
+    lastLeaf=tgt; lastAt=Date.now();
     synth=true;
-    try{ leaf.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})); }
-    catch(_e){ try{ if(leaf.click)leaf.click(); }catch(__e){} }
+    try{ tgt.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})); }
+    catch(_e){ try{ if(tgt.click)tgt.click(); }catch(__e){} }
     synth=false;
   },true);
   document.addEventListener('click',function(e){
@@ -9952,19 +9978,20 @@ try{(function(){
           line.style.cssText='margin-top:5px;padding-top:5px;border-top:1px solid rgba(201,162,74,.28);'+
             'display:flex;align-items:center;gap:6px;cursor:pointer;'+
             'font:11.5px sans-serif;color:#e0d3a8;line-height:1.3;touch-action:manipulation;';
-          var mk=document.createElement('span');
-          mk.textContent='\u25C8';
-          mk.style.cssText='flex:0 0 auto;color:#e8c15a;font-size:10px;';
           var tx=document.createElement('span');
           tx.className='mqTxt';
           tx.style.cssText='flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-          line.appendChild(mk); line.appendChild(tx);
+          line.appendChild(tx);
           line.onclick=function(e){ if(e)e.stopPropagation();
             try{ if(typeof openQuests==='function')openQuests(); }catch(_){} };
           st.appendChild(line);
         }
-        var t=MQ_T().steps[_mq()];
-        if(t!==_chipTxt){ _chipTxt=t; var _tx=line.querySelector('.mqTxt'); if(_tx)_tx.textContent=t; }
+        /* SEM cache: _chipTxt sobrevivia a remocao da linha e, ao trocar de heroi,
+           dizia "texto ja esta certo" para uma linha recem-criada e VAZIA. Compara com o DOM. */
+        var t=String(MQ_T().steps[_mq()]||'');
+        var _tx=line.querySelector('.mqTxt');
+        if(_tx&&_tx.textContent!==t) _tx.textContent=t;
+        if(!t){ if(line.parentNode)line.parentNode.removeChild(line); }
       }catch(e){}
     }
 
