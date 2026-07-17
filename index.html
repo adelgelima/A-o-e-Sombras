@@ -1053,6 +1053,39 @@ const SFX={
   level:()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'sine',0.26),i*90)),
   die:()=>beep(200,0.4,'sawtooth',0.28,60), fire:()=>noise(0.3,0.18,900)
 };
+/* ============ PASSE DE SOM — a metade sonora das 10 escolas ============
+   O passe de VFX deu a cada escola uma FISICA de particula; este da a cada uma
+   uma ASSINATURA sonora, sintetizada com os mesmos beep()/noise() do motor.
+   Regras de mixagem: 1 voz por escola a cada 90ms + teto global de 5 vozes/100ms
+   (combate denso nao vira metralhadora); volume escala com o peso (pw) da magia;
+   mute herdado (beep/noise ja checam AC e soundOn). Retorna true se "emitiu"
+   (contabiliza o throttle mesmo sem AudioContext — testavel em ambiente headless). */
+var _sfxElT={}, _sfxWin=[];
+function sfxEl(el,pw){
+  pw=pw||1;
+  var now=Date.now();
+  if(_sfxElT[el]&&now-_sfxElT[el]<90)return false;
+  _sfxWin=_sfxWin.filter(function(t){return now-t<100;});
+  if(_sfxWin.length>=5)return false;
+  _sfxElT[el]=now; _sfxWin.push(now);
+  if(!AC||!soundOn)return true;
+  var V=Math.min(1.35, 0.8+0.3*Math.min(pw,2));
+  switch(el){
+    case 'fire':   noise(0.22,0.20*V,700);  beep(90,0.18,'sawtooth',0.14*V,55);   break; /* crepitar grave descendo */
+    case 'ice':    beep(1400,0.10,'sine',0.16*V,2200); beep(1800,0.07,'triangle',0.10*V,2600); break; /* vidro subindo */
+    case 'bolt':   noise(0.05,0.24*V,3800); beep(2400,0.04,'square',0.12*V,600);  break; /* estalo instantaneo */
+    case 'poison': beep(140,0.30,'sine',0.16*V,80); beep(233,0.18,'sine',0.10*V,120); break; /* bolha grave dupla */
+    case 'holy':   [523,659,784].forEach(function(f,i){setTimeout(function(){beep(f,0.14,'sine',0.10*V);},i*40);}); break; /* triade que sobe */
+    case 'arcane': beep(440,0.28,'triangle',0.12*V,452); beep(444,0.28,'sine',0.08*V,436); break; /* batimento desafinado */
+    case 'shadow': beep(900,0.14,'sine',0.12*V,110); noise(0.07,0.10*V,300);      break; /* succao: agudo caindo no grave */
+    case 'earth':  beep(70,0.22,'sine',0.26*V,40);  noise(0.12,0.16*V,240);       break; /* baque + cascalho */
+    case 'wind':   noise(0.16,0.10*V,1200);                                        break; /* varrida curta */
+    case 'blood':  beep(120,0.10,'square',0.22*V,60); noise(0.05,0.12*V,900);     break; /* soco seco */
+    default: if(SFX&&SFX.spell)SFX.spell();
+  }
+  return true;
+}
+
 /* ===================== CLASSES / ITENS ===================== */
 const RAR={common:{c:'#9aa0ad',t:'Comum'},uncommon:{c:'#5bbf6f',t:'Incomum'},rare:{c:'#5b93ff',t:'Raro'},
   epic:{c:'#b06ff0',t:'Épico'},legendary:{c:'#e8c15a',t:'Lendário'},mythic:{c:'#ff5a6a',t:'Mítico'}};
@@ -4043,15 +4076,31 @@ function applyWeaponFx(m,total){
       const d2=Math.max(1,Math.round(total*0.55));best.hp-=d2;best.hurtFlash=1;
       addFloater(best.px,best.py-TILE*0.5,d2,'#b9e0ff');if(best.hp<=0)killMonster(best);}}
 }
+function monPorte(m){const s=(m&&m.d&&m.d.size)||1;
+  if(m&&m.d&&m.d.boss)return 'chefe';
+  return s<0.9?'leve':(s>=1.2?'pesado':'medio');}
 function strikeMonster(m,mult=1){
   if(!m||m.dead)return null;
   let{dmg,crit}=playerDamage();dmg=Math.round(dmg*mult);
   const el=player.el;
   const eb=el!=='none'?Math.round(dmg*(elemMult(el,m.d.type)-1)):0;
   let total=Math.max(1,Math.round(dmg+eb-(m.d.def*rnd(1,.4))-(m.d.arm+(m.armB||0))*0.5));
-  if(player.wfx==='exec'&&!m.d.boss&&m.hp<=m.maxhp*0.30)total=Math.round(total*1.7);  /* carrasco */
+  var _execB=0; if(player.wfx==='exec'&&!m.d.boss&&m.hp<=m.maxhp*0.30){total=Math.round(total*1.7);_execB=1;}  /* carrasco */
   m.hp-=total;m.hurtFlash=1;
-  {const fdx=Math.sign(m.px-player.px)||0.5,fdy=Math.sign(m.py-player.py);m.flinchX=fdx*(crit?7.5:4.5);m.flinchY=fdy*(crit?7.5:4.5);}
+  {const fdx=Math.sign(m.px-player.px)||0.5,fdy=Math.sign(m.py-player.py);
+    /* COMBAT FEEL: a reacao ao golpe conta o PESO do bicho (visual puro — a posicao
+       real nao muda, so o deslocamento de desenho flinchX/Y que ja existia):
+       leve voa, medio recua, pesado mal se mexe (e o CHAO reage por ele), chefe e rocha. */
+    const _pt=monPorte(m), _kb={leve:1.8,medio:1.0,pesado:0.42,chefe:0.22}[_pt]*(m.elite?0.8:1);
+    m.flinchX=fdx*(crit?7.5:4.5)*_kb; m.flinchY=fdy*(crit?7.5:4.5)*_kb;
+    if(_pt==='pesado'||_pt==='chefe'){ /* o peso: poeira nos pes em vez de recuo */
+      try{fxBurst('earth',m.px,m.py+TILE*0.28,crit?0.7:0.45);}catch(e){}
+    }
+    if(crit){ /* critico e um EVENTO: micro-congelamento + eco elemental + voz da escola */
+      hitStop=Math.max(hitStop,0.03);
+      const _cm={fire:'fire',ice:'ice',poison:'poison',radiant:'holy'}[el];
+      if(_cm){try{fxBurst(_cm,m.px,m.py-TILE*0.2,0.5);sfxEl(_cm,0.8);}catch(e){}}
+    }}
   if(crit)addRing(m.px,m.py,'#ffd76a',TILE*0.7,0.32);
   if(m.elite&&m.elite.k==='thorns'&&!player.dead&&player.invuln<=0){const _rf=Math.max(1,Math.ceil(total*0.18));applyPlayerDamage(_rf,mName(m));}
   if(player.lifesteal>0&&player.hp<player.maxhp){const ls=Math.max(1,Math.ceil(total*player.lifesteal));
@@ -4068,7 +4117,7 @@ function strikeMonster(m,mult=1){
   if(crit){SFX.crit();shake(4);hitStop=Math.min(0.09,Math.max(hitStop,0.05));buzz(18);}else SFX.hit();
   if(player.wfx&&total>0)applyWeaponFx(m,total);
   if(player.setBonus3&&total>0)applySetOnHit(m,total);
-  if(m.hp<=0)killMonster(m);
+  if(m.hp<=0){killMonster(m); if(_execB){try{sfxEl('blood',1);}catch(e){}} }
   return{total,crit};}
 function doPlayerAttack(m){ /* despacha por alcance */
   if(player.dead||m.dead)return;
@@ -4112,6 +4161,12 @@ function deathFx(m){const df=DEATH_THEME[DEATH_FAM[m.type]];const sz=0.75+m.d.si
 function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,m.py-TILE*0.4,10,{col:m.d.col,spd:70,life:0.5,size:2.4,grav:60});return;}
   m.dead=true;SFX.die();
   hitStop=Math.min(0.09,Math.max(hitStop,m.d.size>=1.25?0.07:0.045));
+  try{ /* morte com identidade de porte (o df por familia continua; isto SOMA) */
+    const _pt=monPorte(m);
+    if(_pt==='pesado'||_pt==='chefe'){fxBurst('earth',m.px,m.py+TILE*0.24,1.2);shake(_pt==='chefe'?6:4);}
+    else if(_pt==='leve'){addParticles(m.px,m.py-TILE*0.3,6,{col:'#f2eee6',spd:130,life:0.22,size:1.8,glow:true,grav:0});}
+    if(m.elite){addRing(m.px,m.py,m.elite.c||'#e8c15a',TILE*1.15,0.5);try{fxLight(m.px,m.py,TILE*2.2,m.elite.c||'#e8c15a',0.6);}catch(e){}}
+  }catch(e){}
   if(!deathFx(m)){addParticles(m.px,m.py,18,{col:m.d.col,spd:90,life:0.6,size:3,grav:80});addRing(m.px,m.py,'#e8c15a',TILE*0.9,0.4);}
   const _loot=dropLoot(m)||{gold:0,items:[]};if(m.elite){const _l2=dropLoot(m);if(_l2){_loot.gold+=_l2.gold;for(const _it of _l2.items)_loot.items.push(_it);}}
   killStreak=(gameTime-lastKillAt<=4)?killStreak+1:1;lastKillAt=gameTime;
@@ -4497,6 +4552,7 @@ function elByColor(c){ /* deriva escola de projeteis antigos pela cor */
 function fxProjImpact(p){
   const el=p.fel||elByColor(p.col||p.trail)||'wind';
   fxBurst(el,p.x,p.y,p.aoe?1.4:0.8);
+  try{sfxEl(el,p.aoe?1:0.5);}catch(e){}
   if(el==='fire'&&p.aoe)fxDecal('scorch',p.x,p.y,TILE*1.1);
   else if(el==='ice')fxDecal('frost',p.x,p.y,TILE*0.7);
   else if(el==='poison')fxDecal('venom',p.x,p.y,TILE*0.7);
@@ -4513,6 +4569,7 @@ window._fxWrapSpells=function(){
         if(s.muzzle)fxBurst(s.el,player.px,player.py-TILE*0.3,0.5);
         if(s.ls)fxLight(player.px,player.py,s.ls[1],s.ls[0],s.ls[2]);
         if(s.hs&&typeof hitStop!=='undefined')hitStop=Math.max(hitStop,s.hs);
+        if(s.el)sfxEl(s.el,s.pw||1);   /* a magia SOA como a escola dela */
       }catch(e){}
       return r;
     };
