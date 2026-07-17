@@ -4346,6 +4346,180 @@ const SPELLS={
    SFX.fire();shake(6);buzz([20,26,20]);screenFlash('#ff8a4a',0.2);
    for(let i=0;i<20;i++){const a=rnd(6.28),r=rnd(TILE*2.2);addParticles(tp.x+Math.cos(a)*r,tp.y+Math.sin(a)*r,2,{col:'#ff9a4a',spd:40,life:0.6,size:2.6,glow:true,up:20});}}}
 };
+
+/* ============ FX MASTER PASS — linguagem de magia ============
+   Nao redesenha nenhuma magia: da a cada ESCOLA uma fisica de particula propria
+   (fogo explode, gelo estilhaca, raio e instantaneo, sombra IMPLODE, arcano orbita,
+   terra pesa, vento corre, sagrado sobe, veneno pinga) e liga as 24 magias a essa
+   linguagem via FXSPEC — mais decalques persistentes, luz temporaria e antecipacao.
+   Regra de ouro: ZERO atraso novo de gameplay; tudo aqui e leitura, nunca espera. */
+let decals=[], fxlights=[];
+const FXEL={
+  fire:  {core:'#ffd9a0',body:'#ff8a3a',phys:'burst'},
+  ice:   {core:'#e8f6fb',body:'#9fd8ea',phys:'shard'},
+  bolt:  {core:'#f2f6ff',body:'#8ab8ff',phys:'jolt'},
+  poison:{core:'#c8f090',body:'#7ac248',phys:'drip'},
+  holy:  {core:'#fff6d8',body:'#a9e6a0',phys:'rise'},
+  arcane:{core:'#e2d2ff',body:'#9a7ad0',phys:'orbit'},
+  shadow:{core:'#b0a0d0',body:'#4a3a66',phys:'implode'},
+  earth: {core:'#e8c98a',body:'#a8894a',phys:'slab'},
+  wind:  {core:'#f0f4ea',body:'#cfe0d0',phys:'gust'},
+  blood: {core:'#ff9a8a',body:'#c8362a',phys:'burst'}
+};
+function _fxPush(x,y,vx,vy,max,col,size,glow,grav){
+  particles.push({x,y,vx,vy,life:0,max,col,size,glow:!!glow,grav:grav||0});
+}
+function fxBurst(el,x,y,pw){
+  pw=pw||1; const R=FXEL[el]||FXEL.arcane;
+  const n=Math.round((quality===1?7:11)*pw);
+  if(R.phys==='burst'){
+    addParticles(x,y,n,{col:R.body,spd:120*pw,life:0.5,size:3,glow:true,grav:-70});
+    addParticles(x,y,Math.ceil(n*0.5),{col:R.core,spd:70*pw,life:0.32,size:2.2,glow:true,grav:-40});
+  }else if(R.phys==='shard'){
+    for(let i=0;i<n;i++){const a=(i/n)*6.283+rnd(0.18,-0.09),s=rnd(190*pw,120*pw);
+      _fxPush(x,y,Math.cos(a)*s,Math.sin(a)*s,0.34,i%3?R.body:R.core,1.8,true,60);}
+  }else if(R.phys==='jolt'){
+    for(let i=0;i<n;i++){const a=rnd(6.283),s=rnd(340,180);
+      _fxPush(x,y,Math.cos(a)*s,Math.sin(a)*s,rnd(0.16,0.08),i%2?R.body:R.core,1.6,true,0);}
+    addRing(x,y,R.core,TILE*0.7*pw,0.18);
+  }else if(R.phys==='drip'){
+    addParticles(x,y,n,{col:R.body,spd:46,life:0.8,size:2.8,glow:false,grav:170});
+    addParticles(x,y,3,{col:R.core,spd:26,life:0.5,size:2,glow:true,grav:120});
+  }else if(R.phys==='rise'){
+    addParticles(x,y,n,{col:R.body,spd:34,life:0.9,size:2.6,glow:true,grav:-95});
+    addParticles(x,y,4,{col:R.core,spd:16,life:0.7,size:2,glow:true,grav:-70});
+  }else if(R.phys==='orbit'){
+    for(let i=0;i<n;i++){const a=(i/n)*6.283,r=TILE*rnd(0.9,0.5),s=rnd(120,70);
+      _fxPush(x+Math.cos(a)*r,y+Math.sin(a)*r,-Math.sin(a)*s-Math.cos(a)*26,Math.cos(a)*s-Math.sin(a)*26,0.5,i%3?R.body:R.core,2,true,0);}
+  }else if(R.phys==='implode'){
+    for(let i=0;i<n;i++){const a=(i/n)*6.283+rnd(0.3),r=TILE*rnd(1.15,0.7),s=rnd(170,110);
+      _fxPush(x+Math.cos(a)*r,y+Math.sin(a)*r,-Math.cos(a)*s,-Math.sin(a)*s,r/s,i%3?R.body:R.core,2.2,true,0);}
+  }else if(R.phys==='slab'){
+    for(let i=0;i<Math.ceil(n*0.6);i++){const a=rnd(6.283),s=rnd(90,40);
+      _fxPush(x,y,Math.cos(a)*s,-rnd(170,90),rnd(0.55,0.35),R.body,3.4,false,330);}
+    addParticles(x,y,n,{col:'#8a7a5a',spd:60,life:0.5,size:2.4,glow:false,grav:40});
+  }else{ /* gust */
+    addParticles(x,y,n,{col:R.body,spd:150,life:0.3,size:2,glow:false,grav:0});
+    addParticles(x,y,3,{col:R.core,spd:90,life:0.22,size:1.8,glow:true,grav:0});
+  }
+}
+function fxGather(el,x,y){ /* antecipacao: implosao curta da cor da escola — mesmo frame, zero delay */
+  const R=FXEL[el]||FXEL.arcane, n=quality===1?6:9;
+  for(let i=0;i<n;i++){const a=(i/n)*6.283+rnd(0.4),r=TILE*rnd(1.0,0.6),s=r/0.16;
+    _fxPush(x+Math.cos(a)*r,y+Math.sin(a)*r,-Math.cos(a)*s,-Math.sin(a)*s,0.16,i%2?R.body:R.core,1.8,true,0);}
+}
+function fxDecal(kind,x,y,r){
+  decals.push({kind,x,y,r:r||TILE*0.8,life:0,max:6,seed:Math.random()*6.283});
+  if(decals.length>48)decals.splice(0,decals.length-48);
+}
+function updateDecals(dt){for(const d of decals)d.life+=dt;compact(decals,_keepLifeMax);}
+function drawDecals(ox,oy){
+  for(const d of decals){const a=Math.min(1,(1-d.life/d.max))*0.5,sx=d.x-ox,sy=d.y-oy;
+    if(sx<-60||sy<-60||sx>W+60||sy>H+60)continue;
+    B.save();B.globalAlpha=a;
+    if(d.kind==='scorch'){B.fillStyle='#120b07';B.beginPath();B.ellipse(sx,sy,d.r,d.r*0.55,0,0,7);B.fill();
+      B.fillStyle='#2e160a';B.beginPath();B.ellipse(sx,sy,d.r*0.62,d.r*0.34,0,0,7);B.fill();
+      if(((gameTime*3+d.seed)|0)%2){B.globalAlpha=a*0.8;B.fillStyle='#ff7a2a';
+        B.fillRect(sx+Math.cos(d.seed)*d.r*0.4,sy+Math.sin(d.seed)*d.r*0.2,2,2);} }
+    else if(d.kind==='frost'){B.fillStyle='#bfe0ea';B.beginPath();B.ellipse(sx,sy,d.r,d.r*0.5,0,0,7);B.fill();
+      B.strokeStyle='#e8f6fb';B.lineWidth=1;
+      for(let i=0;i<4;i++){const a2=d.seed+i*1.57;B.beginPath();B.moveTo(sx,sy);
+        B.lineTo(sx+Math.cos(a2)*d.r*0.85,sy+Math.sin(a2)*d.r*0.42);B.stroke();}}
+    else if(d.kind==='venom'){B.fillStyle='#2e4a22';B.beginPath();B.ellipse(sx,sy,d.r,d.r*0.5,0,0,7);B.fill();
+      B.fillStyle='#5a8a3a';B.beginPath();B.ellipse(sx+d.r*0.25,sy-d.r*0.1,d.r*0.3,d.r*0.16,0,0,7);B.fill();}
+    else{B.strokeStyle='#9a7ad0';B.lineWidth=1.5;B.beginPath();B.ellipse(sx,sy,d.r*0.8,d.r*0.42,0,0,7);B.stroke();}
+    B.restore();}
+}
+function fxLight(x,y,r,col,ttl){
+  fxlights.push({x,y,r,col,life:0,max:ttl||0.5});
+  if(fxlights.length>24)fxlights.splice(0,fxlights.length-24);
+}
+function updateFxLights(dt){for(const l of fxlights)l.life+=dt;compact(fxlights,_keepLifeMax);}
+function drawFxLights(ox,oy){
+  if(quality===1)return;
+  for(const l of fxlights){const a=(1-l.life/l.max)*0.5,sx=l.x-ox,sy=l.y-oy;
+    if(a<=0||sx<-l.r||sy<-l.r||sx>W+l.r||sy>H+l.r)continue;
+    const g=B.createRadialGradient(sx,sy,0,sx,sy,l.r);
+    g.addColorStop(0,l.col);g.addColorStop(1,'rgba(0,0,0,0)');
+    B.save();B.globalCompositeOperation='lighter';B.globalAlpha=a;
+    B.fillStyle=g;B.fillRect(sx-l.r,sy-l.r,l.r*2,l.r*2);B.restore();}
+}
+/* FXSPEC: escola + peso + extras por magia (nao substitui o cast; soma a ele) */
+const FXSPEC={
+  k_heal:{el:'holy',pw:1,ls:['#a9e6a0',TILE*2.4,0.8]},
+  k_swirl:{el:'wind',pw:1},
+  k_slam:{el:'earth',pw:1.4},
+  k_fury:{el:'fire',pw:1.2,ls:['#ff9a4a',TILE*2.2,2.0]},
+  k_charge:{el:'wind',pw:1.2},
+  k_bulwark:{el:'holy',pw:1.1,ls:['#c8cdd8',TILE*2.0,1.2]},
+  k_quake:{el:'earth',pw:2,gather:1},
+  k_execute:{el:'blood',pw:1.5,hs:0.05,muzzle:1},
+  r_triple:{el:'wind',pw:0.7,muzzle:1},
+  r_dash:{el:'wind',pw:1},
+  r_poison:{el:'poison',pw:1,muzzle:1},
+  r_volley:{el:'wind',pw:1.6,gather:1},
+  r_aimed:{el:'bolt',pw:1,muzzle:1},
+  r_trap:{el:'poison',pw:1},
+  r_rain:{el:'wind',pw:1.8,gather:1},
+  r_shadow:{el:'shadow',pw:1.6,gather:1,hs:0.04},
+  m_fire:{el:'fire',pw:0.8,muzzle:1},
+  m_nova:{el:'ice',pw:1.4},
+  m_chain:{el:'bolt',pw:1.1,muzzle:1},
+  m_storm:{el:'arcane',pw:1.8,gather:1,ls:['#b9a8ff',TILE*3,1.2]},
+  m_meteor:{el:'fire',pw:1.8,gather:1,hs:0.05},
+  m_icelance:{el:'ice',pw:1,muzzle:1},
+  m_arcane:{el:'arcane',pw:1.7,gather:1},
+  m_inferno:{el:'fire',pw:2.4,gather:1,ls:['#ff8a4a',TILE*3.2,2.5]},
+  /* ---- lote 2 (21 magias de progressao) — mesmas escolas, pesos calibrados ---- */
+  k_cleave:{el:'wind',pw:1.2}, k_pull:{el:'shadow',pw:1.1},
+  k_smite:{el:'holy',pw:1.3,muzzle:1,ls:['#fff6d8',TILE*2.2,0.8]},
+  k_cataclysm:{el:'earth',pw:2.2,gather:1,hs:0.05},
+  k_reap:{el:'blood',pw:1.5,hs:0.04}, k_ragnarok:{el:'fire',pw:2.6,gather:1,hs:0.06,ls:['#ff9a4a',TILE*3.4,2.2]},
+  r_scatter:{el:'wind',pw:0.9,muzzle:1}, r_pierce:{el:'bolt',pw:1.1,muzzle:1},
+  r_caltrops:{el:'poison',pw:1}, r_hail:{el:'wind',pw:1.8,gather:1},
+  r_barrage:{el:'wind',pw:1.4}, r_snipe:{el:'bolt',pw:1.4,muzzle:1,hs:0.04},
+  r_arrowgod:{el:'bolt',pw:2.4,gather:1,hs:0.05,ls:['#e8f0ff',TILE*3,1.8]},
+  m_frostnova:{el:'ice',pw:1.6}, m_lightning:{el:'bolt',pw:1.3,muzzle:1},
+  m_firewall:{el:'fire',pw:1.5}, m_blizzard:{el:'ice',pw:2,gather:1},
+  m_comet:{el:'fire',pw:2,gather:1,hs:0.05}, m_singularity:{el:'shadow',pw:2.2,gather:1,hs:0.05},
+  m_apocalypse:{el:'fire',pw:2.8,gather:1,hs:0.06,ls:['#ff8a4a',TILE*3.6,2.6]}
+};
+function elByColor(c){ /* deriva escola de projeteis antigos pela cor */
+  if(!c)return 'wind';
+  const s=String(c).toLowerCase();
+  if(/#ff|#f0|#e8[0-9a-f]?[0-9a-f]?[0-6]/.test(s)&&/[89a-f][0-9a-f]#?$/.test(s)===false&&/#ff/.test(s))return 'fire';
+  if(/#9fe8|#7fd4|#9fd8|#bfe0|cfe6ff|b9e0ff/.test(s))return 'ice';
+  if(/8ab8ff|b9e0|e8f0ff|f2f6ff/.test(s))return 'bolt';
+  if(/7ac2|9fe0|b0d0|c248/.test(s))return 'poison';
+  if(/9a7a|8a6a|b9a8|c9a2ff/.test(s))return 'shadow';
+  return 'wind';
+}
+function fxProjImpact(p){
+  const el=p.fel||elByColor(p.col||p.trail)||'wind';
+  fxBurst(el,p.x,p.y,p.aoe?1.4:0.8);
+  if(el==='fire'&&p.aoe)fxDecal('scorch',p.x,p.y,TILE*1.1);
+  else if(el==='ice')fxDecal('frost',p.x,p.y,TILE*0.7);
+  else if(el==='poison')fxDecal('venom',p.x,p.y,TILE*0.7);
+}
+/* Envolve cada cast: antecipacao (gather) + flair (muzzle/luz) — sem atraso algum */
+window._fxWrapSpells=function(){
+  for(const id in SPELLS){
+    const o=SPELLS[id]; if(!o||!o.cast||o.cast._fx)continue;
+    const c=o.cast, s=FXSPEC[id]||{};
+    o.cast=function(){
+      try{ if(s.gather)fxGather(s.el,player.px,player.py); }catch(e){}
+      const r=c.apply(this,arguments);
+      try{
+        if(s.muzzle)fxBurst(s.el,player.px,player.py-TILE*0.3,0.5);
+        if(s.ls)fxLight(player.px,player.py,s.ls[1],s.ls[0],s.ls[2]);
+        if(s.hs&&typeof hitStop!=='undefined')hitStop=Math.max(hitStop,s.hs);
+      }catch(e){}
+      return r;
+    };
+    o.cast._fx=1;
+  }
+};
+window._fxWrapSpells();
 const SPELL_ORDER=Object.keys(SPELLS);
 function classSpellIds(cls){return SPELL_ORDER.filter(id=>SPELLS[id].cls===cls);}
 function unlockedSpellIds(){return classSpellIds(player.cls).filter(id=>player.lvl>=SPELLS[id].lv);}
@@ -4379,6 +4553,7 @@ function useSkill4(){openSpellbook();}
 
 function explodeAt(x,y){
   SFX.fire();shake(7);buzz(22);hitStop=Math.max(hitStop,0.05);
+  try{fxDecal('scorch',x,y,TILE*1.2);fxLight(x,y,TILE*2.6,'#ff8a4a',0.5);}catch(e){}
   addRing(x,y,'#ff8a4a',TILE*1.8,0.5);
   addParticles(x,y,26,{col:'#ff9a4a',spd:160,life:0.6,size:3.4,glow:true});
   addParticles(x,y,12,{col:'#ffd9a0',spd:90,life:0.4,size:2.6,glow:true});
@@ -4733,7 +4908,7 @@ function update(dt){if(_blessOpen)return;
       if(player.poison<=0)player.hp=Math.min(player.maxhp,player.hp+Math.ceil(player.maxhp*(inC?0.01:0.03)));}
   }
   updateMonsters(dt);updateCompanion(dt);updateWander(dt);updateInvasion(dt);updateProjectiles(dt);updateParticles(dt);updateFloaters(dt);
-  updateSlashes(dt);updateRings(dt);updateBeams(dt);updateLoot(dt);updateOrbs(dt);updateAoes(dt);for(let _i=0;_i<zaps.length;_i++)zaps[_i].t+=dt;compact(zaps,_keepZap);updateSpawns(dt);updateCamera(dt);updateAmbient(dt);updateWeather(dt);
+  updateSlashes(dt);updateRings(dt);_updFxPass(dt);updateBeams(dt);updateLoot(dt);updateOrbs(dt);updateAoes(dt);for(let _i=0;_i<zaps.length;_i++)zaps[_i].t+=dt;compact(zaps,_keepZap);updateSpawns(dt);updateCamera(dt);updateAmbient(dt);updateWeather(dt);
 }
 function updateSpawns(dt){const active=monsters.length;
   for(const sp of spawns){if(sp.alive)continue;if(isSafeZone(sp.x,sp.y)){continue;}sp.timer+=dt*1000;
@@ -4848,6 +5023,7 @@ function stepToward(m,gx,gy){const dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],
 function fireProjectile(m){SFX.fire();const ang=Math.atan2(player.py-m.py,player.px-m.px),sp=260;
   projectiles.push({friendly:false,x:m.px,y:m.py,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,el:m.d.rel,dmin:m.d.rdmin,dmax:m.d.rdmax,vis:'bolt',web:m.d.web,life:0,trail:0,from:m,dead:false});m.swing=1;}
 function updateProjectiles(dt){for(const p of projectiles){
+    p._fxT=(p._fxT||0)+dt;if(p._fxT>0.045){p._fxT=0;try{fxBurst(p.fel||elByColor(p.col),p.x,p.y,0.16);}catch(e){}}
   if(p.friendly&&p.tgt&&!p.tgt.dead){ /* homing: curva em direcao ao alvo p/ acertar */
     const des=Math.atan2(p.tgt.py-p.y,p.tgt.px-p.x),cur=Math.atan2(p.vy,p.vx),spd=p.sp||Math.hypot(p.vx,p.vy)||320;
     let diff=des-cur;while(diff>Math.PI)diff-=2*Math.PI;while(diff<-Math.PI)diff+=2*Math.PI;
@@ -4865,8 +5041,9 @@ function updateProjectiles(dt){for(const p of projectiles){
       else if(p.hitS&&p.hitS.has(hit)){/* atravessa alvo j\u00e1 atingido */}
       else{strikeMonster(hit,p.mult);
         if(p.pierce&&p.pierce>0){p.pierce--;if(p.hitS)p.hitS.add(hit);}
-        else p.dead=true;}}
+        else{p.dead=true;try{fxProjImpact(p);}catch(e){}}}}
     else if(hitWall||p.life>1.3){
+      try{fxProjImpact(p);}catch(e){}
       if(p.aoe)explodeAt(p.x,p.y);
       else addParticles(p.x,p.y,6,{col:p.vis==='arrow'?'#d8d2c0':ELEM[p.el].c,spd:70,life:0.3,size:2,glow:p.vis!=='arrow'});
       p.dead=true;}
@@ -4886,7 +5063,7 @@ function updateParticles(dt){for(const p of particles){p.life+=dt;p.x+=p.vx*dt;p
 function updateFloaters(dt){for(const f of floaters){f.life+=dt;f.y+=f.vy*dt;f.vy*=0.92;}compact(floaters,_keepLifeMax);
   if(floaters.length>40)floaters.splice(0,floaters.length-40);}
 function updateSlashes(dt){for(const s of slashes)s.life+=dt;compact(slashes,_keepLifeMax);}
-function updateRings(dt){for(const r of rings)r.life+=dt;compact(rings,_keepLifeDur);}
+function updateRings(dt){for(const r of rings)r.life+=dt;compact(rings,_keepLifeDur);} function _updFxPass(dt){try{updateDecals(dt);updateFxLights(dt);}catch(e){}}
 function updateBeams(dt){for(const b of beams)b.life+=dt;compact(beams,_keepLifeDur);}
 function updateLoot(dt){for(const L of loots){L.t+=dt;
   if(!player.dead&&cheby(L.tx,L.ty,player.tx,player.ty)<=1){pickupLoot(L);L.dead=true;}}
@@ -5026,6 +5203,7 @@ function render(){
   for(const p of projectiles)dr.push({y:p.y,kind:'proj',p});
   for(const ls of LANDMARK_SPRITES){const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});}
   dr.sort((a,b)=>a.y-b.y);
+  try{drawDecals(ox,oy);}catch(e){}
   for(const d of dr){
     if(d.kind==='tile')drawTall(d.tx,d.ty,d.t,d.tx*TILE-ox,d.ty*TILE-oy);
     else if(d.kind==='npc')drawNpc(d.n.x*TILE+TILE/2-ox,d.n.y*TILE+TILE/2-oy,d.n);
@@ -5035,6 +5213,7 @@ function render(){
     else if(d.kind==='proj')drawProjectile(d.p.x-ox,d.p.y-oy,d.p);
     else if(d.kind==='lmspr'){const spr=LMSPR[d.ls.k];if(spr){const ax=(d.ls.x+WOFF)*TILE+TILE/2-ox,ay=(d.ls.y+WOFF)*TILE+TILE-oy;B.drawImage(spr,ax-spr.width/2,ay-spr.height);}}}
   for(const s of slashes)drawSlash(s,ox,oy);
+  try{drawFxLights(ox,oy);}catch(e){}
   for(const r of rings)drawRing(r,ox,oy);
   for(const bm of beams)drawBeam(bm,ox,oy);
   for(const p of particles){const a=1-p.life/p.max,sx=p.x-ox,sy=p.y-oy;
@@ -9357,6 +9536,7 @@ try{(function(){
       for(var i=0;i<monsters.length;i++){var m=monsters[i];if(m.dead)continue;if(dist(m.px,m.py,player.px,player.py)<=TILE*5.0){strikeMonster(m,5.0);m.burn=Math.max(m.burn||0,5);}}}}
     };
     for(var sid in NS){ if(!SPELLS[sid]){ SPELLS[sid]=NS[sid]; SPELL_ORDER.push(sid); } }
+    try{window._fxWrapSpells&&window._fxWrapSpells();}catch(e){}
     /* traducoes dos nomes novos (fallback PT se faltar) */
     if(typeof SKILL_NAMES!=='undefined'){
       var TR={'Talho Amplo':{en:'Wide Cleave',es:'Tajo Amplio',fr:'Taille Large'},'Corrente Espectral':{en:'Spectral Chain',es:'Cadena Espectral',fr:'Cha\u00eene Spectrale'},'Condena\u00e7\u00e3o':{en:'Doom',es:'Condena',fr:'Damnation'},'Cataclismo':{en:'Cataclysm',es:'Cataclismo',fr:'Cataclysme'},'Ceifa':{en:'Reap',es:'Siega',fr:'Fauche'},'Quebra-Terra':{en:'Earthshatter',es:'Quiebratierra',fr:'Brise-Terre'},'Ju\u00edzo de A\u00e7o':{en:'Steel Judgment',es:'Juicio de Acero',fr:'Jugement d\u2019Acier'},'Leque Mortal':{en:'Deadly Fan',es:'Abanico Mortal',fr:'\u00c9ventail Mortel'},'Flecha Perfurante':{en:'Piercing Arrow',es:'Flecha Perforante',fr:'Fl\u00e8che Per\u00e7ante'},'Estrepes':{en:'Caltrops',es:'Abrojos',fr:'Chausse-trapes'},'Tempestade de Flechas':{en:'Arrow Storm',es:'Tormenta de Flechas',fr:'Temp\u00eate de Fl\u00e8ches'},'Barragem':{en:'Barrage',es:'Descarga',fr:'Barrage'},'Tiro Fatal':{en:'Fatal Shot',es:'Tiro Fatal',fr:'Tir Fatal'},'Chuva do Fim':{en:'Endrain',es:'Lluvia Final',fr:'Pluie Finale'},'Nova Glacial':{en:'Frost Nova',es:'Nova Glacial',fr:'Nova de Givre'},'Rel\u00e2mpago':{en:'Lightning',es:'Rel\u00e1mpago',fr:'\u00c9clair'},'Muralha de Fogo':{en:'Firewall',es:'Muro de Fuego',fr:'Mur de Feu'},'Nevasca':{en:'Blizzard',es:'Ventisca',fr:'Blizzard'},'Cometa':{en:'Comet',es:'Cometa',fr:'Com\u00e8te'},'Singularidade':{en:'Singularity',es:'Singularidad',fr:'Singularit\u00e9'},'Apocalipse':{en:'Apocalypse',es:'Apocalipsis',fr:'Apocalypse'}};
