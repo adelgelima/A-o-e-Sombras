@@ -208,7 +208,9 @@
   .slot .req{position:absolute;top:3px;left:4px;font-family:var(--mono);font-size:9px;font-weight:700;color:#ff8a80;text-shadow:0 1px 2px #000;background:rgba(0,0,0,.45);padding:0 3px;border-radius:5px;line-height:1.35}
   .slot .clslock{position:absolute;top:2px;right:4px;font-size:13px;font-weight:700;color:#e86a5a;text-shadow:0 1px 2px #000;line-height:1}
   #minimap{image-rendering:pixelated;cursor:pointer}
-  #zonetoast{position:absolute;top:calc(128px + var(--sat));left:50%;transform:translateX(-50%) translateY(-8px);z-index:4;
+  /* anuncio de regiao: abaixo do cluster do HUD (stats a esquerda ~200px, minimapa+botoes
+   a direita ~200px). Em 128px ele cruzava a fileira de botoes e o pergaminho cobria o texto. */
+#zonetoast{position:absolute;top:calc(214px + var(--sat));left:50%;transform:translateX(-50%) translateY(-8px);z-index:4;
     width:max-content;max-width:min(60vw,320px);
     font:700 clamp(15px,4.4vw,19px) 'Segoe UI',sans-serif;letter-spacing:3px;color:#f2e8c8;text-transform:uppercase;
     text-shadow:0 2px 10px rgba(0,0,0,.95),0 0 3px rgba(0,0,0,.8);opacity:0;pointer-events:none;transition:opacity .5s,transform .5s;text-align:center}
@@ -439,6 +441,11 @@
 .sgrp{margin:15px 2px 6px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
   color:#9a8552;display:flex;align-items:center;gap:8px}
 .sgrp::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,74,.35),transparent)}
+
+/* atalhos extras: slots que so aparecem quando escolhidos */
+.xrow .xmark{width:22px;text-align:center;color:#e8c15a;font-weight:800;flex:none}
+.xrow.on{border-color:rgba(232,193,90,.5);background:rgba(232,193,90,.08)}
+#xbarRows{display:flex;flex-direction:column;gap:7px;max-height:52vh;overflow:auto}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -488,7 +495,9 @@ window.FIREBASE_CONFIG = {
       <div class="skill" id="sk7"><span class="key">4</span><span class="ic"></span><span class="lb"></span><span class="cnt"></span><div class="cd"></div><div class="lk"><b>&#128274;</b><span data-i18n="lvl_short">Nv</span> 16</div></div>
       <div class="skill" id="sk3"><span class="key">5</span><span class="ic">&#129514;</span><span class="lb" data-i18n="life">Vida</span><span class="cnt">0</span><div class="cd"></div></div>
       <div class="skill" id="sk4"><span class="key">6</span><span class="ic">&#127807;</span><span class="lb" data-i18n="antidote">Antídoto</span><span class="cnt">0</span><div class="cd"></div></div>
-      <div class="skill" id="sk5"><span class="key">I</span><span class="ic">&#127890;</span><span class="lb" data-i18n="backpack">Mochila</span><span class="cnt"></span><div class="cd"></div></div>
+      <div class="skill" id="sk5"><span class="key">I</span><span class="ic">&#127890;</span><span class="lb" data-i18n="backpack">Mochila</span><span class="cnt"></span><div class="cd"></div>
+      <div class="skill xslot" id="sk8" style="display:none"><span class="key">5</span><span class="ic"></span><span class="lb"></span><span class="cnt"></span><div class="cd"></div></div>
+      <div class="skill xslot" id="sk9" style="display:none"><span class="key">6</span><span class="ic"></span><span class="lb"></span><span class="cnt"></span><div class="cd"></div></div></div>
     </div>
     <div id="joy"><div id="joyBase"></div><div id="joyStick"></div></div>
     <div id="attackBtn"><span class="ic">&#127919;</span><span class="tx" data-i18n="target_btn">ALVO</span></div>
@@ -668,7 +677,16 @@ window.FIREBASE_CONFIG = {
     </div>
   </div>
   <div id="saveToast" style="position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:9999;background:rgba(18,24,32,.96);color:#e6ebf2;padding:10px 18px;border-radius:11px;border:1px solid rgba(150,180,210,.22);box-shadow:0 8px 24px rgba(0,0,0,.55);font:600 14px 'Segoe UI',system-ui,sans-serif;opacity:0;pointer-events:none;transition:opacity .25s ease"></div>
-  <div id="quests" class="overlay hidden">
+  <div id="xbar" class="overlay hidden">
+  <div class="card panel" style="max-width:420px">
+    <h2 id="xbarTitle" style="margin:0 0 4px">Atalhos da barra</h2>
+    <p id="xbarHint" style="margin:0 0 12px;font-size:12px;color:#8a90a0">
+      At&eacute; 2 atalhos extras. Sem escolher nada, a barra fica como est&aacute;.</p>
+    <div id="xbarRows"></div>
+    <button class="btn wide" id="xbarClose" style="margin-top:12px">Fechar</button>
+  </div>
+</div>
+<div id="quests" class="overlay hidden">
     <div style="background:#171a22;border:1px solid #3a3f4e;border-radius:14px;padding:14px;max-width:min(94vw,440px);max-height:92vh;overflow:auto;box-shadow:0 18px 60px rgba(0,0,0,.6)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <h1 style="font-size:20px;margin:0" data-i18n="quests_title">Missões Diárias</h1><button class="btn" id="qClose" data-i18n="close">Fechar</button></div>
@@ -1362,8 +1380,8 @@ const MTYPES={
  * Tiles, biomas, POIs, cavernas, regioes e geracao do mundo.
  * Bloco legado extraido mecanicamente do single-file original.
  */
-const T={grass:0,stone:1,wall:2,water:3,tree:4,dfloor:5,dwall:6,lava:7,sand:8,rock:9,pillar:10,brazier:11,cfloor:12,cwall:13,mud:14,snow:15,moss:16,roof:17,ash:20,scrub:21,cliff:23,pine:24,deadtree:25,obsidian:26,mushroom:27,bones:28,ice:22};
-const WALKABLE={0:1,1:1,2:0,3:0,4:0,5:1,6:0,7:0,8:1,9:0,10:0,11:0,12:1,13:0,14:1,15:1,16:1,17:0,20:1,21:1,23:0,24:0,25:0,26:1,27:1,28:1,22:1};
+const T={grass:0,stone:1,wall:2,water:3,tree:4,dfloor:5,dwall:6,lava:7,sand:8,rock:9,pillar:10,brazier:11,cfloor:12,cwall:13,mud:14,snow:15,moss:16,roof:17,ash:20,scrub:21,cliff:23,pine:24,deadtree:25,obsidian:26,mushroom:27,bones:28,ice:22,ruin:29,furn:30};
+const WALKABLE={0:1,1:1,2:0,3:0,4:0,5:1,6:0,7:0,8:1,9:0,10:0,11:0,12:1,13:0,14:1,15:1,16:1,17:0,20:1,21:1,23:0,24:0,25:0,26:1,27:1,28:1,22:1,29:1,30:1};
 const DAMAGE_TILE={7:14};
 const CRYPT={x:250,y:150,w:34,h:28};
 let map=new Uint8Array(MAPW*MAPH);
@@ -1580,19 +1598,30 @@ function scatterMicro(){
     well:(x,y)=>{for(let a=0;a<8;a++)s(Math.round(x+Math.cos(a/8*6.28)*1.6),Math.round(y+Math.sin(a/8*6.28)*1.6),T.stone);s(x,y,T.water);},
     altar:(x,y)=>{for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)s(x+dx,y+dy,T.stone);s(x,y,T.pillar);s(x,y-1,T.brazier);},
     statue:(x,y)=>{s(x,y,T.stone);s(x,y-1,T.pillar);},
-    ruin:(x,y)=>{for(const d of[[0,0],[1,0],[0,1],[2,1]])s(x+d[0],y+d[1],T.dwall);s(x+1,y+1,T.dfloor);},
+    ruin:(x,y)=>{ /* Manifesto: pedra quebrada + musgo + silhueta irregular.
+                    Paredes em pe SO em 2 cantos; o resto vira entulho pisavel (T.ruin),
+                    o que quebra a silhueta e deixa o jogador atravessar a ruina. */
+      for(const d of[[0,0],[2,1]])s(x+d[0],y+d[1],T.dwall);
+      for(const d of[[1,0],[0,1],[1,1],[2,0],[-1,1],[1,2]])s(x+d[0],y+d[1],T.ruin);
+      s(x+1,y+1,T.dfloor);},
     camp:(x,y)=>{s(x,y,T.brazier);for(const d of[[2,0],[-2,1],[0,2]])s(x+d[0],y+d[1],T.wall);s(x+1,y,T.dfloor);},
     circle:(x,y)=>{for(let a=0;a<6;a++)s(Math.round(x+Math.cos(a/6*6.28)*2.5),Math.round(y+Math.sin(a/6*6.28)*2.5),T.pillar);},
-    graves:(x,y)=>{for(const d of[[0,0],[2,0],[0,2],[2,2],[1,1]])s(x+d[0],y+d[1],T.dwall);}
+    graves:(x,y)=>{for(const d of[[0,0],[2,0],[0,2],[2,2],[1,1]])s(x+d[0],y+d[1],T.dwall);},
+    stall:(x,y)=>{ /* banca/acampamento de mercador: mobilia + fogueira */
+      for(const d of[[0,0],[1,0],[-1,1],[2,1]])s(x+d[0],y+d[1],T.furn);
+      s(x,y+1,T.stone);s(x+1,y+1,T.brazier);},
+    depot:(x,y)=>{ /* deposito abandonado: caixaria + entulho em volta */
+      for(const d of[[0,0],[1,0],[0,1],[1,1],[2,0]])s(x+d[0],y+d[1],T.furn);
+      for(const d of[[-1,0],[2,1],[0,2]])s(x+d[0],y+d[1],T.ruin);}
   };
   /* pools por bioma (variedade, sem repetição) */
   const POOL={
-    'Bosque Antigo':['log','boulder','mushrooms','well','statue','ruin','circle','camp'],
-    'Selva Sombria':['log','mushrooms','bones','ruin','statue','graves'],
-    'Campos de Cindra':['well','statue','ruin','camp','circle','graves','boulder','log'],
-    'Ermo Escaldante':['bones','ruin','camp','cairn','statue','graves'],
+    'Bosque Antigo':['log','boulder','mushrooms','well','statue','ruin','circle','camp','stall'],
+    'Selva Sombria':['log','mushrooms','bones','ruin','statue','graves','depot'],
+    'Campos de Cindra':['well','statue','ruin','camp','circle','graves','boulder','log','stall','depot'],
+    'Ermo Escaldante':['bones','ruin','camp','cairn','statue','graves','depot'],
     'Picos Uivantes':['cairn','boulder','ruin'],'Sopé dos Picos':['cairn','boulder','log','camp'],
-    'Cinzas de Vorrak':['bones','altar','ruin','graves'],'Matagal de Cinzas':['bones','altar','ruin','camp'],
+    'Cinzas de Vorrak':['bones','altar','ruin','graves','depot'],'Matagal de Cinzas':['bones','altar','ruin','camp'],
     'Caldeira de Vorrak':['bones','altar'],'Pântano de Lodo':['mushrooms','log','bones','ruin']
   };
   const STEP=17;let placed=0;
@@ -2552,6 +2581,92 @@ function makeIce(){const c=mkC(TILE,TILE),g=c.getContext('2d');g.fillStyle='#bfe
   for(let i=0;i<3;i++){g.beginPath();g.moveTo((Math.random()*TILE)|0,0);g.lineTo((Math.random()*TILE)|0,TILE);g.stroke();}return c;}
 function makeMushroom(){const c=mkC(TILE,TILE),g=c.getContext('2d');const gr=tileCanvas.grass?tileCanvas.grass[0]:null;if(gr)g.drawImage(gr,0,0);else{g.fillStyle='#3a4a34';g.fillRect(0,0,TILE,TILE);}
   for(const m of[[14,26,4],[26,30,5],[20,18,3],[32,22,3]]){g.fillStyle='#4a2a5a';g.fillRect(m[0],m[1],2,4);g.fillStyle='#9a5aaa';g.beginPath();g.ellipse(m[0]+1,m[1],m[2],m[2]*0.7,0,0,7);g.fill();g.fillStyle='#d8a0e8';g.fillRect(m[0]-1,m[1]-1,2,2);}return c;}
+function makeWallBase(){const c=mkC(TILE,TILE),g=c.getContext('2d');
+  /* PAREDE BASE (Manifesto, lei 1 e 3): era um #14161c chapado que ainda por cima
+     dava return antes do hillshade -- a unica superficie do mundo fora da luz.
+     Agora: pedra escura em 3 tons, juntas, luz NW / sombra SE e 6 variantes. */
+  g.fillStyle='#181b23';g.fillRect(0,0,TILE,TILE);
+  dither(g,22,['#20242f']); dither(g,12,['#12141b']);
+  for(let r=0;r<4;r++){const y=r*11, off=(r%2)?6:0;
+    for(let x=-off;x<TILE;x+=15){
+      const w=Math.min(15,TILE-Math.max(0,x))-2; if(w<4)continue;
+      const bx=Math.max(0,x);
+      g.fillStyle='#232734';g.fillRect(bx,y+1,w,9);
+      g.fillStyle='rgba(242,234,216,0.10)';g.fillRect(bx,y+1,w,1);g.fillRect(bx,y+1,1,9);
+      g.fillStyle='rgba(12,8,20,0.34)';g.fillRect(bx,y+9,w,1);g.fillRect(bx+w-1,y+1,1,9);
+      if(Math.random()<0.28){g.fillStyle='#1a1d26';
+        const cx2=bx+2+((Math.random()*(w-4))|0);g.fillRect(cx2,y+2,1,3+((Math.random()*4)|0));}
+    }}
+  if(Math.random()<0.4){g.fillStyle='rgba(90,120,70,0.22)';
+    const mx=(Math.random()*30)|0,my=(Math.random()*30)|0;g.fillRect(mx,my,6+((Math.random()*8)|0),3);}
+  return c;}
+function makeRuin(){const c=mkC(TILE,TILE),g=c.getContext('2d');
+  /* RUINA (Manifesto): pedra quebrada + musgo invasor + silhueta irregular.
+     Entulho baixo: pisavel, so conta historia. */
+  const gr=tileCanvas.grass?tileCanvas.grass[(Math.random()*tileCanvas.grass.length)|0]:null;
+  if(gr)g.drawImage(gr,0,0); else {g.fillStyle='#3d7a41';g.fillRect(0,0,TILE,TILE);}
+  const N=3+((Math.random()*3)|0);
+  for(let i=0;i<N;i++){
+    const bw=7+((Math.random()*11)|0), bh=5+((Math.random()*7)|0);
+    const bx=2+((Math.random()*(TILE-bw-4))|0), by=4+((Math.random()*(TILE-bh-8))|0);
+    g.fillStyle='rgba(12,8,20,0.34)';g.fillRect(bx+2,by+bh,bw,2);      /* contato no chao */
+    g.fillStyle='#6d7178';g.fillRect(bx,by,bw,bh);
+    g.fillStyle='#82868e';g.fillRect(bx,by,bw,1);g.fillRect(bx,by,1,bh);   /* luz NW */
+    g.fillStyle='#4b4f56';g.fillRect(bx,by+bh-1,bw,1);g.fillRect(bx+bw-1,by,1,bh); /* sombra SE */
+    g.fillStyle='#565a61';                                              /* rachadura */
+    g.fillRect(bx+2+((Math.random()*(bw-4))|0),by+1,1,bh-2);
+    if(Math.random()<0.7){g.fillStyle='rgba(74,122,64,0.5)';            /* musgo invasor */
+      g.fillRect(bx,by+bh-2,2+((Math.random()*4)|0),2);
+      g.fillRect(bx+bw-3,by+bh-3,2,3);}
+  }
+  for(let i=0;i<5;i++){g.fillStyle='#5d6169';
+    g.fillRect((Math.random()*TILE)|0,(Math.random()*TILE)|0,2,2);}     /* cacos soltos */
+  return c;}
+function makeFurn(v){const c=mkC(TILE,TILE),g=c.getContext('2d');
+  /* MOBILIA DE VILA (Manifesto): madeira #5a4430/#8a6a3e, sempre com sombra de contato.
+     6 variantes: barril, caixa, banco, carroca, lenha, sacos. */
+  const st=tileCanvas.stone?tileCanvas.stone[(Math.random()*tileCanvas.stone.length)|0]:null;
+  if(st)g.drawImage(st,0,0); else {g.fillStyle='#6d6a60';g.fillRect(0,0,TILE,TILE);}
+  const W1='#8a6a3e',W2='#5a4430',W3='#a8845a',IR='#4a4f58';
+  const sh=(x,y,w,hh)=>{g.fillStyle='rgba(12,8,20,0.38)';g.beginPath();
+    g.ellipse(x+w/2+1,y+hh+1,w*0.55,3,0,0,7);g.fill();};
+  const k=v%6;
+  if(k===0){ sh(13,10,18,22);
+    g.fillStyle=W2;g.fillRect(13,10,18,22);
+    g.fillStyle=W1;g.fillRect(15,10,14,22);
+    g.fillStyle=W3;g.fillRect(16,10,2,22);
+    g.fillStyle=IR;g.fillRect(13,14,18,2);g.fillRect(13,26,18,2);
+    g.fillStyle='rgba(242,234,216,0.16)';g.fillRect(13,10,18,1);
+  }else if(k===1){ sh(12,13,20,18);
+    g.fillStyle=W2;g.fillRect(12,13,20,18);
+    g.fillStyle=W1;g.fillRect(14,15,16,14);
+    g.fillStyle=W2;g.fillRect(12,20,20,2);g.fillRect(21,13,2,18);
+    g.fillStyle='rgba(242,234,216,0.15)';g.fillRect(12,13,20,1);
+    g.fillStyle='rgba(12,8,20,0.3)';g.fillRect(12,29,20,2);
+  }else if(k===2){ sh(8,18,28,10);
+    g.fillStyle=W1;g.fillRect(8,18,28,5);
+    g.fillStyle=W3;g.fillRect(8,18,28,1);
+    g.fillStyle=W2;g.fillRect(10,23,3,7);g.fillRect(31,23,3,7);
+    g.fillStyle='rgba(12,8,20,0.28)';g.fillRect(8,22,28,1);
+  }else if(k===3){ sh(9,14,26,16);
+    g.fillStyle=W2;g.fillRect(9,14,26,10);
+    g.fillStyle=W1;g.fillRect(11,16,22,6);
+    g.fillStyle=IR;g.beginPath();g.arc(15,27,4,0,7);g.fill();
+    g.beginPath();g.arc(29,27,4,0,7);g.fill();
+    g.fillStyle=W3;g.beginPath();g.arc(15,27,1.6,0,7);g.fill();
+    g.beginPath();g.arc(29,27,1.6,0,7);g.fill();
+  }else if(k===4){ sh(11,17,22,13);
+    for(let r=0;r<3;r++)for(let i=0;i<4;i++){
+      const x=11+i*6+(r%2?2:0), y=17+r*5;
+      g.fillStyle=(i+r)%2?W1:W2;g.beginPath();g.arc(x+2,y+2,2.6,0,7);g.fill();
+      g.fillStyle='rgba(242,234,216,0.18)';g.beginPath();g.arc(x+1,y+1,1,0,7);g.fill();}
+  }else{ sh(12,15,20,16);
+    g.fillStyle='#b8a882';g.fillRect(12,18,10,13);g.fillRect(21,15,11,16);
+    g.fillStyle='#9a8a66';g.fillRect(12,18,10,1);g.fillRect(21,15,11,1);
+    g.fillStyle='rgba(12,8,20,0.3)';g.fillRect(20,18,2,13);
+    g.fillStyle='#6a5a3a';g.fillRect(15,21,4,1);g.fillRect(25,18,4,1);
+  }
+  return c;}
 function makeBones(){const c=mkC(TILE,TILE),g=c.getContext('2d');const gr=tileCanvas.grass?tileCanvas.grass[0]:null;if(gr)g.drawImage(gr,0,0);else{g.fillStyle='#5a5142';g.fillRect(0,0,TILE,TILE);}
   g.strokeStyle='#d8d0c0';g.lineWidth=2;g.beginPath();g.moveTo(12,30);g.lineTo(30,20);g.stroke();g.beginPath();g.arc(10,32,3,0,7);g.stroke();
   for(const r of[[20,28],[26,24],[16,22]]){g.beginPath();g.moveTo(r[0],r[1]);g.lineTo(r[0]+6,r[1]-3);g.stroke();}return c;}
@@ -2847,6 +2962,9 @@ function bakeTiles(){
   tileCanvas.rock=[makeRock(0),makeRock(1),makeRock(2),makeRock(0),makeRock(1),makeRock(2)];
   tileCanvas.cave=[makeCaveFloor(),makeCaveFloor(),makeCaveFloor(),makeCaveFloor(),makeCaveFloor(),makeCaveFloor()];
   tileCanvas.mud=[makeMud(),makeMud(),makeMud(),makeMud(),makeMud(),makeMud()];
+  tileCanvas.wallbase=[makeWallBase(),makeWallBase(),makeWallBase(),makeWallBase(),makeWallBase(),makeWallBase()];
+  tileCanvas.ruin=[makeRuin(),makeRuin(),makeRuin(),makeRuin(),makeRuin(),makeRuin()];
+  tileCanvas.furn=[makeFurn(0),makeFurn(1),makeFurn(2),makeFurn(3),makeFurn(4),makeFurn(5)];
   /* ===== CONTACT KIT (Manifesto Brumal): assentamento e costura ===== */
   window._gFam=function(t){
     if(t===T.sand)return 2;
@@ -3732,9 +3850,14 @@ function recompute(){
   player.atk=Math.round(player.atk*(1+_bv('dano',0.08,6)+_cp('k_furia',0.05)+_cp('m_poder',0.06)+_cp('r_veneno',0.04)));
   player.maxhp=Math.round(player.maxhp*(1+_bv('vida',0.12,6)+_cp('k_couro',0.08)));
   player.cdr=Math.min(0.70,player.cdr+_bv('recarga',0.07,5)+_cp('m_arcano',0.04));
-  player.critC=Math.min(0.75,0.12+player.skill*0.002+_bv('crit',0.05,5)+_cp('r_mira',0.03));
-  player.critD=Math.min(5.0,1.6+_bv('critdmg',0.25,5)+_cp('r_perfura',0.15)+_cp('m_foco',0.10));
-  player.goldMul=1+_bv('ouro',0.12,5);
+  player.critC=Math.min(0.75,0.12+player.skill*0.002+_bv('crit',0.05,5)+_cp('r_instinto',0.03)+_cp('r_mira',0.03));
+  player.critD=Math.min(5.0,1.6+_bv('critdmg',0.25,5)+_cp('k_brado',0.04)+_cp('r_perfura',0.15)+_cp('m_foco',0.10));
+  player.goldMul=1+_bv('ouro',0.12,5)+_cp('k_espolio',0.06)+_cp('m_avidez',0.06);
+  /* ---- campos dos perks novos (lote 2) ---- */
+  player.xpMul=1+_bv('saber',0.10,5)+_cp('m_lucidez',0.08)+_cp('r_folego',0.05);
+  player.potMul=1+_bv('alquimia',0.15,5)+_cp('m_elixir',0.12);
+  player.luck=_bv('sorte',0.08,5)+_cp('r_rastro',0.07);
+  player.dmgRed=Math.min(0.60,_bv('couraca',0.04,6)+_cp('k_baluarte',0.03)+_cp('m_barreira',0.03));
   player.orbHeal=0.12+_bv('orbe',0.05,4)+_cp('m_essencia',0.04);
   player.thorns=Math.min(1.2,_bv('espinhos',0.08,5)+_cp('k_retribui',0.05));
   player.lifesteal=Math.min(0.45,_bv('vamp',0.03,4)+_cp('k_sede',0.02)+_cp('m_vinculo',0.02));
@@ -3840,7 +3963,8 @@ function _dropCls(){ /* 20% de chance de dropar item de OUTRA vocacao (pra vende
   return player.cls;
 }
 function dropLoot(m){const b={gold:0,items:[]};
-  for(const e of m.d.loot){if(!chance(e.p))continue;
+  const _lk=1+(player.luck||0);   /* perk: Sorte do Errante / Rastro Frio */
+  for(const e of m.d.loot){if(!chance(e.id==='gold'?e.p:Math.min(1,e.p*_lk)))continue;
     if(e.id==='gold')b.gold+=ri(e.min||1,e.max||1);
     else if(e.w!==undefined)b.items.push(WEAPONS[player.cls][e.w].id);
     else if(e.o!==undefined)b.items.push(OFFHANDS[player.cls][e.o].id);
@@ -4036,7 +4160,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
       const dd=cheby(o.tx,o.ty,player.tx,player.ty);if(dd<=Math.max(1,player.rng)&&dd<nd){nd=dd;nx=o;}}
     if(nx){player.target=nx;player.autoTgt=true;}}
   monsters=monsters.filter(x=>x!==m);renderBattle();}
-function giveXp(x){player.xp+=x;const _lv0=player.lvl;
+function giveXp(x){x=Math.round(x*(player.xpMul||1));player.xp+=x;   /* perk: Saber Antigo / Lucidez */const _lv0=player.lvl;
   while(player.xp>=xpForLevel(player.lvl+1)){player.lvl++;recompute();player.hp=player.maxhp;
     SFX.level();buzz([30,50,40,30]);centerMsg(tf('c_lvl',{lvl:player.lvl}));addMessage(tf('msg_lvlup',{lvl:player.lvl}),'good');
     const _lc=CLASSES[player.cls].col;
@@ -4071,7 +4195,8 @@ function monsterHitsPlayer(m){if(player.dead||player.invuln>0)return;
   if(!player.target||player.target.dead){player.target=m;player.autoTgt=true;renderBattle();}
   if(player.thorns>0&&!m.dead){const th2=Math.max(1,Math.ceil(dmg*player.thorns));m.hp-=th2;m.hurtFlash=1;
     addFloater(m.px,m.py-TILE*0.55,th2,'#8fd47a');if(m.hp<=0)killMonster(m);}}
-function applyPlayerDamage(dmg,src){player.hp-=dmg;player.hurtFlash=1;player.invuln=0.15;
+function applyPlayerDamage(dmg,src){dmg=dmg*(1-(player.dmgRed||0));   /* perk: Couraca Viva / Baluarte / Barreira */
+  player.hp-=dmg;player.hurtFlash=1;player.invuln=0.15;
   addFloater(player.px,player.py-TILE*0.6,'-'+dmg,'#ff7a6a');SFX.hurt();buzz(24);
   if(player.rng<=1)shake(Math.min(8,3+dmg*0.12));  // ranged não treme a câmera (não atrapalha a mira)
   if(dmg>player.maxhp*0.15&&player.rng<=1)hitStop=Math.min(0.09,Math.max(hitStop,0.04));
@@ -4269,7 +4394,8 @@ function usePotion(kind){if(player.dead||cd.pot>0)return;
   if(kind==='cure'&&player.poison<=0){addMessage(t('m_not_pois'),'sys');return;}
   list.sort((a,b)=>itemById(a.id).amt-itemById(b.id).amt);
   const it=itemById(list[0].id);takeBag(it.id,1);cd.pot=1.0;
-  if(kind==='hp'){player.hp=Math.min(player.maxhp,player.hp+it.amt);addFloater(player.px,player.py-TILE*0.6,'+'+it.amt,'#a9e6a0');}
+  if(kind==='hp'){var _am=Math.round(it.amt*(player.potMul||1));   /* perk: Alquimia / Elixir Puro */
+    player.hp=Math.min(player.maxhp,player.hp+_am);addFloater(player.px,player.py-TILE*0.6,'+'+_am,'#a9e6a0');}
   else{player.poison=0;addFloater(player.px,player.py-TILE*0.6,t('fl_purified'),'#8fe08a');addMessage(t('msg_cure_purge'),'good');qProg('cure');}
   SFX.pickup();buzz(10);updateInvIfOpen();}
 /* linha de visão (Bresenham por casas) */
@@ -5047,11 +5173,20 @@ function snowUnder(tx,ty){let n=0;
   if(tileAt(tx-1,ty)===T.snow)n++;if(tileAt(tx+1,ty)===T.snow)n++;
   return n>=2;}
 function drawFloor(tx,ty,t,sx,sy){
-  if(t===T.wall){B.fillStyle='#14161c';B.fillRect(sx,sy,TILE,TILE);return;}
+  if(t===T.wall){
+    /* antes: fill chapado + return -> ficava FORA do hillshade e do Contact Kit */
+    var _wb=tileCanvas.wallbase;
+    if(_wb&&_wb.length){B.drawImage(_wb[((hash2(tx,ty)*_wb.length)|0)%_wb.length],sx,sy);
+      var _wsh=_hillshade(tx,ty);
+      if(_wsh){B.fillStyle=_wsh>0?'rgba(255,244,220,'+(_wsh*0.5).toFixed(3)+')':'rgba(12,8,20,'+(-_wsh*0.6).toFixed(3)+')';B.fillRect(sx,sy,TILE,TILE);}
+    }else{B.fillStyle='#181b23';B.fillRect(sx,sy,TILE,TILE);}
+    return;}
   if(t===T.water){drawWaterTile(tx,ty,sx,sy);return;}
   if(t===T.lava){drawLavaTile(tx,ty,sx,sy);return;}
   let arr=null,idx=0;
-  if(isGrassy(t)){
+  if(t===T.ruin){arr=tileCanvas.ruin;idx=((hash2(tx,ty)*arr.length)|0)%arr.length;}
+  else if(t===T.furn){arr=tileCanvas.furn;idx=((hash2(tx,ty)*arr.length)|0)%arr.length;}
+  else if(isGrassy(t)){
     if(t!==T.grass&&mossUnder(tx,ty)){arr=tileCanvas.moss;idx=((hash2(tx,ty)*arr.length)|0)%arr.length;}
     else if(t!==T.grass&&snowUnder(tx,ty)){arr=tileCanvas.snow;idx=((hash2(tx,ty)*arr.length)|0)%arr.length;}
     else{arr=tileCanvas.grass;
@@ -8505,6 +8640,11 @@ const BLESS=[
  {id:'ouro',ic:'&#128176;',t:'M\u00e3o de Midas',d:'+12% de ouro saqueado',mx:25},
  {id:'espinhos',ic:'&#127807;',t:'Pele de Espinhos',d:'Reflete 8% do dano sofrido',mx:25},
  {id:'vamp',ic:'&#129656;',t:'Sede Sombria',d:'Cura 3% do dano que voc\u00ea causa',mx:25},
+ /* ---------- GERAIS (lote 2: variedade de fim de jogo) ---------- */
+ {id:'saber',ic:'&#128218;',t:'Saber Antigo',d:'+10% de experi\u00eancia',mx:20},
+ {id:'alquimia',ic:'&#129514;',t:'Alquimia',d:'Po\u00e7\u00f5es curam +15%',mx:15},
+ {id:'sorte',ic:'&#127808;',t:'Sorte do Errante',d:'+8% de chance de esp\u00f3lio',mx:15},
+ {id:'couraca',ic:'&#128481;&#65039;',t:'Coura\u00e7a Viva',d:'-4% de dano sofrido',mx:15},
  /* ---------- CAVALEIRO (tanque / corpo-a-corpo) ---------- */
  {id:'k_furia',cls:'knight',ic:'&#128293;',t:'F\u00faria de Ferro',d:'+5% de dano',mx:10},
  {id:'k_couro',cls:'knight',ic:'&#128737;&#65039;',t:'Couro Curtido',d:'+8% de vida m\u00e1xima',mx:10},
@@ -8512,6 +8652,9 @@ const BLESS=[
  {id:'k_retribui',cls:'knight',ic:'&#9889;',t:'Retribui\u00e7\u00e3o',d:'Reflete +5% do dano sofrido',mx:8},
  {id:'k_sede',cls:'knight',ic:'&#127838;',t:'Sede de Batalha',d:'+2% de roubo de vida',mx:8},
  {id:'k_golpe',cls:'knight',ic:'&#9876;&#65039;',t:'Golpe R\u00e1pido',d:'+3% de velocidade de ataque',mx:8},
+ {id:'k_baluarte',cls:'knight',ic:'&#127959;&#65039;',t:'Baluarte',d:'-3% de dano sofrido',mx:8},
+ {id:'k_brado',cls:'knight',ic:'&#128227;',t:'Brado de Guerra',d:'+4% de dano cr\u00edtico',mx:10},
+ {id:'k_espolio',cls:'knight',ic:'&#128176;',t:'Direito de Conquista',d:'+6% de ouro',mx:8},
  /* ---------- ARQUEIRA (dist\u00e2ncia / cr\u00edtico) ---------- */
  {id:'r_cadencia',cls:'ranger',ic:'&#127993;',t:'Cad\u00eancia',d:'+4% de velocidade de ataque',mx:10},
  {id:'r_mira',cls:'ranger',ic:'&#127919;',t:'Mira Firme',d:'+3% de chance cr\u00edtica',mx:10},
@@ -8519,13 +8662,20 @@ const BLESS=[
  {id:'r_agil',cls:'ranger',ic:'&#128168;',t:'P\u00e9s Leves',d:'+4% de velocidade de movimento',mx:8},
  {id:'r_alcance',cls:'ranger',ic:'&#128207;',t:'Longo Alcance',d:'+1 de alcance',mx:2},
  {id:'r_veneno',cls:'ranger',ic:'&#127807;',t:'Ponta Envenenada',d:'+4% de dano',mx:10},
+ {id:'r_rastro',cls:'ranger',ic:'&#128373;&#65039;',t:'Rastro Frio',d:'+7% de chance de esp\u00f3lio',mx:8},
+ {id:'r_folego',cls:'ranger',ic:'&#129528;',t:'F\u00f4lego Longo',d:'+5% de experi\u00eancia',mx:10},
+ {id:'r_instinto',cls:'ranger',ic:'&#127919;',t:'Instinto',d:'+3% de chance cr\u00edtica',mx:8},
  /* ---------- MAGO (magia / recarga) ---------- */
  {id:'m_arcano',cls:'mage',ic:'&#128302;',t:'Fluxo Arcano',d:'-4% de recarga das habilidades',mx:10},
  {id:'m_poder',cls:'mage',ic:'&#10024;',t:'Poder Arcano',d:'+6% de dano',mx:10},
  {id:'m_manto',cls:'mage',ic:'&#129526;',t:'Manto R\u00fanico',d:'+2 de armadura',mx:8},
  {id:'m_essencia',cls:'mage',ic:'&#128308;',t:'Ess\u00eancia Densa',d:'Orbes de vida curam +4%',mx:8},
  {id:'m_vinculo',cls:'mage',ic:'&#129656;',t:'V\u00ednculo Vital',d:'+2% de roubo de vida',mx:8},
- {id:'m_foco',cls:'mage',ic:'&#128165;',t:'Foco Mortal',d:'+10% de dano cr\u00edtico',mx:10}
+ {id:'m_foco',cls:'mage',ic:'&#128165;',t:'Foco Mortal',d:'+10% de dano cr\u00edtico',mx:10},
+ {id:'m_lucidez',cls:'mage',ic:'&#128218;',t:'Lucidez',d:'+8% de experi\u00eancia',mx:8},
+ {id:'m_elixir',cls:'mage',ic:'&#129514;',t:'Elixir Puro',d:'Po\u00e7\u00f5es curam +12%',mx:8},
+ {id:'m_barreira',cls:'mage',ic:'&#128481;&#65039;',t:'Barreira Arcana',d:'-3% de dano sofrido',mx:8},
+ {id:'m_avidez',cls:'mage',ic:'&#128176;',t:'Avidez',d:'+6% de ouro',mx:8}
 ];
 let _blessQ=0,_blessOpen=false,_blessOffer=[];
 function blessCount(id){return (meta.bless&&meta.bless[id])||0;}
@@ -8560,7 +8710,9 @@ function pickBless(id){if(!_blessOpen)return;if(window._pickBusy&&Date.now()-win
 window._acCloseBless=function(){ try{ _blessOpen=false; var p=document.getElementById('bless'); if(p)p.classList.add('hidden'); }catch(e){} };
 /* fecha ao tocar FORA do card (mantem _blessQ: a bencao volta no proximo nivel) */
 try{ var _blEl=document.getElementById('bless');
-  if(_blEl){ _blEl.addEventListener('pointerup',function(e){ if(e.target===_blEl){ window._acCloseBless(); } },false); }
+  if(_blEl){ _blEl.addEventListener('click',function(e){ if(e.target===_blEl){ window._acCloseBless(); } },false); }
+  /* era 'pointerup' (heranca da ponte de toque). Com 'click' o navegador exige descer E subir
+     no mesmo elemento: arrastar do card ate o fundo e soltar nao fecha mais o painel sem querer. */
 }catch(e){}
 /* rede de seguranca: painel escondido + _blessOpen true = jogo pausado sem motivo -> destrava */
 setInterval(function(){ try{ if(_blessOpen){ var p=document.getElementById('bless');
@@ -8880,122 +9032,20 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
 
 /* === PONTE: dispara acao no POINTERDOWN (neste aparelho o click/pointerup e engolido em alguns elementos) === */
 (function(){
+  /* ===== PONTE DE TOQUE: REMOVIDA (era ~7KB) =====
+     Ela existia para contornar cliques engolidos, causados por touch-action:none no CSS.
+     Com touch-action:manipulation (corrigido antes) o navegador entrega o clique sozinho,
+     e o proprio jogador confirmou no aparelho que nao ha mais toque perdido.
+     Removida porque ela era a FONTE dos cliques fantasma: a ponte sintetizava o clique
+     no pointerup, o handler mudava a tela, e SO ENTAO o navegador calculava o alvo do
+     clique nativo -- que caia no que tivesse aparecido embaixo do dedo. Sem ponte, o
+     navegador calcula o alvo ANTES do handler rodar: um toque = um clique, no lugar certo.
+     Mantidos: window._acPanelShield (+ CSS body.acShield) e o anti-duplo _acDbl/_guardBtns. */
   if(typeof document==='undefined')return;
-  /* ===== PONTE DE TOQUE v2 (generalizada) =====
-     Historico: cliques eram engolidos de forma intermitente no Chrome Android.
-     Causa provavel: heuristica de double-tap-zoom + touch-action:none no CSS antigo
-     (o proprio contorno colocado para "impedir clique engolido" podia suprimi-lo).
-     Correcao em duas frentes:
-       1) CSS: touch-action:manipulation nos clicaveis (preserva click, mata o delay);
-       2) esta ponte deixa de ser lista de permissao: cobre QUALQUER elemento clicavel
-          (SEL legada OU .onclick definido) e dispara o click sintetico no ALVO ORIGINAL
-          do toque (preserva handlers de clique-fora que checam e.target).
-     O click nativo, quando ocorrer, e suprimido pelo guarda de 800ms (sem duplo disparo). */
-  var SEL='button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,.bcard,.brow,#tracker,.tHead,[role=button]';
-  function _clickable(n){
-    try{
-      var el=n;
-      while(el&&el!==document&&el!==document.documentElement){
-        if(el.nodeType===1){
-          if(el.disabled)return null;   /* botao desabilitado nao clica (nem repassa acima) */
-          if(el.matches&&el.matches(SEL))return el;
-          if(typeof el.onclick==='function')return el;
-        }
-        el=el.parentNode;
-      }
-    }catch(_e){}
-    return null;
-  }
-  window._acClickable=_clickable;
-  /* ===== ESCUDO ALINHADO AO CSS =====
-     O escudo existe para o toque que FECHA um painel nao vazar no que esta embaixo.
-     O CSS ja declara a intencao exata:
-       body.acShield #skillbar, body.acShield #attackBtn { pointer-events:none }
-     A ponte bloqueava TUDO por 450ms -- muito mais largo que a intencao -- e matava
-     botoes de HUD que o jogador toca de proposito (ex.: pergaminho de missoes logo
-     apos fechar um painel). Agora so blinda os mesmos alvos do CSS. */
-  function _shielded(n){
-    /* ===== ESCUDO v3: lista de LIBERACAO (era lista de bloqueio) =====
-       O escudo de 450ms existe porque, ao fechar um painel, o clique NATIVO do toque
-       chega depois e o navegador refaz o hit-test: ele cai em quem estiver embaixo
-       (o mapa -> joyEnd/handleTap = clique fantasma; ou a propria .overlay -> fecha
-       o painel que acabou de abrir = "pergaminho falhando").
-       v2 blindava so #skillbar/#attackBtn e deixava mapa e overlay expostos.
-       v3 blinda TUDO por padrao e libera apenas o HUD que o jogador toca de proposito
-       (#right: minimapa, tracker, AFK e #tools/pergaminho). #skillbar e irmao de #right,
-       entao continua protegido, como o CSS body.acShield sempre declarou. */
-    if(!(window._acPanelShield&&Date.now()<window._acPanelShield))return false;
-    try{ var el=n;
-      var emCard=false;
-      while(el&&el.nodeType===1){
-        if(el.id==='tools')return false;  /* botoes de HUD: o jogador toca de proposito e repetido */
-        if(el.id==='title')return true;   /* tela inicial: ELA APARECE por causa do toque -> sempre blindada.
-                                             (era o furo: os cards de heroi ficam dentro de um .card, que
-                                             eu havia liberado, e o toque em 'Trocar de heroi' caia neles) */
-        if(el.classList&&el.classList.contains('card'))emCard=true;  /* conteudo de painel ja aberto */
-        el=el.parentNode;
-      }
-      return !emCard;
-    }catch(_e){}
-    return true;   /* mapa, minimapa, scrim, skillbar, attackBtn: protegidos na janela */
-  }
-  var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downHost=null, downX=0, downY=0, moved=false;
-  document.addEventListener('pointerdown',function(e){
-    if(e.pointerType==='mouse'&&e.button!==0){ downLeaf=null; return; }  /* so botao primario */
-    /* O ESCUDO VEM PRIMEIRO. Antes, o teste de "clicavel" rodava antes e dava return
-       para o canvas do mapa (que nao tem onclick) -- ou seja, o escudo NUNCA protegeu
-       o mapa. Resultado: ao fechar um painel, o toque caia no canvas -> joystick ->
-       joyEnd -> handleTap = clique fantasma. Com capture:true, o stopPropagation aqui
-       impede o pointerdown do proprio canvas. */
-    if(_shielded(e.target)){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
-    var t=_clickable(e.target);
-    if(!t){ downLeaf=null; downHost=null; return; }
-    downLeaf=e.target; downHost=t; downX=e.clientX; downY=e.clientY; moved=false;
-  },true);
-  document.addEventListener('pointermove',function(e){
-    if(!downLeaf)return;
-    if(Math.abs(e.clientX-downX)>10||Math.abs(e.clientY-downY)>10){ moved=true; downLeaf=null; downHost=null; window._acScrolledAt=Date.now(); }
-  },true);
-  document.addEventListener('pointerup',function(e){
-    if(!downLeaf)return;
-    var leaf=downLeaf, host=downHost; downLeaf=null; downHost=null;
-    if(moved)return;
-    /* ===== SOBREVIVER A RE-RENDER =====
-       Varios paineis se redesenham sozinhos com innerHTML (renderTracker roda 1x/s,
-       renderHUD por frame). Se esse redesenho cair ENTRE o pointerdown e o pointerup,
-       o elemento guardado vira orfao e o clique sintetico morria no vazio -- o toque
-       "nao fazia nada", de forma intermitente. Agora: se o alvo sumiu, procuramos o
-       elemento equivalente no MESMO ponto da tela (e o e.target resultante continua
-       correto para handlers que usam closest(), como o cabecalho do tracker). */
-    var tgt=null;
-    if(leaf&&document.contains(leaf)) tgt=leaf;
-    else{
-      try{ var at=document.elementFromPoint(e.clientX,e.clientY); if(at&&_clickable(at)) tgt=at; }catch(_e){}
-      if(!tgt&&host&&document.contains(host)) tgt=host;
-    }
-    if(!tgt)return;
-    lastLeaf=tgt; lastAt=Date.now();
-    synth=true;
-    try{ tgt.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window})); }
-    catch(_e){ try{ if(tgt.click)tgt.click(); }catch(__e){} }
-    synth=false;
-  },true);
-  document.addEventListener('click',function(e){
-    if(synth)return;
-    if(_shielded(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }
-    if(window._acScrolledAt&&(Date.now()-window._acScrolledAt)<400){ if(_clickable(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; } }
-    /* ===== ECO DO NAVEGADOR (a raiz do "toque fantasma") =====
-       No toque, a ponte JA sintetizou o clique certo no pointerup. O clique nativo que
-       o navegador dispara depois e um eco -- e o alvo dele e recalculado NA HORA: se a
-       tela mudou por causa do proprio toque (painel fechou, tela inicial apareceu), o
-       eco cai em cima do que estiver embaixo. Era assim que "Trocar de heroi" acabava
-       clicando direto num card de heroi que ficou sob o dedo.
-       Antes so matavamos o eco quando ele caia NO MESMO elemento; agora matamos todos.
-       detail===0 e clique programatico/teclado (nao e eco): esse passa. */
-    if(lastAt&&(Date.now()-lastAt)<800&&e.detail!==0){
-      e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return;
-    }
-  },true);
+  try{ window._acClickable=function(n){ var el=n; while(el&&el.nodeType===1){
+    if(el.matches&&el.matches('button,.btn,.slotc,.langb,.tbtn,.stog,.clsCard,.sdel,.gbtn,.yes,.no,.chip,.bcard,.brow,#tracker,.tHead,[role=button]'))return el;
+    if(typeof el.onclick==='function')return el; el=el.parentNode; } return null; }; }catch(e){}
+  try{console.log('[toque] ponte removida: o navegador entrega o clique nativamente.');}catch(e){}
 })();
 
 
@@ -12024,6 +12074,94 @@ function _acBadgeY(H){
   _badgeYc=y;_badgeHc=H;return y;
 }
 try{ window.addEventListener('resize',function(){_badgeYc=null;_badgeHc=-1;}); }catch(e){}
+
+/* ============ ATALHOS EXTRAS DA BARRA (item 6) ============
+   Pedido: "botoes customizaveis extras na barra, SEM POLUIR O HUD".
+   Solucao: dois slots que so EXISTEM se o jogador escolher uma acao para eles.
+   Sem configuracao, a barra fica identica a de hoje -- poluicao zero por padrao.
+   A escolha e por aparelho (localStorage), nao por save: vale para todos os herois. */
+(function(){
+  var KEY='ac_xbar';
+  /* so acoes que ja existem e sao seguras fora de contexto */
+  var ACT={
+    map:   {ic:'&#128506;&#65039;', fn:function(){ if(typeof openBigMap==='function')openBigMap(); },
+            t:{pt:'Mapa do Vale',en:'Valley map',es:'Mapa del Valle',fr:'Carte de la Vall\u00e9e'}},
+    quests:{ic:'&#128220;', fn:function(){ if(typeof openQuests==='function')openQuests(); },
+            t:{pt:'Miss\u00f5es',en:'Quests',es:'Misiones',fr:'Qu\u00eates'}},
+    afk:   {ic:'&#128564;', fn:function(){ if(typeof toggleAfk==='function')toggleAfk(); },
+            t:{pt:'Modo AFK',en:'AFK mode',es:'Modo AFK',fr:'Mode AFK'}},
+    chase: {ic:'&#127939;', fn:function(){ var b=document.getElementById('btnChase'); if(b&&b.onclick)b.onclick(); },
+            t:{pt:'Perseguir alvo',en:'Chase target',es:'Perseguir objetivo',fr:'Poursuivre'}},
+    save:  {ic:'&#128190;', fn:function(){ try{ SaveLoad.saveNow(); }catch(e){} },
+            t:{pt:'Guardar agora',en:'Save now',es:'Guardar ahora',fr:'Sauvegarder'}},
+    gear:  {ic:'&#9881;', fn:function(){ if(typeof openSettings==='function')openSettings(); },
+            t:{pt:'Configura\u00e7\u00f5es',en:'Settings',es:'Ajustes',fr:'R\u00e9glages'}}
+  };
+  var LB={pt:['Atalhos da barra','At\u00e9 2 atalhos extras. Sem escolher nada, a barra fica como est\u00e1.','Fechar','nenhum'],
+          en:['Bar shortcuts','Up to 2 extra shortcuts. Choose none and the bar stays as it is.','Close','none'],
+          es:['Atajos de la barra','Hasta 2 atajos extra. Sin elegir nada, la barra queda igual.','Cerrar','ninguno'],
+          fr:['Raccourcis de la barre','Jusqu\u2019\u00e0 2 raccourcis. Sans choix, la barre reste telle quelle.','Fermer','aucun']};
+  function L(){ try{ return (typeof LANG!=='undefined'&&LB[LANG])?LANG:'pt'; }catch(e){ return 'pt'; } }
+  function get(){ try{ var v=JSON.parse(localStorage.getItem(KEY)||'[]'); return Array.isArray(v)?v.slice(0,2):[]; }catch(e){ return []; } }
+  function set(v){ try{ localStorage.setItem(KEY, JSON.stringify(v.slice(0,2))); }catch(e){} apply(); }
+  function apply(){
+    var sel=get();
+    [['sk8',0],['sk9',1]].forEach(function(p){
+      var el=document.getElementById(p[0]); if(!el)return;
+      var id=sel[p[1]], a=id&&ACT[id];
+      if(!a){ el.style.display='none'; el.onclick=null; return; }
+      el.style.display='';
+      var ic=el.querySelector('.ic'), lb=el.querySelector('.lb');
+      if(ic)ic.innerHTML=a.ic;
+      if(lb)lb.textContent=a.t[L()]||a.t.pt;
+      el.onclick=function(){ try{ a.fn(); }catch(e){} };
+    });
+  }
+  window._acXbarApply=apply;
+  function render(){
+    var box=document.getElementById('xbarRows'); if(!box)return;
+    var sel=get(), lg=L(), T=LB[lg];
+    var ttl=document.getElementById('xbarTitle'); if(ttl)ttl.textContent=T[0];
+    var hnt=document.getElementById('xbarHint'); if(hnt)hnt.textContent=T[1];
+    var cls=document.getElementById('xbarClose'); if(cls)cls.textContent=T[2];
+    box.innerHTML='';
+    Object.keys(ACT).forEach(function(id){
+      var a=ACT[id], on=sel.indexOf(id)>=0;
+      var r=document.createElement('button');
+      r.className='srow xrow'+(on?' on':'');
+      r.innerHTML='<div class="sic">'+a.ic+'</div><div class="stx"><b>'+(a.t[lg]||a.t.pt)+'</b></div>'+
+                  '<div class="xmark">'+(on?'&#10003;':'')+'</div>';
+      r.onclick=function(){
+        var s=get(), k=s.indexOf(id);
+        if(k>=0)s.splice(k,1);
+        else{ if(s.length>=2)s.shift(); s.push(id); }
+        set(s); render();
+      };
+      box.appendChild(r);
+    });
+  }
+  window._acXbarOpen=function(){ try{ if(typeof closeAllPanels==='function')closeAllPanels(); }catch(e){}
+    render(); var p=document.getElementById('xbar'); if(p)p.classList.remove('hidden'); };
+  function wire(){
+    var c=document.getElementById('xbarClose');
+    if(c)c.onclick=function(){ var p=document.getElementById('xbar'); if(p)p.classList.add('hidden'); };
+    var ov=document.getElementById('xbar');
+    if(ov)ov.addEventListener('click',function(e){ if(e.target===ov)ov.classList.add('hidden'); });
+    /* linha nas Configuracoes, logo abaixo de "Estilo do heroi" */
+    try{
+      var anchor=document.getElementById('rowSkinVar')||document.getElementById('rowSwitchHero');
+      if(anchor&&anchor.parentNode&&!document.getElementById('rowXbar')){
+        var r=document.createElement('button'); r.className='srow slink'; r.id='rowXbar';
+        r.innerHTML='<div class="sic">&#9776;</div><div class="stx"><b>'+LB[L()][0]+'</b><span>'+LB[L()][1]+'</span></div><div class="sarr">&#8250;</div>';
+        r.onclick=window._acXbarOpen;
+        anchor.parentNode.insertBefore(r, anchor.nextSibling);
+      }
+    }catch(e){}
+    apply();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,900);});
+  else setTimeout(wire,900);
+})();
 </script>
 </body>
 </html>
