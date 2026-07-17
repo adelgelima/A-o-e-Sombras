@@ -410,6 +410,35 @@
 .bcard:nth-child(2){animation-delay:.05s}.bcard:nth-child(3){animation-delay:.1s}
 .bcard:active{transform:scale(.97);border-color:var(--acc);box-shadow:0 0 0 2px rgba(232,193,90,.35),0 6px 18px rgba(0,0,0,.5)}
 .stog:after,.stog::after{transition:left .16s cubic-bezier(.2,.8,.2,1),background .16s,transform .16s}
+
+/* ===== UX TELAS (selecao / criacao / configuracoes) ===== */
+/* canhotos vive nas Configuracoes; a copia da tela inicial era ruido duplicado */
+.topt{display:none}
+.hrow{display:flex;align-items:baseline;justify-content:space-between;margin:2px 0 8px}
+.hrow h2{margin:0}
+#heroCount{font-size:11px;color:#8a90a0;letter-spacing:.1em;font-weight:700}
+.si .smeta{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.si .smeta i{font-style:normal;font-size:10px;line-height:1;padding:3px 7px;border-radius:7px;white-space:nowrap}
+.si .cb{font-weight:800;letter-spacing:.03em;color:var(--cc);border:1px solid var(--cc);background:rgba(255,255,255,.045)}
+.si .lp{color:#cfd3dc;background:#242938;border:1px solid #323848}
+.si .lp b{color:#e8c15a}
+.si .gp{color:#ead27a;background:rgba(201,162,74,.10);border:1px solid rgba(201,162,74,.35)}
+#newHeroBtn{background:linear-gradient(180deg,#e8c15a,#c9992e)!important;color:#241a06!important;border-color:#f2d27a!important;text-shadow:none!important;font-weight:800}
+.tl1,.tl3{text-shadow:0 2px 16px rgba(232,193,90,.22)}
+/* criacao */
+#nameInput{width:100%;box-sizing:border-box;background:#12151d;border:1.5px solid #2c313e;border-radius:11px;
+  color:var(--ink);font-size:15px;padding:12px 13px;outline:none;transition:border-color .15s,box-shadow .15s}
+#nameInput:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(232,193,90,.14)}
+.crow .clab{color:#aeb4c2;font-size:12px}
+#startBtn{background:linear-gradient(180deg,#e8c15a,#c9992e)!important;color:#241a06!important;border-color:#f2d27a!important;text-shadow:none!important;font-weight:800}
+.clsCard.sel{box-shadow:0 0 0 2px var(--cc),0 10px 26px rgba(0,0,0,.45)}
+/* configuracoes: toggle ganha KNOB (antes era so um pill que mudava de cor) */
+.stog::after{content:'';position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;
+  background:#aeb4c2;box-shadow:0 1px 3px rgba(0,0,0,.55)}
+.stog.on::after{left:26px;background:#241a06}
+.sgrp{margin:15px 2px 6px;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:#9a8552;display:flex;align-items:center;gap:8px}
+.sgrp::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(201,162,74,.35),transparent)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -482,7 +511,7 @@ window.FIREBASE_CONFIG = {
         <div class="ttag" data-i18n="game_sub">um RPG de bolso no Vale de Cindra</div>
       </div>
       <div id="slotsWrap" class="hidden">
-        <h2 data-i18n="your_heroes">Seus her&oacute;is</h2>
+        <div class="hrow"><h2 data-i18n="your_heroes">Seus her&oacute;is</h2><span id="heroCount"></span></div>
         <div id="slotList"></div>
         <button class="btn wide" id="newHeroBtn" data-i18n="create_hero">+ Criar novo her&oacute;i</button>
         <div class="tdiv" id="createDiv" style="display:none"><span data-i18n="new_hero">novo her&oacute;i</span></div>
@@ -8013,10 +8042,17 @@ function renderSlots(){const db=loadSlots();const list=$('slotList');list.innerH
   db.slots.forEach((d,i)=>{const sm=slotSummary(d);if(!sm)return;count++;
     const row=document.createElement('div');row.className='slotc'+(_delConfirm===i?' confirming':'');row.dataset.slot=i;
     const av=document.createElement('div');av.className='sav';av.style.setProperty('background',hexA(CLASSES[sm.cls].col,0.14));
+    av.style.boxShadow='inset 0 0 0 2px '+hexA(CLASSES[sm.cls].col,0.5);   /* anel da vocacao */
     const pc=miniPortrait(sm.cls,sm.custom);if(pc)av.appendChild(pc);
     row.appendChild(av);
     const info=document.createElement('div');info.className='si';
-    info.innerHTML='<b>'+sm.name+'</b><span>'+className(sm.cls)+' \u00b7 '+t('lvl_word')+' '+sm.lvl+' \u00b7 '+sm.gold+' '+t('gold_low')+'</span>';
+    var _gfmt=String(sm.gold).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+    info.innerHTML='<b>'+sm.name+'</b>'+
+      '<span class="smeta">'+
+        '<i class="cb" style="--cc:'+CLASSES[sm.cls].col+'">'+className(sm.cls)+'</i>'+
+        '<i class="lp">'+t('lvl_word')+' <b>'+sm.lvl+'</b></i>'+
+        '<i class="gp">\u25C8 '+_gfmt+'</i>'+
+      '</span>';
     row.appendChild(info);
     if(_delConfirm===i){
       const cf=document.createElement('div');cf.className='sconf';
@@ -8031,8 +8067,9 @@ function renderSlots(){const db=loadSlots();const list=$('slotList');list.innerH
       row.onclick=()=>continueGame(i);
     }
     list.appendChild(row);});
-  // botão criar some se lotou os 3
+  // botão criar some se lotou os 6
   $('newHeroBtn').style.display=(count>=MAX_SLOTS)?'none':'block';
+  var _hc=$('heroCount'); if(_hc)_hc.textContent=count+' / '+MAX_SLOTS;
   return count;}
 function refreshTitle(){
   const count=renderSlots();
@@ -8366,8 +8403,7 @@ const DungeonLayer={
  * Bloco legado extraido mecanicamente do single-file original.
  */
 const SAVE_KEY='acoSombras.v1';      // save legado (1 personagem) — migrado p/ slot
-const SLOTS_KEY='acoSombras.slots';  // {slots:[save|null,save|null,save|null], active:0..2}
-const MAX_SLOTS=3;
+const SLOTS_KEY='acoSombras.slots';  const MAX_SLOTS=6;   /* 6 herois, qualquer combinacao de vocacoes (era 3) */
 function legacyRuntime(){return window.AcoSombrasRuntime||{};}
 function lsGet(k){const sm=legacyRuntime().saves;if(sm&&sm.getRaw)return sm.getRaw(k);try{return window.localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){const sm=legacyRuntime().saves;if(sm&&sm.setRaw)return sm.setRaw(k,v);try{window.localStorage.setItem(k,v);return true;}catch(e){return false;}}
@@ -11051,6 +11087,19 @@ try{(function(){
           if(bb._acLang)return; bb._acLang=1;
           bb.onclick=function(){try{setLang(this.dataset.lang);}catch(e){}};
         });
+        /* cabecalhos de grupo nas Configuracoes (re-traduzem junto) */
+        try{
+          var _SGT={pt:['Jogo','Her\u00f3i','Ajuda','Progresso'],en:['Game','Hero','Help','Progress'],
+                    es:['Juego','H\u00e9roe','Ayuda','Progreso'],fr:['Jeu','H\u00e9ros','Aide','Progression']};
+          var G=_SGT[Lg]||_SGT.pt;
+          [['rowSound',0],['rowSwitchHero',1],['rowHelp',2],['rowSaveNow',3]].forEach(function(p){
+            var a=document.getElementById(p[0]); if(!a||!a.parentNode)return;
+            var g=document.getElementById('sgrp'+p[1]);
+            if(!g){ g=document.createElement('div'); g.className='sgrp'; g.id='sgrp'+p[1];
+                    a.parentNode.insertBefore(g,a); }
+            g.textContent=G[p[1]];
+          });
+        }catch(e){}
       }catch(e){}
     };
     setTimeout(window._acRelabel,1200);
