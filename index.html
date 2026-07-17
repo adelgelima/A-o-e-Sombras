@@ -7797,7 +7797,7 @@ function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
   tp.style.left=Math.max(4,x)+'px';tp.style.top=Math.max(4,y)+'px';}
 function hideTip(){$('tooltip').style.display='none';}
 let shopKind='shop';
-let trackerOpen=false;  /* rastreador colapsado por padrão (ícone) */
+let trackerOpen=true; var _tSig='';   /* rastreador visivel por padrao; reabre sozinho quando as missoes mudam */  /* rastreador colapsado por padrão (ícone) */
 function shopItems(kind){const w=WEAPONS[player.cls],o=OFFHANDS[player.cls];
   const gid=(slot,rar)=>{const g=GEAR.find(x=>x.cls===player.cls&&x.slot===slot&&x.rar===rar);return g?g.id:null;};
   let list;
@@ -8663,10 +8663,14 @@ function renderTracker(){const el=$('tracker');if(!el)return;
   /* concluídas primeiro, depois por % de completude (desc) */
   items.sort((a,b)=>(b.done-a.done)||(b.frac-a.frac));
   const nDone=items.filter(i=>i.done).length;
+  try{ var _sig=items.map(i=>i.label+':'+i.need).join('|');
+       if(_sig!==_tSig){ if(_tSig!=='' && _sig!=='') trackerOpen=true; _tSig=_sig; } }catch(e){}
   if(!trackerOpen){
-    el.classList.add('collapsed');
-    el.innerHTML='<span class="tIcon">&#9745;</span>'+(nDone>0?'<span class="tDot">'+nDone+'</span>':'');
+    /* Sem icone proprio: o pergaminho do HUD ja e o unico acesso as missoes.
+       Recolhido = invisivel. Volta sozinho quando as missoes mudam (ver _tSig). */
+    el.classList.add('collapsed'); el.classList.add('hidden'); el.innerHTML='';
   }else{
+    el.classList.remove('hidden');
     el.classList.remove('collapsed');
     let html='<div class="tHead"><span>'+t('quests_title')+'</span><span class="tClose">&#9650;</span></div>';
     html+=items.map(i=>'<div class="tItem'+(i.done?' done':'')+'">'+(i.done?'&#10003; ':i.icon+' ')+i.label+' <b>'+i.pg+'/'+i.need+'</b></div>').join('');
@@ -8786,7 +8790,7 @@ function init(){
   $('mmIn').onclick=e=>{e.stopPropagation();miniZoom=Math.min(12,miniZoom+2);renderMinimap();};
   $('mmOut').onclick=e=>{e.stopPropagation();miniZoom=Math.max(3,miniZoom-2);renderMinimap();};
   $('mmBig').onclick=e=>{e.stopPropagation();openBigMap();};
-  $('btnQuests').onclick=openQuests;$('qClose').onclick=closeAllPanels;$('dailyBtn').onclick=claimDaily;$('tracker').onclick=(e)=>{if(!trackerOpen){trackerOpen=true;renderTracker();}else if(e.target.closest('.tHead')){trackerOpen=false;renderTracker();}else openQuests();};
+  $('btnQuests').onclick=openQuests;$('qClose').onclick=closeAllPanels;$('dailyBtn').onclick=claimDaily;$('tracker').onclick=(e)=>{ if(e.target&&e.target.closest&&e.target.closest('.tHead')){trackerOpen=false;renderTracker();} else openQuests(); };
   $('btnGear').onclick=openSettings;
   {const bc=$('btnChase');if(bc){
     try{const cs=localStorage.getItem('aco_chase');if(cs!==null)chaseOn=(cs==='1');}catch(e){}
@@ -8886,16 +8890,18 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
        entao continua protegido, como o CSS body.acShield sempre declarou. */
     if(!(window._acPanelShield&&Date.now()<window._acPanelShield))return false;
     try{ var el=n;
+      var emCard=false;
       while(el&&el.nodeType===1){
-        if(el.id==='tools')return false;   /* SO os botoes de HUD (pergaminho/bandeira/engrenagem/correr).
-                                              O minimapa (#mapwrap, dentro de #right) NAO entra: ele fica
-                                              exatamente sob os botoes 'Fechar' dos paineis, e era ali que
-                                              o clique nativo retargetado batia = toque fantasma no mapa. */
-        if(el.classList&&el.classList.contains('card'))return false;  /* conteudo do painel ABERTO */
+        if(el.id==='tools')return false;  /* botoes de HUD: o jogador toca de proposito e repetido */
+        if(el.id==='title')return true;   /* tela inicial: ELA APARECE por causa do toque -> sempre blindada.
+                                             (era o furo: os cards de heroi ficam dentro de um .card, que
+                                             eu havia liberado, e o toque em 'Trocar de heroi' caia neles) */
+        if(el.classList&&el.classList.contains('card'))emCard=true;  /* conteudo de painel ja aberto */
         el=el.parentNode;
       }
+      return !emCard;
     }catch(_e){}
-    return true;   /* mapa, scrim da overlay, skillbar, attackBtn: protegidos na janela */
+    return true;   /* mapa, minimapa, scrim, skillbar, attackBtn: protegidos na janela */
   }
   var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downHost=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
@@ -8942,11 +8948,16 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
     if(synth)return;
     if(_shielded(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; }
     if(window._acScrolledAt&&(Date.now()-window._acScrolledAt)<400){ if(_clickable(e.target)){ e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return; } }
-    if(lastLeaf&&(Date.now()-lastAt)<800){
-      var t=e.target;
-      if(t===lastLeaf||(lastLeaf.contains&&lastLeaf.contains(t))||(t&&t.contains&&t.contains(lastLeaf))){
-        e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault();
-      }
+    /* ===== ECO DO NAVEGADOR (a raiz do "toque fantasma") =====
+       No toque, a ponte JA sintetizou o clique certo no pointerup. O clique nativo que
+       o navegador dispara depois e um eco -- e o alvo dele e recalculado NA HORA: se a
+       tela mudou por causa do proprio toque (painel fechou, tela inicial apareceu), o
+       eco cai em cima do que estiver embaixo. Era assim que "Trocar de heroi" acabava
+       clicando direto num card de heroi que ficou sob o dedo.
+       Antes so matavamos o eco quando ele caia NO MESMO elemento; agora matamos todos.
+       detail===0 e clique programatico/teclado (nao e eco): esse passa. */
+    if(lastAt&&(Date.now()-lastAt)<800&&e.detail!==0){
+      e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); return;
     }
   },true);
 })();
