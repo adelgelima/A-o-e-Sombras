@@ -4250,7 +4250,12 @@ function monsterHitsPlayer(m){if(player.dead||player.invuln>0)return;
   if(!player.target||player.target.dead){player.target=m;player.autoTgt=true;renderBattle();}
   if(player.thorns>0&&!m.dead){const th2=Math.max(1,Math.ceil(dmg*player.thorns));m.hp-=th2;m.hurtFlash=1;
     addFloater(m.px,m.py-TILE*0.55,th2,'#8fd47a');if(m.hp<=0)killMonster(m);}}
-function applyPlayerDamage(dmg,src){dmg=dmg*(1-(player.dmgRed||0));   /* perk: Couraca Viva / Baluarte / Barreira */
+function applyPlayerDamage(dmg,src){
+  /* perk: Couraca Viva / Baluarte / Barreira.
+     Math.round e OBRIGATORIO: dmgRed e float (0.04*3 = 0.12000000000000001 em JS), entao
+     10*(1-0.12000000000000001) = 8.799999999999999 e o numero flutuante aparecia inteiro na tela.
+     Math.max(1,...) preserva a regra antiga de que todo golpe que acerta tira ao menos 1. */
+  dmg=Math.max(1,Math.round(dmg*(1-(player.dmgRed||0))));
   player.hp-=dmg;player.hurtFlash=1;player.invuln=0.15;
   addFloater(player.px,player.py-TILE*0.6,'-'+dmg,'#ff7a6a');SFX.hurt();buzz(24);
   if(player.rng<=1)shake(Math.min(8,3+dmg*0.12));  // ranged não treme a câmera (não atrapalha a mira)
