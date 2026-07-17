@@ -61,7 +61,7 @@
   .brow .nm{font-size:11px;color:var(--ink);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .brow .mini{width:44px;height:6px;border-radius:3px;background:rgba(0,0,0,.5);overflow:hidden}
   .brow .mini>i{display:block;height:100%;background:linear-gradient(180deg,var(--hp2),var(--hp))}
-  #log{position:absolute;left:calc(10px + var(--sal));bottom:calc(112px + var(--sab));width:min(360px,62vw);max-height:118px;
+  #log{position:absolute;left:calc(10px + var(--sal));bottom:calc(112px + var(--sab));width:min(360px,62vw);max-height:166px;
     overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;pointer-events:none}
   #log .m{font-size:12px;color:var(--ink);text-shadow:0 1px 3px #000;line-height:1.3}
   #log .m.dmg{color:#ffb4ab} #log .m.good{color:#9fe89a} #log .m.sys{color:var(--ink-dim)}
@@ -391,18 +391,21 @@
 @keyframes uxCardIn{from{opacity:0;transform:translateY(10px) scale(.965)}to{opacity:1;transform:none}}
 .overlay:not(.hidden){animation:uxOvIn .16s ease-out}
 .overlay:not(.hidden) .card{animation:uxCardIn .2s cubic-bezier(.2,.8,.2,1)}
-@media (prefers-reduced-motion:reduce){.overlay:not(.hidden),.overlay:not(.hidden) .card,.bcard,#log .m{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.overlay:not(.hidden),.overlay:not(.hidden) .card,.bcard{animation:none!important}}
 .btn,.tbtn,.gbtn,.langb,.chip,.bcard,.slot,.slotc,button{transition:transform .12s ease,filter .12s ease,box-shadow .12s ease,border-color .12s ease}
 .btn:active,.tbtn:active,.gbtn:active,.langb:active,.chip:active,.slot:active,.slotc:active,button:active{transform:scale(.96);filter:brightness(1.18)}
 .skill{transition:transform .1s ease}
 .skill:active{transform:scale(.92)}
 #attackBtn:active,#stopBtn:active{transform:scale(.94);filter:brightness(1.15)}
-#shopRows .row button,#dailyBody button{background:linear-gradient(180deg,#e8c15a,#c9992e)!important;color:#241a06!important;border-color:#f2d27a!important;text-shadow:none!important;font-weight:800;min-width:38px;min-height:34px}
+/* UI amarelo dos botoes (restaurado a pedido: nao era a causa dos bugs). */
+#shopRows .row button,#dailyBody button{background:linear-gradient(180deg,#e8c15a,#c9992e)!important;color:#241a06!important;border-color:#f2d27a!important;text-shadow:none!important;font-weight:800}
 #invClose,#sbClose,#shopClose,#helpClose,#setClose,#qClose,#bmClose,#dailyClose,#lbClose{background:none!important;border-color:#3a4050!important;color:#aeb4c2!important}
 .qbar{height:8px;background:#12151d;border:1px solid #262b38;border-radius:5px;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
 .qbar i{border-radius:4px;box-shadow:0 0 6px rgba(232,193,90,.45)}
-#log .m{background:rgba(9,11,16,.74);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:3px 9px;width:fit-content;max-width:100%;animation:uxMsg .18s ease-out}
-@keyframes uxMsg{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+/* #log e recriado via innerHTML a CADA frame (renderHUD -> renderLog): animacao de
+   entrada reiniciava 60x/s (piscando) e ainda atropelava o fade calculado (op).
+   Fica so o estilo estatico da pilula, que e o ganho real de legibilidade. */
+#log .m{background:rgba(9,11,16,.74);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:3px 9px;width:fit-content;max-width:100%}
 .bcard{animation:uxCardIn .22s cubic-bezier(.2,.8,.2,1) both}
 .bcard:nth-child(2){animation-delay:.05s}.bcard:nth-child(3){animation-delay:.1s}
 .bcard:active{transform:scale(.97);border-color:var(--acc);box-shadow:0 0 0 2px rgba(232,193,90,.35),0 6px 18px rgba(0,0,0,.5)}
@@ -936,7 +939,7 @@ if(typeof document!=='undefined')document.addEventListener('click',function(e){
 function applyI18n(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.getAttribute('data-i18n'));});
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.getAttribute('data-i18n-html'));});
-  document.querySelectorAll('.langb').forEach(x=>{x.classList.toggle('on',x.dataset.lang===LANG);});
+  document.querySelectorAll('.langb').forEach(x=>{x.classList.toggle('on',x.dataset.lang===LANG); try{window._acRelabel&&window._acRelabel();}catch(e){}});
 }
 function setLang(l){LANG=l;lsSet(LANG_KEY,l);applyI18n();
   try{if(typeof refreshTitle==='function')refreshTitle();
@@ -5080,7 +5083,7 @@ function drawTall(tx,ty,t,sx,sy){
   if(t===T.cwall){B.drawImage(cwallSpr,sx,sy-14);return;}
   if(t===T.pillar){B.drawImage(pillarSpr,sx,sy-22);return;}
   if(t===T.tree){const _sn=(tileAt(tx+1,ty)===T.snow||tileAt(tx-1,ty)===T.snow||tileAt(tx,ty+1)===T.snow||tileAt(tx,ty-1)===T.snow||tileAt(tx+1,ty+1)===T.snow||tileAt(tx-1,ty-1)===T.snow);
-    B.drawImage((_sn?tileCanvas.treeSnow:tileCanvas.tree)[Math.floor(hash2(tx,ty)*3)],sx,sy-18);return;}
+    {const _ta=(_sn?tileCanvas.treeSnow:tileCanvas.tree);B.drawImage(_ta[Math.floor(hash2(tx,ty)*_ta.length)%_ta.length],sx,sy-18);}return;}
   if(t===T.rock){B.drawImage(tileCanvas.rock[Math.floor(hash2(tx,ty)*3)],sx,sy);return;}
   if(t===T.brazier){B.drawImage(brazierSpr,sx,sy);
     const fi=Math.floor(gameTime*10+hash2(tx,ty)*6)%6;
@@ -8860,21 +8863,39 @@ try{const rt=legacyRuntime();if(rt.state)rt.state.set('legacy.ready',true);if(rt
      botoes de HUD que o jogador toca de proposito (ex.: pergaminho de missoes logo
      apos fechar um painel). Agora so blinda os mesmos alvos do CSS. */
   function _shielded(n){
+    /* ===== ESCUDO v3: lista de LIBERACAO (era lista de bloqueio) =====
+       O escudo de 450ms existe porque, ao fechar um painel, o clique NATIVO do toque
+       chega depois e o navegador refaz o hit-test: ele cai em quem estiver embaixo
+       (o mapa -> joyEnd/handleTap = clique fantasma; ou a propria .overlay -> fecha
+       o painel que acabou de abrir = "pergaminho falhando").
+       v2 blindava so #skillbar/#attackBtn e deixava mapa e overlay expostos.
+       v3 blinda TUDO por padrao e libera apenas o HUD que o jogador toca de proposito
+       (#right: minimapa, tracker, AFK e #tools/pergaminho). #skillbar e irmao de #right,
+       entao continua protegido, como o CSS body.acShield sempre declarou. */
     if(!(window._acPanelShield&&Date.now()<window._acPanelShield))return false;
     try{ var el=n;
       while(el&&el.nodeType===1){
-        if(el.id==='skillbar'||el.id==='attackBtn')return true;
+        if(el.id==='tools')return false;   /* SO os botoes de HUD (pergaminho/bandeira/engrenagem/correr).
+                                              O minimapa (#mapwrap, dentro de #right) NAO entra: ele fica
+                                              exatamente sob os botoes 'Fechar' dos paineis, e era ali que
+                                              o clique nativo retargetado batia = toque fantasma no mapa. */
+        if(el.classList&&el.classList.contains('card'))return false;  /* conteudo do painel ABERTO */
         el=el.parentNode;
       }
     }catch(_e){}
-    return false;
+    return true;   /* mapa, scrim da overlay, skillbar, attackBtn: protegidos na janela */
   }
   var synth=false, lastLeaf=null, lastAt=0, downLeaf=null, downX=0, downY=0, moved=false;
   document.addEventListener('pointerdown',function(e){
     if(e.pointerType==='mouse'&&e.button!==0){ downLeaf=null; return; }  /* so botao primario */
+    /* O ESCUDO VEM PRIMEIRO. Antes, o teste de "clicavel" rodava antes e dava return
+       para o canvas do mapa (que nao tem onclick) -- ou seja, o escudo NUNCA protegeu
+       o mapa. Resultado: ao fechar um painel, o toque caia no canvas -> joystick ->
+       joyEnd -> handleTap = clique fantasma. Com capture:true, o stopPropagation aqui
+       impede o pointerdown do proprio canvas. */
+    if(_shielded(e.target)){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
     var t=_clickable(e.target);
     if(!t){ downLeaf=null; return; }
-    if(_shielded(e.target)){ e.preventDefault(); e.stopPropagation(); downLeaf=null; return; }
     downLeaf=e.target; downX=e.clientX; downY=e.clientY; moved=false;
   },true);
   document.addEventListener('pointermove',function(e){
@@ -9875,7 +9896,7 @@ try{(function(){
     setInterval(function(){
       try{
         if(typeof running==='undefined'||!running||typeof player==='undefined'||!player||player.dead){ _mqChipShow(false); return; }
-        if(!_mqStarted()||_mq()>=5){ _mqChipShow(_mq()<5?false:false); return; }
+        if(!_mqStarted()||_mq()>=5){ _mqChipShow(false); _mqChipUpdate(); return; }  /* chama o update: e ele que REMOVE a #mqLine ao concluir */
         var s=_mq();
         if(s<=1&&(!window._acVillages||!window._acVillages.length)){ meta.mq=2; _mqChipUpdate(); }  /* sem vilarejos no terreno: pula */
         else if(s===0&&window._acInVillage&&window._acInVillage(player.tx,player.ty)) _mqComplete(0);
@@ -9914,32 +9935,36 @@ try{(function(){
     var _MQ_BTN='flex:0 0 auto;border:1px solid #4a4432;background:rgba(255,255,255,.05);color:#c9a24a;border-radius:6px;padding:0;line-height:1;cursor:pointer;touch-action:manipulation;';
 
     function _mqChipUpdate(){
+      /* ===== DISPLAY UNIFICADO DA MISSAO INICIAL =====
+         Antes: chip flutuante (top-left) com texto + botao minimizar; minimizado virava
+         um 2o icone de pergaminho -- duplicando o #btnQuests do HUD direito.
+         Agora: o objetivo atual e uma LINHA dentro do painel de stats, onde o olho do
+         jogador ja esta (vida/ouro). Sem chip solto, sem botao de minimizar, e o
+         pergaminho do HUD passa a ser o UNICO icone de missoes do jogo. */
       try{
-        if(_mq()>=5){ if(_chip&&_chip.parentNode){_chip.parentNode.removeChild(_chip);_chip=null;} return; }
-        if(!_chip){
-          _chip=document.createElement('div');
-          _chip.id='mqChip';
-          _chip.style.cssText=_MQ_BASE+'max-width:56vw;padding:5px 6px 5px 10px;display:none;align-items:center;gap:6px;';
-          /* texto da missao: toca para abrir o painel */
-          var txt=document.createElement('span');
-          txt.className='mqTxt';
-          txt.style.cssText='flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;';
-          txt.onclick=function(e){ if(e)e.stopPropagation(); try{ if(typeof openQuests==='function')openQuests(); }catch(_){} };
-          _chip.appendChild(txt);
-          /* botao minimizar/expandir (<button> => a ponte de toque trata) */
-          var mn=document.createElement('button');
-          mn.className='mqMin';
-          mn.style.cssText=_MQ_BTN+'width:24px;height:24px;font-size:15px;';
-          mn.textContent='\u2212';
-          mn.addEventListener('pointerdown',function(e){ e.stopPropagation(); });
-          mn.onclick=function(e){ if(e)e.stopPropagation(); _mqSetMin(!_mqIsMin()); };
-          _chip.appendChild(mn);
-          (document.body||document.documentElement).appendChild(_chip);
-          _mqApplyMin();
+        var st=document.getElementById('stats');
+        var line=document.getElementById('mqLine');
+        if(_mq()>=5){ if(line&&line.parentNode)line.parentNode.removeChild(line); return; }
+        if(!st)return;
+        if(!line){
+          line=document.createElement('div');
+          line.id='mqLine';
+          line.style.cssText='margin-top:5px;padding-top:5px;border-top:1px solid rgba(201,162,74,.28);'+
+            'display:flex;align-items:center;gap:6px;cursor:pointer;'+
+            'font:11.5px sans-serif;color:#e0d3a8;line-height:1.3;touch-action:manipulation;';
+          var mk=document.createElement('span');
+          mk.textContent='\u25C8';
+          mk.style.cssText='flex:0 0 auto;color:#e8c15a;font-size:10px;';
+          var tx=document.createElement('span');
+          tx.className='mqTxt';
+          tx.style.cssText='flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+          line.appendChild(mk); line.appendChild(tx);
+          line.onclick=function(e){ if(e)e.stopPropagation();
+            try{ if(typeof openQuests==='function')openQuests(); }catch(_){} };
+          st.appendChild(line);
         }
-        var t='\uD83D\uDCDC ▸ '+MQ_T().steps[_mq()];
-        if(t!==_chipTxt){ _chipTxt=t; var _tx=_chip.querySelector('.mqTxt'); if(_tx)_tx.textContent=t; }
-        _mqApplyMin();
+        var t=MQ_T().steps[_mq()];
+        if(t!==_chipTxt){ _chipTxt=t; var _tx=line.querySelector('.mqTxt'); if(_tx)_tx.textContent=t; }
       }catch(e){}
     }
 
@@ -10961,6 +10986,36 @@ try{(function(){
       _apply();
       try{console.log('[escudo] v2 event-driven (sem polling).');}catch(e){}
     })();
+  }catch(e){}
+
+  /* ============ i18n VIVO das linhas injetadas (fix: mistura de idiomas no settings) ============
+     'Trocar de heroi' e 'Estilo do heroi' eram escritas UMA vez no idioma do momento e
+     ficavam para tras ao trocar de lingua (visto no video: settings em frances com essas
+     linhas em portugues). Agora re-traduzem no applyI18n. */
+  try{
+    var _SWL={pt:['Trocar de her\u00f3i','Salva o jogo e volta \u00e0 sele\u00e7\u00e3o de personagem'],
+              en:['Switch hero','Saves the game and returns to character select'],
+              es:['Cambiar de h\u00e9roe','Guarda el juego y vuelve a la selecci\u00f3n de personaje'],
+              fr:['Changer de h\u00e9ros','Sauvegarde et retourne \u00e0 la s\u00e9lection du personnage']};
+    window._acRelabel=function(){
+      try{
+        var Lg=(typeof LANG!=='undefined'&&LANG)||'pt';
+        var sw=document.getElementById('rowSwitchHero');
+        if(sw){var b=sw.querySelector('.stx b'),s=sw.querySelector('.stx span'),T=_SWL[Lg]||_SWL.pt;
+          if(b)b.textContent=T[0]; if(s)s.textContent=T[1];}
+        if(typeof _VL!=='undefined'){
+          var hs=document.getElementById('rowSkinVar');
+          if(hs){var V=_VL[Lg]||_VL.pt;
+            var b2=hs.querySelector('.stx b'),s2=hs.querySelector('.stx span');
+            if(b2)b2.textContent=V[0]; if(s2)s2.textContent=V[1];}
+        }
+        document.querySelectorAll('.langb').forEach(function(bb){
+          if(bb._acLang)return; bb._acLang=1;
+          bb.onclick=function(){try{setLang(this.dataset.lang);}catch(e){}};
+        });
+      }catch(e){}
+    };
+    setTimeout(window._acRelabel,1200);
   }catch(e){}
 
   /* ============ UI DE VARIANTES: escolha do Estilo do herói (I/II) ============ */
