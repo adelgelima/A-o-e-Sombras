@@ -518,6 +518,20 @@
 body.ngWorld #c{filter:brightness(0.82) saturate(0.85) hue-rotate(-18deg) contrast(1.06)}
 body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:34;
   background:radial-gradient(ellipse at 50% 20%, rgba(30,40,90,0.10) 0%, rgba(10,14,40,0.22) 100%)}
+
+/* códice */
+.cdxCard{max-width:380px;max-height:82vh;overflow:auto;text-align:left}
+.cdxHead{display:flex;justify-content:space-between;align-items:center}
+.cdxHead h1{font-size:19px;color:#e8c15a;margin:0}
+.cdxSub{color:#8a90a0;font:600 12px system-ui;margin:2px 0 8px}
+.cdxSec{font:800 11px system-ui;letter-spacing:.1em;text-transform:uppercase;color:#9a8552;
+  border-bottom:1px solid #2c313e;padding-bottom:3px;margin:12px 0 6px}
+.cdxRow{display:flex;justify-content:space-between;font:600 12.5px system-ui;color:#c8ccd4;padding:2px 0}
+.cdxRow b{color:#e8c15a;font-weight:800}
+.cdxChips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.cdxChip{background:#171a22;border:1px solid #2c313e;border-radius:8px;padding:2px 7px;
+  font:600 11px system-ui;color:#aeb4c2}
+.cdxChip.dim{color:#6a7080;border-style:dashed}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -4391,7 +4405,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
   hitStop=Math.min(0.09,Math.max(hitStop,m.d.size>=1.25?0.07:0.045));
   try{_widowMourn(m);}catch(e){} if(m.d.boss){ /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
     window._slowT=1.4;
-    try{meta.bossEcho=mName(m);}catch(e){meta.bossEcho=m.d.name;}
+    try{meta.bossEcho=mName(m);}catch(e){meta.bossEcho=m.d.name;} try{_vengOnKill(m);}catch(e){}
     try{_bossRelic(m);}catch(e){}
     try{_ngKillCheck(m);}catch(e){}
     try{centerMsg((typeof Lg!=='undefined'&&{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg])?mName(m)+{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg]:mName(m)+' caiu.');}catch(e){}
@@ -4409,7 +4423,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
   let rm=1;if(meta.rested>0){meta.rested--;rm=1.3;}
   const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm*(meta.ng?1.5:1));
   if(killStreak>=3)addFloater(m.px,m.py-TILE*0.95,tf('fl_combo',{n:killStreak}),'#ffd76a',killStreak>=6);
-  meta.stats.kills++;qProg('kill');taskProg(m.type); try{if(m.elite)_bloodOnElite(m);}catch(e){}
+  meta.stats.kills++;qProg('kill');taskProg(m.type); try{if(m.elite)_bloodOnElite(m);}catch(e){} try{_codexReg(m);}catch(e){}
   if(m._invader&&invasion){invasion.killed++;const bg=Math.round((m.d.xp||10)*0.6);player.gold+=bg;addFloater(m.px,m.py-TILE*1.0,'+'+bg+'\u29bf','#ffd76a');}
   const _kz=zoneAt(m.tx,m.ty);
   if(_kz==='Picos Uivantes')qProg('snow');
@@ -4504,7 +4518,7 @@ function applyPlayerDamage(dmg,src){
   addFloater(player.px,player.py-TILE*0.6,'-'+dmg,'#ff7a6a');SFX.hurt();buzz(24);
   if(player.rng<=1)shake(Math.min(8,3+dmg*0.12));  // ranged não treme a câmera (não atrapalha a mira)
   if(dmg>player.maxhp*0.15&&player.rng<=1)hitStop=Math.min(0.09,Math.max(hitStop,0.04));
-  if(player.hp<=0){player.hp=0;die(src);}}
+  if(player.hp<=0){player.hp=0; try{if(src&&src.d&&src.d.boss){meta.veng=meta.veng||{};meta.veng[src.d.id]=1;meta._lk=src.d.id;}}catch(e){} die(src);}}
 function slowPlayer(dur){if(player.dead)return;player.slowT=Math.max(player.slowT||0,dur);
   addParticles(player.px,player.py,8,{col:'#8fd0ff',spd:45,life:0.5,size:2.4,glow:true});}
 function poisonPlayer(n){if(player.dead)return;
@@ -4517,8 +4531,26 @@ function die(src){player.dead=true;buzz([60,60,120]);
   const cost=reviveCost(),rb=document.getElementById('reviveBtn');
   if(rb){rb.textContent=tf('revive_btn',{g:cost});const poor=player.gold<cost;rb.style.opacity=poor?'0.45':'1';rb.style.pointerEvents=poor?'none':'auto';}
   try{var _dm=document.getElementById('deathMsg');
-    if(_dm){var _dn={pt:' caiu. As sombras o levaram.',en:' has fallen. The shadows took them.',es:' cay\u00f3. Las sombras se lo llevaron.',fr:' est tomb\u00e9. Les ombres l\u2019ont emport\u00e9.'};
-      _dm.textContent=(player.name||'')+((typeof Lg!=='undefined'&&_dn[Lg])?_dn[Lg]:_dn.pt);}}catch(e){}
+    if(_dm){
+      var _lg=(typeof Lg!=='undefined')?Lg:'pt', _kn=null;
+      try{
+        if(meta&&meta._lk){_kn=_codexName(meta._lk);}
+        else if(src){_kn=src.d?(function(){try{return mName(src);}catch(e){return src.d.name;}})():String(src);}
+      }catch(e){}
+      var TXT;
+      if(meta&&meta._lk){
+        var B={pt:' caiu diante de {k}. A d\u00edvida est\u00e1 aberta.',en:' fell before {k}. The debt is open.',es:' cay\u00f3 ante {k}. La deuda est\u00e1 abierta.',fr:' est tomb\u00e9 devant {k}. La dette est ouverte.'};
+        TXT=(player.name||'')+(B[_lg]||B.pt).replace('{k}',_kn||'?');
+      }else if(_kn){
+        var C={pt:' caiu diante de {k}.',en:' fell before {k}.',es:' cay\u00f3 ante {k}.',fr:' est tomb\u00e9 devant {k}.'};
+        TXT=(player.name||'')+(C[_lg]||C.pt).replace('{k}',_kn);
+      }else{
+        var _dn={pt:' caiu. As sombras o levaram.',en:' has fallen. The shadows took them.',es:' cay\u00f3. Las sombras se lo llevaron.',fr:' est tomb\u00e9. Les ombres l\u2019ont emport\u00e9.'};
+        TXT=(player.name||'')+(_dn[_lg]||_dn.pt);
+      }
+      _dm.textContent=TXT;
+      if(meta)meta._lk=null;
+    }}catch(e){}
   try{_gravePlant();}catch(e){}
   document.getElementById('death').classList.remove('hidden');}
 function reviveCost(){return Math.round(60+player.lvl*22+((typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?DungeonLayer.depth*45:0));}
@@ -4859,6 +4891,12 @@ function useSkill1(){castSlot(0);}
 function useSkill2(){castSlot(1);}
 function useSkill3(){castSlot(2);}
 function useSkill4(){openSpellbook();}
+var _origCastSlot=castSlot;
+castSlot=function(i){
+  var pre=null; try{pre=JSON.stringify(cd);}catch(e){}
+  _origCastSlot(i);
+  try{if(i===2&&pre!==null&&JSON.stringify(cd)!==pre)_warCry();}catch(e){}
+};
 
 
 function explodeAt(x,y){
@@ -5521,7 +5559,7 @@ function render(){
   for(const p of projectiles)dr.push({y:p.y,kind:'proj',p});
   for(const ls of LANDMARK_SPRITES){const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});}
   dr.sort((a,b)=>a.y-b.y);
-  try{drawDecals(ox,oy);}catch(e){} try{_webDraw(ox,oy);}catch(e){} try{_graveDraw(ox,oy);}catch(e){}
+  try{drawDecals(ox,oy);}catch(e){} try{_webDraw(ox,oy);}catch(e){} try{_graveDraw(ox,oy);}catch(e){} try{_statueDraw(ox,oy);}catch(e){}
   for(const d of dr){
     if(d.kind==='tile')drawTall(d.tx,d.ty,d.t,d.tx*TILE-ox,d.ty*TILE-oy);
     else if(d.kind==='npc')drawNpc(d.n.x*TILE+TILE/2-ox,d.n.y*TILE+TILE/2-oy,d.n);
@@ -9605,6 +9643,21 @@ try{(function(){
       loot:[{id:'gold',p:1,min:Math.max(1,Math.round(a[K.xp]*0.35)),max:Math.max(3,Math.round(a[K.xp]*1.1))},
             {id:'hp_s',p:0.08},{id:'hp_m',p:a[K.ti]>=4?0.1:0},{id:'hp_l',p:a[K.ti]>=5?0.08:0}]};
     if(isBoss&&BOSSKIT[id]){var kit=BOSSKIT[id]; for(var kk in kit){MTYPES[id][kk]=kit[kk];} }
+    /* ---- Top100 #14: arquetipo de ataque POR FAMILIA (variedade percebida) ---- */
+    if(!isBoss){
+      var _fk=({dragon:{ranged:true,rel:'fire',rrange:5,_rm:0.9},
+                ashimp:{ranged:true,rel:'fire',rrange:4,_rm:0.8},
+                slime:{ranged:true,rel:'poison',rrange:3,_rm:0.7},
+                golem:{slam:true},
+                skeleton:{beh:'charge'}})[a[K.dr]];
+      if(_fk){
+        for(var fk2 in _fk){if(fk2!=='_rm')MTYPES[id][fk2]=_fk[fk2];}
+        if(_fk.ranged){
+          MTYPES[id].rdmin=Math.max(1,Math.round(a[K.dl]*_fk._rm));
+          MTYPES[id].rdmax=Math.max(2,Math.round(a[K.dh]*_fk._rm));
+        }
+      }
+    }
   }
   /* nomes localizados (en/es/fr); PT vem do MTYPES.name */
   if(typeof MNAMES!=='undefined'){ for(var id in MN){ MNAMES[id]=MN[id]; } }
@@ -12943,6 +12996,13 @@ function _qwL(d){var lg=(typeof Lg!=='undefined'&&d[Lg])?Lg:'pt';return d[lg];}
 function _miraLine(){
   try{
     var L=[];
+    if(meta.vengDone){
+      var vn=meta.vengDone; meta.vengDone=null; meta.bossEcho=null;
+      return _qwL({pt:'Mira: \u201cAquele que te derrubou\u2026 caiu. Eu vi seu rosto no dia em que voc\u00ea saiu para ca\u00e7\u00e1-lo: '+vn+' nunca teve chance.\u201d',
+        en:'Mira: \u201cThe one who felled you\u2026 has fallen. I saw your face the day you went hunting: '+vn+' never stood a chance.\u201d',
+        es:'Mira: \u201cEl que te derrib\u00f3\u2026 cay\u00f3. Vi tu cara el d\u00eda que saliste a cazarlo: '+vn+' nunca tuvo oportunidad.\u201d',
+        fr:'Mira : \u201cCelui qui vous a terrass\u00e9\u2026 est tomb\u00e9. J\u2019ai vu votre visage le jour de la chasse : '+vn+' n\u2019avait aucune chance.\u201d'});
+    }
     if(meta.bossEcho){
       var bn=meta.bossEcho; meta.bossEcho=null;
       return _qwL({pt:'Mira: \u201cDizem que '+bn+' finalmente caiu. Foi voc\u00ea, n\u00e3o foi? O caldo hoje \u00e9 por minha conta\u2026 no pre\u00e7o de sempre.\u201d',
@@ -12955,6 +13015,11 @@ function _miraLine(){
         en:'Mira: \u201cThe sky has been wrong for days and no one notices anymore. Only me. And you.\u201d',
         es:'Mira: \u201cEl cielo lleva d\u00edas equivocado y ya nadie lo nota. Solo yo. Y t\u00fa.\u201d',
         fr:'Mira : \u201cLe ciel est faux depuis des jours et plus personne ne le remarque. Sauf moi. Et vous.\u201d'});}
+    if((meta.bellN||0)>=3&&!meta._mBell){meta._mBell=1;
+      L.push({pt:'Mira: \u201cTr\u00eas badaladas em dias diferentes. Karghast gosta de voc\u00ea \u2014 e isso me preocupa.\u201d',
+        en:'Mira: \u201cThree tolls on three different days. Karghast likes you \u2014 and that worries me.\u201d',
+        es:'Mira: \u201cTres campanadas en d\u00edas distintos. A Karghast le gustas \u2014 y eso me preocupa.\u201d',
+        fr:'Mira : \u201cTrois sonneries en trois jours. Karghast vous aime bien \u2014 et \u00e7a m\u2019inqui\u00e8te.\u201d'});}
     if(meta.tLua&&!meta._mLua){meta._mLua=1;
       L.push({pt:'Mira: \u201cCa\u00e7ador da Lua, \u00e9? Na \u00faltima vermelha, tranquei a porta. Voc\u00ea saiu ca\u00e7ando.\u201d',
         en:'Mira: \u201cBlood Moon Hunter, hm? Last red night, I bolted the door. You went hunting.\u201d',
@@ -12970,6 +13035,11 @@ function _miraLine(){
         en:'Mira: \u201cHeir of the Titan, hm? The Sword hadn\u2019t sung like that since before the fall.\u201d',
         es:'Mira: \u201c\u00bfHeredero del Tit\u00e1n? La Espada no cantaba as\u00ed desde antes de la ca\u00edda.\u201d',
         fr:'Mira : \u201cH\u00e9ritier du Titan ? L\u2019\u00c9p\u00e9e n\u2019avait pas chant\u00e9 ainsi depuis la chute.\u201d'});}
+    if((meta.mon||0)>=5&&!meta._mMon5){meta._mMon5=1;
+      L.push({pt:'Mira: \u201cErgueram uma est\u00e1tua sua na pra\u00e7a. Pequena \u2014 mas a vila inteira passa por ela todo dia.\u201d',
+        en:'Mira: \u201cThey raised a statue of you in the square. Small \u2014 but the whole village passes it every day.\u201d',
+        es:'Mira: \u201cLevantaron una estatua tuya en la plaza. Peque\u00f1a \u2014 pero toda la aldea pasa por ella cada d\u00eda.\u201d',
+        fr:'Mira : \u201cIls ont \u00e9rig\u00e9 votre statue sur la place. Petite \u2014 mais tout le village passe devant chaque jour.\u201d'});}
     if((meta.mon||0)>0&&!meta._mMon){meta._mMon=1;
       L.push({pt:'Mira: \u201cVi seu nome no Monumento. A vila repara nessas coisas, sabia?\u201d',
         en:'Mira: \u201cI saw your name on the Monument. The village notices these things, you know.\u201d',
@@ -13197,6 +13267,214 @@ function _bossRelic(m){
 
 
 
+
+
+
+function _vengOnKill(m){
+  try{
+    var id=m&&m.d&&m.d.id; if(!id||!meta.veng||!meta.veng[id])return;
+    delete meta.veng[id];
+    var nm=m.d.name; try{nm=mName(m);}catch(e){}
+    meta.vengDone=nm;
+    addMessage(_qwL({pt:'\u2694 D\u00edvida cobrada: '+nm+' pagou.',en:'\u2694 Debt collected: '+nm+' has paid.',
+      es:'\u2694 Deuda cobrada: '+nm+' pag\u00f3.',fr:'\u2694 Dette recouvr\u00e9e : '+nm+' a pay\u00e9.'}),'good');
+  }catch(e){}
+}
+
+/* ============ TOP100 #25 — GRITO DE GUERRA ============ */
+var WARCRY={
+ knight:{pt:'A\u00c7O E SOMBRAS!',en:'STEEL AND SHADOWS!',es:'\u00a1ACERO Y SOMBRAS!',fr:'ACIER ET OMBRES !'},
+ ranger:{pt:'O VENTO GUIA!',en:'THE WIND GUIDES!',es:'\u00a1EL VIENTO GU\u00cdA!',fr:'LE VENT GUIDE !'},
+ mage:  {pt:'O VERBO RESPONDE!',en:'THE WORD ANSWERS!',es:'\u00a1EL VERBO RESPONDE!',fr:'LE VERBE R\u00c9POND !'}
+};
+function _warCry(){
+  try{
+    if(window._cryT!=null && (gameTime-window._cryT)<20)return false;
+    window._cryT=gameTime;
+    var c=WARCRY[player.cls]||WARCRY.knight;
+    addFloater(player.px,player.py-TILE*1.35,_qwL(c),'#ffd76a',true);
+    try{buzz(20);}catch(e){}
+    return true;
+  }catch(e){return false;}
+}
+/* ============ TOP100 #28 — PACTO T5: A ESTATUA DA PRACA ============ */
+function _statueDraw(ox,oy){
+  try{
+    if((meta.mon||0)<5)return false;
+    if((typeof DungeonLayer!=='undefined')&&DungeonLayer.active)return false;
+    var SX=253,SY=301;
+    if(Math.max(Math.abs(player.tx-SX),Math.abs(player.ty-SY))>14)return false;
+    var sx=SX*TILE+TILE/2-ox, sy=SY*TILE+TILE-oy;
+    B.save();
+    B.fillStyle='rgba(0,0,0,0.25)';B.beginPath();B.ellipse(sx,sy-1,10,4,0,0,7);B.fill();
+    B.fillStyle='#6f7482';B.fillRect(sx-8,sy-6,16,5);          /* base */
+    B.fillStyle='#8d93a2';B.fillRect(sx-5,sy-14,10,9);         /* pedestal */
+    B.fillStyle='#c9a24a';                                     /* figura dourada */
+    B.fillRect(sx-2,sy-24,4,9);
+    B.beginPath();B.arc(sx,sy-26,2.6,0,7);B.fill();
+    B.fillRect(sx-4,sy-22,2,5);B.fillRect(sx+2,sy-22,2,5);
+    if(Math.max(Math.abs(player.tx-SX),Math.abs(player.ty-SY))<=3){
+      B.font='700 8px system-ui';B.textAlign='center';
+      B.fillStyle='rgba(0,0,0,0.55)';B.fillText((player.name||'')+' \u2605',sx+1,sy-31);
+      B.fillStyle='#ffd76a';B.fillText((player.name||'')+' \u2605',sx,sy-32);
+    }
+    B.restore();
+    return true;
+  }catch(e){return false;}
+}
+/* ============ TOP100 #13 — OS SINOS DE KARGHAST ============ */
+/* 1x/dia, junto a catedral em ruinas: o sino toca (sintese WebAudio, 2 badaladas),
+   o som atravessa o Vale, e uma bencao menor e sorteada. Ritual diario com corpo. */
+function _bellSound(){
+  try{
+    if(typeof AC==='undefined'||!AC||!master)return;
+    if(typeof soundOn!=='undefined'&&!soundOn)return;
+    var base=AC.currentTime;
+    [0,1.35].forEach(function(off,tq){
+      var t=base+off, amp=tq?0.72:1;
+      [[520,1],[520*2.76,0.42],[520*5.40,0.16]].forEach(function(p){
+        var o=AC.createOscillator(),g=AC.createGain();
+        o.type='sine'; o.frequency.value=p[0]*(1+(Math.random()*0.004-0.002));
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.22*p[1]*amp,t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+3.1);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t+3.2);
+      });
+    });
+  }catch(e){}
+}
+function _bellBless(n){
+  try{
+    if(n===0){meta.rested=(meta.rested||0)+25;
+      addMessage(_qwL({pt:'\ud83d\udd14 B\u00ean\u00e7\u00e3o do Sino: +25 de descanso. O Vale acompanha seus passos hoje.',
+        en:'\ud83d\udd14 Bell\u2019s Blessing: +25 rest. The Vale walks with you today.',
+        es:'\ud83d\udd14 Bendici\u00f3n de la Campana: +25 de descanso. El Valle acompa\u00f1a tus pasos hoy.',
+        fr:'\ud83d\udd14 B\u00e9n\u00e9diction de la Cloche : +25 de repos. Le Val marche avec vous aujourd\u2019hui.'}),'good');}
+    else if(n===1){var g=50+player.lvl*10; player.gold+=g;
+      addMessage(_qwL({pt:'\ud83d\udd14 B\u00ean\u00e7\u00e3o do Sino: os fi\u00e9is de outrora deixaram '+g+' de ouro entre as pedras.',
+        en:'\ud83d\udd14 Bell\u2019s Blessing: the faithful of old left '+g+' gold among the stones.',
+        es:'\ud83d\udd14 Bendici\u00f3n de la Campana: los fieles de anta\u00f1o dejaron '+g+' de oro entre las piedras.',
+        fr:'\ud83d\udd14 B\u00e9n\u00e9diction de la Cloche : les fid\u00e8les d\u2019antan ont laiss\u00e9 '+g+' or parmi les pierres.'}),'good');
+      try{SFX.gold();}catch(e){}}
+    else{player.hp=player.maxhp; try{player.poison=0;player.poisonT=0;}catch(e){}
+      addMessage(_qwL({pt:'\ud83d\udd14 B\u00ean\u00e7\u00e3o do Sino: suas feridas fecham e o veneno se cala.',
+        en:'\ud83d\udd14 Bell\u2019s Blessing: your wounds close and the venom falls silent.',
+        es:'\ud83d\udd14 Bendici\u00f3n de la Campana: tus heridas cierran y el veneno calla.',
+        fr:'\ud83d\udd14 B\u00e9n\u00e9diction de la Cloche : vos plaies se referment et le venin se tait.'}),'good');
+      try{SFX.level();}catch(e){}}
+  }catch(e){}
+}
+function _bellCheck(){
+  try{
+    var d=(typeof todayStr==='function')?todayStr():String(Math.floor(Date.now()/86400000));
+    if(meta.bellDay===d)return;
+    var ru=LANDMARK_SPRITES.find(function(l){return l.k==='ruin';}); if(!ru)return;
+    var W2=(typeof WOFF!=='undefined')?WOFF:0;
+    if(Math.max(Math.abs(player.tx-(ru.x+W2)),Math.abs(player.ty-(ru.y+W2)))>2)return;
+    meta.bellDay=d; meta.bellN=(meta.bellN||0)+1;
+    addMessage(_qwL({pt:'\ud83d\udd14 O sino de Karghast ECOA pelo Vale inteiro.',
+      en:'\ud83d\udd14 The bell of Karghast ECHOES across the whole Vale.',
+      es:'\ud83d\udd14 La campana de Karghast RESUENA por todo el Valle.',
+      fr:'\ud83d\udd14 La cloche de Karghast R\u00c9SONNE \u00e0 travers tout le Val.'}),'sys');
+    try{_bellSound();}catch(e){}
+    try{addRing(player.px,player.py,'#e8c15a',TILE*4.5,1.3);
+        setTimeout(function(){try{addRing(player.px,player.py,'#e8c15a',TILE*6.5,1.6);}catch(e){}},700);
+        fxLight(player.px,player.py,TILE*3,'#e8c15a',2);buzz([35,70,35]);}catch(e){}
+    _bellBless(Math.floor(Math.random()*3));
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+/* ============ TOP10 #10 — O CODICE DO VALE ============ */
+/* A lore sai dos bastidores: criaturas conhecidas, marcos, inscricoes, reliquias, titulos. */
+function _codexName(id){
+  try{
+    if(typeof Lg!=='undefined'&&Lg!=='pt'&&typeof MNAMES!=='undefined'&&MNAMES[id]&&MNAMES[id][Lg])return MNAMES[id][Lg];
+    return (MTYPES[id]&&MTYPES[id].name)||id;
+  }catch(e){return id;}
+}
+function _codexReg(m){
+  try{
+    var id=m&&m.d&&m.d.id; if(!id)return false;
+    meta.codex=meta.codex||{};
+    var novo=!meta.codex[id];
+    meta.codex[id]=(meta.codex[id]||0)+1;
+    if(novo){
+      addMessage(_qwL({pt:'\u25c8 Nova entrada no C\u00f3dice: '+_codexName(id),
+        en:'\u25c8 New Codex entry: '+_codexName(id),
+        es:'\u25c8 Nueva entrada del C\u00f3dice: '+_codexName(id),
+        fr:'\u25c8 Nouvelle entr\u00e9e du Codex : '+_codexName(id)}),'sys');
+    }
+    return novo;
+  }catch(e){return false;}
+}
+var _LMWP={tree:'arvore',spire:'mosteiro',tower:'castelo',sword:'espada',ruin:'karghast'};
+function renderCodex(){
+  try{
+    var p=document.getElementById('codex'); if(!p)return;
+    var lg=(typeof Lg!=='undefined')?Lg:'pt';
+    var L=function(d){return d[lg]||d.pt;};
+    meta.codex=meta.codex||{}; meta.myst=meta.myst||{}; meta.wp=meta.wp||{}; meta.relic=meta.relic||{};
+    var todas=Object.keys(MTYPES), sab=todas.filter(function(k){return meta.codex[k];});
+    var head=L({pt:'C\u00f3dice do Vale',en:'Codex of the Vale',es:'C\u00f3dice del Valle',fr:'Codex du Val'});
+    var sub=L({pt:'Criaturas',en:'Creatures',es:'Criaturas',fr:'Cr\u00e9atures'})+' '+sab.length+'/'+todas.length;
+    var html2='<div class="cdxHead"><h1>\u25c8 '+head+'</h1><button class="sx" id="cdxClose">\u2715</button></div>'
+      +'<div class="cdxSub">'+sub+'</div>';
+    /* marcos & inscricoes */
+    html2+='<div class="cdxSec">'+L({pt:'Marcos & Inscri\u00e7\u00f5es',en:'Landmarks & Inscriptions',es:'Hitos e Inscripciones',fr:'Monuments & Inscriptions'})+'</div>';
+    ['tree','spire','tower','sword','ruin'].forEach(function(k){
+      var nm=MYST[k]?MYST[k].n[lg]||MYST[k].n.pt:k;
+      var vw=meta.wp[_LMWP[k]]?'\ud83d\udccd':'\u2591';
+      var ins=meta.myst[k]?'\u25c8':'\u2591';
+      html2+='<div class="cdxRow"><span>'+nm+'</span><b>'+vw+' '+ins+'</b></div>';
+    });
+    var rst=meta.myst10===2?L({pt:'revelada',en:'revealed',es:'revelada',fr:'r\u00e9v\u00e9l\u00e9e'})
+          :meta.myst10===1?L({pt:'parcial',en:'partial',es:'parcial',fr:'partielle'})
+          :L({pt:'selada',en:'sealed',es:'sellada',fr:'scell\u00e9e'});
+    html2+='<div class="cdxRow"><span>'+L({pt:'A Resposta do Andar 10',en:'The Floor-10 Answer',es:'La Respuesta del Piso 10',fr:'La R\u00e9ponse de l\u2019\u00c9tage 10'})+'</span><b>'+rst+'</b></div>';
+    /* reliquias */
+    html2+='<div class="cdxSec">'+L({pt:'Rel\u00edquias dos Covis',en:'Lair Relics',es:'Reliquias de las Guaridas',fr:'Reliques des Antres'})+'</div>';
+    var _temVeng=false;
+    Object.keys(EPIT).forEach(function(k){
+      var vg=(meta.veng&&meta.veng[k]); if(vg)_temVeng=true;
+      html2+='<div class="cdxRow"><span>'+_codexName(k)+'</span><b>'+(vg?'\u2694 ':'')+(meta.relic[k]?'\u2756':'\u2591')+'</b></div>';
+    });
+    if(_temVeng)html2+='<div class="cdxRow"><span style="color:#8a90a0">'+L({pt:'\u2694 = vingan\u00e7a pendente',en:'\u2694 = revenge pending',es:'\u2694 = venganza pendiente',fr:'\u2694 = vengeance en attente'})+'</span><b></b></div>';
+    /* titulos */
+    html2+='<div class="cdxSec">'+L({pt:'T\u00edtulos',en:'Titles',es:'T\u00edtulos',fr:'Titres'})+'</div>';
+    html2+='<div class="cdxRow"><span>'+L({pt:'Monumento do Vale',en:'Vale Monument',es:'Monumento del Valle',fr:'Monument du Val'})+'</span><b>'+((meta.mon||0)>0?('T'+meta.mon):'\u2591')+'</b></div>';
+    html2+='<div class="cdxRow"><span>'+L({pt:'Herdeiro do Tit\u00e3',en:'Heir of the Titan',es:'Heredero del Tit\u00e1n',fr:'H\u00e9ritier du Titan'})+'</span><b>'+(meta.tEsp?'\u2756':'\u2591')+'</b></div>';
+    html2+='<div class="cdxRow"><span>'+L({pt:'Ca\u00e7ador da Lua de Sangue',en:'Blood Moon Hunter',es:'Cazador de la Luna de Sangre',fr:'Chasseur de la Lune de Sang'})+'</span><b>'+(meta.tLua?'\u2756':'\u2591')+'</b></div>';
+    /* criaturas conhecidas */
+    html2+='<div class="cdxSec">'+L({pt:'Criaturas conhecidas',en:'Known creatures',es:'Criaturas conocidas',fr:'Cr\u00e9atures connues'})+'</div><div class="cdxChips">';
+    sab.map(function(k){return {n:_codexName(k),c:meta.codex[k]};})
+       .sort(function(a,b){return a.n.localeCompare(b.n);})
+       .forEach(function(e){html2+='<span class="cdxChip">'+e.n+(e.c>1?' \u00d7'+e.c:'')+'</span>';});
+    var rest=todas.length-sab.length;
+    if(rest>0)html2+='<span class="cdxChip dim">\u2026 +'+rest+' '+L({pt:'por conhecer',en:'unknown',es:'por conocer',fr:'inconnues'})+'</span>';
+    html2+='</div>';
+    p.querySelector('.card').innerHTML=html2;
+    var cb=document.getElementById('cdxClose');
+    if(cb)cb.onclick=function(){p.classList.add('hidden');};
+  }catch(e){}
+}
+(function(){
+  function wire(){
+    try{
+      if(document.getElementById('btnCodex'))return;
+      var tools=document.getElementById('tools'); if(!tools)return;
+      var b=document.createElement('div'); b.className='tbtn'; b.id='btnCodex';
+      b.title=_qwL({pt:'C\u00f3dice',en:'Codex',es:'C\u00f3dice',fr:'Codex'});
+      b.innerHTML='\ud83d\udcd5';
+      tools.appendChild(b);
+      var p=document.createElement('div'); p.id='codex'; p.className='overlay hidden';
+      p.innerHTML='<div class="card panel cdxCard"></div>';
+      document.body.appendChild(p);
+      b.onclick=function(){renderCodex();p.classList.remove('hidden');};
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1100);});
+  else setTimeout(wire,1100);
+})();
 /* ============ LONGO PRAZO #9 — VALE VIRADO (NG lendario) ============ */
 /* Matar um chefe no andar 10 desbloqueia. Toggle nas Configuracoes.
    Virado: paleta noturna (filtro no canvas), elites x2, vigor +35%, XP x1.5. */
@@ -13614,7 +13892,7 @@ window._acWorldTick=function(){
         if(map[_idx]!==T.brazier)map[_idx]=T.brazier;
       }
     }catch(e){}
-    try{_espadaCheck();_fundCheck();_mystCheck();MUS.update();_graveCheck();_bloodTick();}catch(e){}
+    try{_espadaCheck();_fundCheck();_mystCheck();MUS.update();_graveCheck();_bloodTick();_bellCheck();}catch(e){}
     /* ---- Auditoria #9: cartao de chefe ---- */
     for(const m of monsters){
       if(m.dead||!m.d||!m.d.boss||m._carded)continue;
