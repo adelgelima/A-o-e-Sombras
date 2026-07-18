@@ -487,6 +487,18 @@
 #bagSortBtn{position:absolute;top:9px;right:46px;width:34px;height:30px;border-radius:9px;
   background:#171a22;border:1px solid #323848;color:#cfd3dc;font-size:15px}
 #bagSortBtn:active{border-color:var(--acc)}
+
+/* quick wins 10/10 */
+#tooltip .desc.lore{color:#e0c88a;border-left:2px solid #6a5a2e;padding-left:7px;font-style:italic}
+.ttag2{font:700 12px Georgia,serif;color:#c9a24a;letter-spacing:.14em;margin-top:4px;font-style:italic}
+.embers{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.embers i{position:absolute;bottom:-8px;width:3px;height:3px;border-radius:50%;background:#ff9a4a;
+  opacity:0;animation:embRise 7s linear infinite;box-shadow:0 0 6px 1px rgba(255,138,58,.55)}
+.embers i:nth-child(1){left:12%;animation-delay:0s}.embers i:nth-child(2){left:28%;animation-delay:2.3s}
+.embers i:nth-child(3){left:47%;animation-delay:1.1s}.embers i:nth-child(4){left:63%;animation-delay:3.7s}
+.embers i:nth-child(5){left:78%;animation-delay:0.6s}.embers i:nth-child(6){left:90%;animation-delay:4.4s}
+@keyframes embRise{0%{transform:translateY(0);opacity:0}8%{opacity:.9}
+  100%{transform:translateY(-46vh) translateX(10px);opacity:0}}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -559,6 +571,8 @@ window.FIREBASE_CONFIG = {
         <div class="tl2">&#10038; &amp; &#10038;</div>
         <div class="tl3">SOMBRAS</div>
         <div class="ttag" data-i18n="game_sub">um RPG de bolso no Vale de Cindra</div>
+ <div class="ttag2" data-i18n="game_motto">O Vale lembra.</div>
+ <div class="embers" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </div>
       <div id="slotsWrap" class="hidden">
         <div class="hrow"><h2 data-i18n="your_heroes">Seus her&oacute;is</h2><span id="heroCount"></span></div>
@@ -588,7 +602,7 @@ window.FIREBASE_CONFIG = {
           <b>M &middot; I &middot; &#9873;</b><span data-i18n="howto_panels">mapa do Vale &middot; mochila &middot; miss&otilde;es</span>
         </div>
       </details>
-      <div class="tfoot" data-i18n="offline_note">funciona offline &middot; progresso salvo no aparelho</div>
+      <div class="tfoot" data-i18n="offline_note">sem an&uacute;ncios &middot; sem espera &middot; funciona offline &middot; seu progresso &eacute; seu</div>
     </div>
   </div>
 
@@ -816,7 +830,7 @@ const I18N={
   howto_sk:'habilidades \u00b7 as duas \u00faltimas abrem nos n\u00edveis 8 e 16',
   howto_pot:'po\u00e7\u00e3o de vida \u00b7 ant\u00eddoto',
   howto_panels:'mapa do Vale \u00b7 mochila \u00b7 miss\u00f5es',
-  offline_note:'funciona offline \u00b7 progresso salvo no aparelho',
+  offline_note:'sem an\u00fancios \u00b7 sem espera \u00b7 funciona offline \u00b7 seu progresso \u00e9 seu', game_motto:'O Vale lembra.',
   sound:'Som', sound_sub:'Efeitos e trilha', quality:'Qualidade gr\u00e1fica',
   quality_hi:'Alta \u2014 mais detalhes e efeitos', quality_lo:'Desempenho \u2014 mais fluido em aparelhos simples',
   afk_mode:'Modo AFK', afk_sub:'Ca\u00e7a sozinho ao redor do ponto onde foi ativado',
@@ -865,7 +879,7 @@ const I18N={
   howto_sk:'skills \u00b7 the last two unlock at levels 8 and 16',
   howto_pot:'health potion \u00b7 antidote',
   howto_panels:'Vale map \u00b7 backpack \u00b7 quests',
-  offline_note:'works offline \u00b7 progress saved on device',
+  offline_note:'no ads \u00b7 no waiting \u00b7 works offline \u00b7 your progress is yours', game_motto:'The Vale remembers.',
   sound:'Sound', sound_sub:'Effects and music', quality:'Graphics quality',
   quality_hi:'High \u2014 more detail and effects', quality_lo:'Performance \u2014 smoother on simple devices',
   afk_mode:'AFK mode', afk_sub:'Hunts on its own around the spot where it was enabled',
@@ -914,7 +928,7 @@ const I18N={
   howto_sk:'habilidades \u00b7 las dos \u00faltimas se abren en los niveles 8 y 16',
   howto_pot:'poci\u00f3n de vida \u00b7 ant\u00eddoto',
   howto_panels:'mapa del Valle \u00b7 mochila \u00b7 misiones',
-  offline_note:'funciona sin conexi\u00f3n \u00b7 progreso guardado en el dispositivo',
+  offline_note:'sin anuncios \u00b7 sin esperas \u00b7 funciona offline \u00b7 tu progreso es tuyo', game_motto:'El Valle recuerda.',
   sound:'Sonido', sound_sub:'Efectos y m\u00fasica', quality:'Calidad gr\u00e1fica',
   quality_hi:'Alta \u2014 m\u00e1s detalles y efectos', quality_lo:'Rendimiento \u2014 m\u00e1s fluido en equipos sencillos',
   afk_mode:'Modo AFK', afk_sub:'Caza solo alrededor del punto donde se activ\u00f3',
@@ -963,7 +977,7 @@ const I18N={
   howto_sk:'comp\u00e9tences \u00b7 les deux derni\u00e8res s\u2019ouvrent aux niveaux 8 et 16',
   howto_pot:'potion de vie \u00b7 antidote',
   howto_panels:'carte de la Vall\u00e9e \u00b7 sac \u00b7 qu\u00eates',
-  offline_note:'fonctionne hors ligne \u00b7 progression sauvegard\u00e9e sur l\u2019appareil',
+  offline_note:'sans pub \u00b7 sans attente \u00b7 hors ligne \u00b7 votre progression vous appartient', game_motto:'Le Val se souvient.',
   sound:'Son', sound_sub:'Effets et musique', quality:'Qualit\u00e9 graphique',
   quality_hi:'\u00c9lev\u00e9e \u2014 plus de d\u00e9tails et d\u2019effets', quality_lo:'Performance \u2014 plus fluide sur appareils simples',
   afk_mode:'Mode AFK', afk_sub:'Chasse seul autour du point o\u00f9 il a \u00e9t\u00e9 activ\u00e9',
@@ -4260,6 +4274,11 @@ function deathFx(m){const df=DEATH_THEME[DEATH_FAM[m.type]];const sz=0.75+m.d.si
 function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,m.py-TILE*0.4,10,{col:m.d.col,spd:70,life:0.5,size:2.4,grav:60});return;}
   m.dead=true;SFX.die();
   hitStop=Math.min(0.09,Math.max(hitStop,m.d.size>=1.25?0.07:0.045));
+  if(m.d.boss){ /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
+    window._slowT=1.4;
+    try{meta.bossEcho=mName(m);}catch(e){meta.bossEcho=m.d.name;}
+    try{centerMsg((typeof Lg!=='undefined'&&{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg])?mName(m)+{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg]:mName(m)+' caiu.');}catch(e){}
+  }
   try{ /* morte com identidade de porte (o df por familia continua; isto SOMA) */
     const _pt=monPorte(m);
     if(_pt==='pesado'||_pt==='chefe'){fxBurst('earth',m.px,m.py+TILE*0.24,1.2);shake(_pt==='chefe'?6:4);}
@@ -4380,6 +4399,9 @@ function die(src){player.dead=true;buzz([60,60,120]);
   document.getElementById('deathMsg').textContent=src?tf('death_by',{src:src}):t('death_shadows');
   const cost=reviveCost(),rb=document.getElementById('reviveBtn');
   if(rb){rb.textContent=tf('revive_btn',{g:cost});const poor=player.gold<cost;rb.style.opacity=poor?'0.45':'1';rb.style.pointerEvents=poor?'none':'auto';}
+  try{var _dm=document.getElementById('deathMsg');
+    if(_dm){var _dn={pt:' caiu. As sombras o levaram.',en:' has fallen. The shadows took them.',es:' cay\u00f3. Las sombras se lo llevaron.',fr:' est tomb\u00e9. Les ombres l\u2019ont emport\u00e9.'};
+      _dm.textContent=(player.name||'')+((typeof Lg!=='undefined'&&_dn[Lg])?_dn[Lg]:_dn.pt);}}catch(e){}
   document.getElementById('death').classList.remove('hidden');}
 function reviveCost(){return Math.round(60+player.lvl*22+((typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?DungeonLayer.depth*45:0));}
 function revive(){const cost=reviveCost();if(player.gold<cost){addMessage(t('revive_no'),'dmg');return;}
@@ -8298,7 +8320,7 @@ function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
   else if(k==='armor')stats=`${t('tip_armor')} +${it.arm}`+(it.hp?`<br>${t('life')} +${it.hp}`:'')+(it.fireRes?`<br>${t('tip_fireres')} ${Math.round(it.fireRes*100)}%`:'')+`<br>${t('tip_reqlvl')} ${it.req}`;
   else stats=it.kind==='hp'?tf('tip_restores',{n:it.amt}):t('tip_purge');
   const kindLab=k==='weapon'?t('weapon'):k==='off'?classOff(it.cls||player.cls):k==='armor'?t('armor'):t('kind_consumable');
-  tp.innerHTML=`<div class="tn" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="tr">${rarName(it.rar)} · ${kindLab}</div><div class="st">${stats}</div><div class="desc">${itemDesc(it)}</div>`;try{tp.innerHTML+=_cmpBlock(it);}catch(e){}
+  tp.innerHTML=`<div class="tn" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="tr">${rarName(it.rar)} · ${kindLab}</div><div class="st">${stats}</div><div class="desc${(it.rar==='legendary'||it.rar==='mythic')?' lore':''}">${(it.rar==='legendary'||it.rar==='mythic')?'\u2756 ':''}${itemDesc(it)}</div>`;try{tp.innerHTML+=_cmpBlock(it);}catch(e){}
   try{
     var _k=itemKind(it);
     var _slotMap={weapon:'weapon',off:'shield',armor:'armor',head:'head',legs:'legs'};
@@ -8702,7 +8724,7 @@ function resize(){
   B=worldCv.getContext('2d');B.imageSmoothingEnabled=false;
   bakeVignettes();}
 function loop(ts){requestAnimationFrame(loop);try{window.running=running;if(document.body){if(running){document.body.classList.add('playing');}else{document.body.classList.remove('playing');}}}catch(e){}if(!running)return;
-  if(!lastT)lastT=ts;let dt=(ts-lastT)/1000;lastT=ts;dt=Math.min(dt,0.05);
+  if(!lastT)lastT=ts;let dt=(ts-lastT)/1000;lastT=ts;dt=Math.min(dt,0.05); if(window._slowT>0){window._slowT-=dt; dt*=0.35;} /* coda de chefe: 1,4s de camera lenta */
   if(hitStop>0){hitStop-=dt;
     // congela a LÓGICA, mas mantém câmera e movimento fluindo p/ evitar transições truncadas
     if(!_blessOpen){updateEntityMove(player,dt,1);updateCamera(dt);
@@ -9275,7 +9297,8 @@ function backToHeroSelect(){
   var sw=$('slotsWrap');if(sw)sw.classList.remove('hidden');
   try{ if(typeof renderSlots==='function')renderSlots(); }catch(e){}
 }
-function onSessionStart(){rollQuests();dailyCheck();if(meta.rested>0)addMessage(tf('msg_rest_bonus',{n:meta.rested}),'good');updateQBadge();saveGame();}
+function onSessionStart(){rollQuests();dailyCheck();if(meta.rested>0)addMessage(tf('msg_rest_bonus',{n:meta.rested}),'good');
+  try{var _ml=_miraLine(); if(_ml)setTimeout(function(){addMessage(_ml,'sys');},1400);}catch(e){}updateQBadge();saveGame();}
 function continueGame(slot){if(slot!=null)activeSlot=slot;const d=loadSave(activeSlot);if(!d)return;initAudio();
   selectedCls=d.cls;selectedGender=d.gender||'m';player.custom=d.custom||null;applyClass();
   player.name=d.name||'Herói';player.lvl=d.lvl||1;player.xp=d.xp||0;player.gold=d.gold||0;
@@ -12791,6 +12814,102 @@ function _miniCompass(){
     g.fill(); g.stroke(); g.restore();
   }catch(e){}
 }
+
+/* ============ QUICK WINS DO RELATORIO 10/10 — "O Vale lembra" ============ */
+function _qwL(d){var lg=(typeof Lg!=='undefined'&&d[Lg])?Lg:'pt';return d[lg];}
+/* ---- QW#7: Mira, a primeira personagem (1 fala com memoria por dia) ---- */
+function _miraLine(){
+  try{
+    var L=[];
+    if(meta.bossEcho){
+      var bn=meta.bossEcho; meta.bossEcho=null;
+      return _qwL({pt:'Mira: \u201cDizem que '+bn+' finalmente caiu. Foi voc\u00ea, n\u00e3o foi? O caldo hoje \u00e9 por minha conta\u2026 no pre\u00e7o de sempre.\u201d',
+        en:'Mira: \u201cThey say '+bn+' finally fell. It was you, wasn\u2019t it? Today\u2019s broth is on me\u2026 at the usual price.\u201d',
+        es:'Mira: \u201cDicen que '+bn+' por fin cay\u00f3. Fuiste t\u00fa, \u00bfverdad? El caldo de hoy va por mi cuenta\u2026 al precio de siempre.\u201d',
+        fr:'Mira : \u201cOn dit que '+bn+' est enfin tomb\u00e9. C\u2019\u00e9tait vous, non ? Le bouillon du jour est offert\u2026 au prix habituel.\u201d'});
+    }
+    if(meta.tEsp&&!meta._mEsp){meta._mEsp=1;
+      L.push({pt:'Mira: \u201cHerdeiro do Tit\u00e3, \u00e9? A Espada n\u00e3o cantava assim desde antes da queda.\u201d',
+        en:'Mira: \u201cHeir of the Titan, hm? The Sword hadn\u2019t sung like that since before the fall.\u201d',
+        es:'Mira: \u201c\u00bfHeredero del Tit\u00e1n? La Espada no cantaba as\u00ed desde antes de la ca\u00edda.\u201d',
+        fr:'Mira : \u201cH\u00e9ritier du Titan ? L\u2019\u00c9p\u00e9e n\u2019avait pas chant\u00e9 ainsi depuis la chute.\u201d'});}
+    if((meta.mon||0)>0&&!meta._mMon){meta._mMon=1;
+      L.push({pt:'Mira: \u201cVi seu nome no Monumento. A vila repara nessas coisas, sabia?\u201d',
+        en:'Mira: \u201cI saw your name on the Monument. The village notices these things, you know.\u201d',
+        es:'Mira: \u201cVi tu nombre en el Monumento. La aldea se fija en esas cosas.\u201d',
+        fr:'Mira : \u201cJ\u2019ai vu votre nom sur le Monument. Le village remarque ces choses.\u201d'});}
+    if((meta.bestFloor||0)>=5&&!meta._mFlr){meta._mFlr=1;
+      L.push({pt:'Mira: \u201cAndar '+meta.bestFloor+'? Os mineiros n\u00e3o descem nem no terceiro.\u201d',
+        en:'Mira: \u201cFloor '+meta.bestFloor+'? The miners won\u2019t even go past the third.\u201d',
+        es:'Mira: \u201c\u00bfPiso '+meta.bestFloor+'? Los mineros no bajan ni al tercero.\u201d',
+        fr:'Mira : \u201c\u00c9tage '+meta.bestFloor+' ? Les mineurs ne descendent m\u00eame pas au troisi\u00e8me.\u201d'});}
+    if((meta.streak||0)>=3&&!meta._mStk){meta._mStk=1;
+      L.push({pt:'Mira: \u201c'+meta.streak+' dias seguidos. J\u00e1 sei at\u00e9 a hora em que voc\u00ea chega.\u201d',
+        en:'Mira: \u201c'+meta.streak+' days in a row. I already know what time you arrive.\u201d',
+        es:'Mira: \u201c'+meta.streak+' d\u00edas seguidos. Ya s\u00e9 hasta a qu\u00e9 hora llegas.\u201d',
+        fr:'Mira : \u201c'+meta.streak+' jours d\u2019affil\u00e9e. Je sais d\u00e9j\u00e0 \u00e0 quelle heure vous arrivez.\u201d'});}
+    var wpN=meta.wp?Object.keys(meta.wp).length:0;
+    if(wpN>=4&&!meta._mWp){meta._mWp=1;
+      L.push({pt:'Mira: \u201cAndarilho, hein? Traga not\u00edcias do Mosteiro na pr\u00f3xima.\u201d',
+        en:'Mira: \u201cQuite the wanderer. Bring news from the Monastery next time.\u201d',
+        es:'Mira: \u201cTodo un andariego. Trae noticias del Monasterio la pr\u00f3xima vez.\u201d',
+        fr:'Mira : \u201cSacr\u00e9 voyageur. Rapportez des nouvelles du Monast\u00e8re.\u201d'});}
+    if((meta.stats&&meta.stats.kills||0)>500&&!meta._mK){meta._mK=1;
+      L.push({pt:'Mira: \u201cQuinhentas feras. Eu limparia essa espada antes de sentar na minha mesa.\u201d',
+        en:'Mira: \u201cFive hundred beasts. I\u2019d clean that sword before sitting at my table.\u201d',
+        es:'Mira: \u201cQuinientas bestias. Yo limpiar\u00eda esa espada antes de sentarte a mi mesa.\u201d',
+        fr:'Mira : \u201cCinq cents b\u00eates. Je nettoierais cette \u00e9p\u00e9e avant de vous asseoir.\u201d'});}
+    if(!L.length&&!meta._mHi){meta._mHi=1;
+      L.push({pt:'Mira: \u201cO caldo est\u00e1 quente e o Vale, quieto demais. Aproveite os dois.\u201d',
+        en:'Mira: \u201cThe broth is hot and the Vale too quiet. Enjoy both.\u201d',
+        es:'Mira: \u201cEl caldo est\u00e1 caliente y el Valle, demasiado quieto. Disfruta ambos.\u201d',
+        fr:'Mira : \u201cLe bouillon est chaud et le Val bien trop calme. Profitez des deux.\u201d'});}
+    return L.length?_qwL(L[0]):null;
+  }catch(e){return null;}
+}
+/* ---- QW#6: A Espada Responde (lendario+ equipado junto ao marco, 1x) ---- */
+function _espadaCheck(){
+  try{
+    if(meta.tEsp)return;
+    var w=WAYPOINTS.find(function(v){return v.id==='espada';}); if(!w)return;
+    if(Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y))>4)return;
+    var it=itemById(player.equip&&player.equip.weapon);
+    if(!it||(it.rar!=='legendary'&&it.rar!=='mythic'))return;
+    meta.tEsp=1;
+    addMessage(_qwL({pt:'\u2694 A Espada do Tit\u00e3 RESSOA com a sua l\u00e2mina. Um t\u00edtulo desperta: Herdeiro do Tit\u00e3.',
+      en:'\u2694 The Titan\u2019s Sword RESONATES with your blade. A title awakens: Heir of the Titan.',
+      es:'\u2694 La Espada del Tit\u00e1n RESUENA con tu hoja. Un t\u00edtulo despierta: Heredero del Tit\u00e1n.',
+      fr:'\u2694 L\u2019\u00c9p\u00e9e du Titan R\u00c9SONNE avec votre lame. Un titre s\u2019\u00e9veille : H\u00e9ritier du Titan.'}),'good');
+    try{addRing(player.px,player.py,'#ffd76a',TILE*3.2,0.9);fxLight(player.px,player.py,TILE*4,'#ffd76a',2.2);
+        sfxEl('holy',1.4);hitStop=Math.max(hitStop,0.05);buzz([30,60,30]);}catch(e){}
+    try{_monApply();}catch(e){}
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+/* ---- QW#19: Pedra de Fundacao (1a visita a praca) ---- */
+function _fundCheck(){
+  try{
+    if(meta.fund)return;
+    if(Math.max(Math.abs(player.tx-219),Math.abs(player.ty-275))>2)return;
+    meta.fund=1;
+    var LNS={pt:['\u25c8 Pedra de Funda\u00e7\u00e3o: \u201cPedravau nasceu onde o Tit\u00e3 caiu de joelhos.\u201d',
+                 '\u25c8 \u201cErguemos a vila com o a\u00e7o dele \u2014 e com o medo do que o derrubou.\u201d',
+                 '\u25c8 \u201cSe as sombras voltarem, que o Vale lembre quem lutou.\u201d'],
+             en:['\u25c8 Founding Stone: \u201cPedravau was born where the Titan fell to his knees.\u201d',
+                 '\u25c8 \u201cWe raised the village with his steel \u2014 and with fear of what felled him.\u201d',
+                 '\u25c8 \u201cIf the shadows return, may the Vale remember who fought.\u201d'],
+             es:['\u25c8 Piedra Fundacional: \u201cPedravau naci\u00f3 donde el Tit\u00e1n cay\u00f3 de rodillas.\u201d',
+                 '\u25c8 \u201cAlzamos la aldea con su acero \u2014 y con el miedo a lo que lo derrib\u00f3.\u201d',
+                 '\u25c8 \u201cSi las sombras vuelven, que el Valle recuerde qui\u00e9n luch\u00f3.\u201d'],
+             fr:['\u25c8 Pierre de Fondation : \u201cPedravau est n\u00e9e o\u00f9 le Titan tomba \u00e0 genoux.\u201d',
+                 '\u25c8 \u201cNous avons b\u00e2ti le village de son acier \u2014 et de la peur de ce qui l\u2019abattit.\u201d',
+                 '\u25c8 \u201cSi les ombres reviennent, que le Val se souvienne de qui a combattu.\u201d']};
+    var lg=(typeof Lg!=='undefined'&&LNS[Lg])?Lg:'pt';
+    LNS[lg].forEach(function(t,i){setTimeout(function(){try{addMessage(t,'sys');}catch(e){}},i*900);});
+    try{SFX.level();fxLight(player.px,player.py,TILE*2.4,'#e8c15a',1.2);}catch(e){}
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
 function _bossCard(m){
   try{
     let el=document.getElementById('bossCard');
@@ -12872,6 +12991,7 @@ window._acWorldTick=function(){
         if(map[_idx]!==T.brazier)map[_idx]=T.brazier;
       }
     }catch(e){}
+    try{_espadaCheck();_fundCheck();}catch(e){}
     /* ---- Auditoria #9: cartao de chefe ---- */
     for(const m of monsters){
       if(m.dead||!m.d||!m.d.boss||m._carded)continue;
