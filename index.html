@@ -499,6 +499,25 @@
 .embers i:nth-child(5){left:78%;animation-delay:0.6s}.embers i:nth-child(6){left:90%;animation-delay:4.4s}
 @keyframes embRise{0%{transform:translateY(0);opacity:0}8%{opacity:.9}
   100%{transform:translateY(-46vh) translateX(10px);opacity:0}}
+
+/* teatro dos chefes */
+#bossCard i{display:block;font:italic 400 11px Georgia,serif;color:#9aa0b0;margin-top:3px;letter-spacing:.02em}
+#bossVig{position:fixed;inset:0;pointer-events:none;z-index:40;opacity:0;
+  background:radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.62) 100%)}
+#bossVig.on{animation:bvig 1.5s ease-out}
+@keyframes bvig{0%{opacity:0}22%{opacity:1}100%{opacity:0}}
+#relicP .btn.wide{display:block;width:100%}
+
+/* lua de sangue */
+#bloodVeil{position:fixed;inset:0;pointer-events:none;z-index:35;opacity:0;transition:opacity 2.5s;
+  background:radial-gradient(ellipse at 50% 30%, rgba(160,20,30,0.10) 0%, rgba(90,8,18,0.26) 100%)}
+#bloodVeil.on{opacity:1;animation:bloodPulse 9s ease-in-out infinite}
+@keyframes bloodPulse{0%,100%{opacity:0.85}50%{opacity:1}}
+
+/* vale virado */
+body.ngWorld #c{filter:brightness(0.82) saturate(0.85) hue-rotate(-18deg) contrast(1.06)}
+body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:34;
+  background:radial-gradient(ellipse at 50% 20%, rgba(30,40,90,0.10) 0%, rgba(10,14,40,0.22) 100%)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -1093,6 +1112,101 @@ function buzz(p){ if(soundOn&&typeof navigator!=='undefined'&&navigator.vibrate)
 let AC=null,master=null;
 function initAudio(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();
   master=AC.createGain();master.gain.value=0.5;master.connect(AC.destination);}catch(e){}}
+
+/* ============ MEDIO PRAZO #2 — A VOZ DO VALE (musica WebAudio, zero asset) ============ */
+/* Seis motivos de bioma + masmorra. Melodia esparsa por caminhada em escala; drone que
+   desliza de frequencia na troca de bioma (crossfade organico). Respeita soundOn. */
+var MUSD={
+ vila:    {wave:'triangle',root:196.00,sc:[0,2,4,7,9],   st:[1.7,2.9],vol:1.0,dr:49.0},
+ campos:  {wave:'triangle',root:220.00,sc:[0,2,4,7,9,12],st:[1.9,3.2],vol:0.9,dr:55.0},
+ floresta:{wave:'sine',    root:174.61,sc:[0,2,3,5,7,9], st:[2.2,3.6],vol:0.9,dr:43.7},
+ neve:    {wave:'sine',    root:440.00,sc:[0,3,5,7,10],  st:[3.0,5.0],vol:0.7,dr:55.0},
+ pantano: {wave:'sine',    root:116.54,sc:[0,1,3,5,7],   st:[2.4,4.0],vol:0.9,dr:58.3},
+ cinzas:  {wave:'triangle',root:130.81,sc:[0,1,6,7],     st:[2.0,3.4],vol:0.9,dr:65.4},
+ dungeon: {wave:'sine',    root:98.00, sc:[0,1,5,6],     st:[2.6,4.2],vol:0.8,dr:49.0},
+ sangue:  {wave:'sine',    root:92.50, sc:[0,1,6,7],     st:[2.0,3.2],vol:1.0,dr:46.2}
+};
+var MUS={cur:null,deg:2,_t:null,_g:null,_lp:null,_dr:null,_drG:null,_on:false,
+ _key:function(z,dg){
+   if(dg)return'dungeon';
+   z=String(z||'');
+   if(z.indexOf('Vila')>=0||z.indexOf('Porto')>=0)return'vila';
+   if(z.indexOf('Campos')>=0)return'campos';
+   if(z.indexOf('Bosque')>=0||z.indexOf('Floresta')>=0)return'floresta';
+   if(z.indexOf('Pico')>=0||z.indexOf('Neve')>=0||z.indexOf('Geleira')>=0)return'neve';
+   if(z.indexOf('P\u00e2ntano')>=0||z.indexOf('Lodo')>=0)return'pantano';
+   if(z.indexOf('Cinza')>=0||z.indexOf('Caldeira')>=0||z.indexOf('Cripta')>=0||z.indexOf('Karghast')>=0||z.indexOf('Catacumba')>=0)return'cinzas';
+   return'campos';
+ },
+ boot:function(){
+   try{
+     if(this._on)return; 
+     if(typeof initAudio==='function')initAudio();
+     if(typeof AC==='undefined'||!AC||!master)return;
+     this._g=AC.createGain(); this._g.gain.value=0.085;
+     this._lp=AC.createBiquadFilter(); this._lp.type='lowpass'; this._lp.frequency.value=1100;
+     this._g.connect(this._lp); this._lp.connect(master);
+     this._dr=AC.createOscillator(); this._dr.type='sine';
+     this._drG=AC.createGain(); this._drG.gain.value=0.0;
+     this._dr.connect(this._drG); this._drG.connect(this._lp);
+     var d=MUSD[this.cur||'campos']; this._dr.frequency.value=d.dr;
+     this._dr.start();
+     this._on=true;
+     this.tick();
+   }catch(e){}
+ },
+ setBiome:function(k){
+   if(!MUSD[k]||k===this.cur)return;
+   this.cur=k; this.deg=Math.min(this.deg,MUSD[k].sc.length-1);
+   try{
+     if(this._dr&&AC){var t=AC.currentTime;
+       this._dr.frequency.cancelScheduledValues(t);
+       this._dr.frequency.setValueAtTime(this._dr.frequency.value,t);
+       this._dr.frequency.exponentialRampToValueAtTime(Math.max(20,MUSD[k].dr),t+2.5);}
+   }catch(e){}
+ },
+ update:function(){
+   try{
+     var dg=(typeof DungeonLayer!=='undefined')&&DungeonLayer.active;
+     var z=dg?'':(typeof zoneAt==='function'?zoneAt(player.tx,player.ty):'');
+     this.setBiome((!dg&&typeof _bloodState==='function'&&_bloodState()===2)?'sangue':this._key(z,dg));
+     if(this._drG&&AC){var alvo=(typeof soundOn==='undefined'||soundOn)?0.020:0.0;
+       this._drG.gain.setTargetAtTime(alvo,AC.currentTime,0.8);}
+   }catch(e){}
+ },
+ tick:function(){
+   var self=this;
+   try{
+     var d=MUSD[this.cur||'campos'];
+     var passo=(d.st[0]+Math.random()*(d.st[1]-d.st[0]))*1000;
+     if(this._t)clearTimeout(this._t);
+     this._t=setTimeout(function(){try{self.tick();}catch(e){}},passo);
+     if(typeof AC==='undefined'||!AC||!this._g)return;
+     if(typeof soundOn!=='undefined'&&!soundOn)return;
+     if(typeof running!=='undefined'&&!running)return;
+     if(typeof player!=='undefined'&&player&&player.dead)return;
+     /* caminhada na escala (evita saltos; melodia, nao ruido) */
+     var mv=[-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)];
+     this.deg=Math.max(0,Math.min(d.sc.length-1,this.deg+mv));
+     var semi=d.sc[this.deg]+(Math.random()<0.12?12:0);
+     var f=d.root*Math.pow(2,semi/12);
+     var t=AC.currentTime, o=AC.createOscillator(), g=AC.createGain();
+     o.type=d.wave; o.frequency.value=f;
+     g.gain.setValueAtTime(0,t);
+     g.gain.linearRampToValueAtTime(0.055*d.vol,t+0.5);
+     g.gain.linearRampToValueAtTime(0.0001,t+2.6);
+     o.connect(g); g.connect(this._g); o.start(t); o.stop(t+2.7);
+     if(Math.random()<0.28){ /* harmonia ocasional: quinta abaixo, mais suave */
+       var o2=AC.createOscillator(), g2=AC.createGain();
+       o2.type=d.wave; o2.frequency.value=f*Math.pow(2,-5/12);
+       g2.gain.setValueAtTime(0,t+0.15);
+       g2.gain.linearRampToValueAtTime(0.030*d.vol,t+0.7);
+       g2.gain.linearRampToValueAtTime(0.0001,t+2.6);
+       o2.connect(g2); g2.connect(this._g); o2.start(t+0.15); o2.stop(t+2.7);
+     }
+   }catch(e){}
+ }
+};
 function beep(f,d,type='sine',v=0.3,to=null){if(!AC||!soundOn)return;const g=AC.createGain();g.gain.value=v;g.connect(master);
   const o=AC.createOscillator();o.type=type;o.frequency.value=f;if(to)o.frequency.exponentialRampToValueAtTime(to,AC.currentTime+d);
   g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.connect(g);o.start();o.stop(AC.currentTime+d);}
@@ -3512,7 +3626,7 @@ function loadMonPng(){
   if(typeof Image==='undefined')return;
   for(const key in MONPNG_SRC){const src=MONPNG_SRC[key];if(!src)continue;
     try{const img=new Image();const rec={img,ready:false,w:0,h:0};
-      img.onload=()=>{rec.ready=true;rec.w=img.naturalWidth||img.width;rec.h=img.naturalHeight||img.height;};
+      img.onload=()=>{rec.ready=true;rec.w=img.naturalWidth||img.width;rec.h=img.naturalHeight||img.height;try{_brumalBake(rec);}catch(e){}};
       img.onerror=()=>{rec.ready=false;};
       img.src=src;monPng[key]=rec;
     }catch(e){}}
@@ -4044,8 +4158,9 @@ function spawnMonster(sp){const d=MTYPES[sp.type];if(sp&&typeof isSafeZone==='fu
   const m={id:uid++,type:sp.type,d,tx:sp.x,ty:sp.y,px:sp.x*TILE+TILE/2,py:sp.y*TILE+TILE/2,
     hp:d.hp,maxhp:d.hp,face:'down',moving:false,mprog:0,mdur:d.step,tox:0,toy:0,fromx:0,fromy:0,stepMul:1,
     atkCd:0,hurtFlash:0,anim:rnd(6),wander:0,slow:0,poison:0,poisonT:0,burn:0,burnT:0,home:sp,dead:false,rangedCd:rnd(3),swing:0,windup:0,atkDir:null,chargeWind:0,charging:0,chargeCd:rnd(4,2),_omdur:0};
+  if(meta&&meta.ng&&!d.boss){m.maxhp=Math.round(m.maxhp*1.35);m.hp=m.maxhp;}
   const _ec=[0.02,0.05,0.07,0.10,0.14,0.18][dangerAt(sp.x,sp.y)]||0.07;
-  if(!d.boss&&!d.flee&&Math.random()<_ec*(_wkAct(2)?1.6:1)){
+  if(!d.boss&&!d.flee&&Math.random()<_ec*(_wkAct(2)?1.6:1)*_bloodEliteMul()*_ngEliteMul()){
     const AF=[{n:'Veloz',c:'#7fd4ff',k:'fast',g:'ice'},{n:'Brutal',c:'#ff8a4a',k:'brute',g:'fire'},
       {n:'Vampírico',c:'#ff5aa0',k:'vamp',g:'holy'},{n:'Férreo',c:'#c8cdd8',k:'iron',g:'warm'},
       {n:'Explosivo',c:'#ffd24a',k:'boom',g:'fire'},
@@ -4274,9 +4389,11 @@ function deathFx(m){const df=DEATH_THEME[DEATH_FAM[m.type]];const sz=0.75+m.d.si
 function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,m.py-TILE*0.4,10,{col:m.d.col,spd:70,life:0.5,size:2.4,grav:60});return;}
   m.dead=true;SFX.die();
   hitStop=Math.min(0.09,Math.max(hitStop,m.d.size>=1.25?0.07:0.045));
-  if(m.d.boss){ /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
+  try{_widowMourn(m);}catch(e){} if(m.d.boss){ /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
     window._slowT=1.4;
     try{meta.bossEcho=mName(m);}catch(e){meta.bossEcho=m.d.name;}
+    try{_bossRelic(m);}catch(e){}
+    try{_ngKillCheck(m);}catch(e){}
     try{centerMsg((typeof Lg!=='undefined'&&{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg])?mName(m)+{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg]:mName(m)+' caiu.');}catch(e){}
   }
   try{ /* morte com identidade de porte (o df por familia continua; isto SOMA) */
@@ -4290,9 +4407,9 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
   killStreak=(gameTime-lastKillAt<=4)?killStreak+1:1;lastKillAt=gameTime;
   const smul=1+Math.min(0.5,(killStreak-1)*0.05);
   let rm=1;if(meta.rested>0){meta.rested--;rm=1.3;}
-  const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm);
+  const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm*(meta.ng?1.5:1));
   if(killStreak>=3)addFloater(m.px,m.py-TILE*0.95,tf('fl_combo',{n:killStreak}),'#ffd76a',killStreak>=6);
-  meta.stats.kills++;qProg('kill');taskProg(m.type);
+  meta.stats.kills++;qProg('kill');taskProg(m.type); try{if(m.elite)_bloodOnElite(m);}catch(e){}
   if(m._invader&&invasion){invasion.killed++;const bg=Math.round((m.d.xp||10)*0.6);player.gold+=bg;addFloater(m.px,m.py-TILE*1.0,'+'+bg+'\u29bf','#ffd76a');}
   const _kz=zoneAt(m.tx,m.ty);
   if(_kz==='Picos Uivantes')qProg('snow');
@@ -4402,6 +4519,7 @@ function die(src){player.dead=true;buzz([60,60,120]);
   try{var _dm=document.getElementById('deathMsg');
     if(_dm){var _dn={pt:' caiu. As sombras o levaram.',en:' has fallen. The shadows took them.',es:' cay\u00f3. Las sombras se lo llevaron.',fr:' est tomb\u00e9. Les ombres l\u2019ont emport\u00e9.'};
       _dm.textContent=(player.name||'')+((typeof Lg!=='undefined'&&_dn[Lg])?_dn[Lg]:_dn.pt);}}catch(e){}
+  try{_gravePlant();}catch(e){}
   document.getElementById('death').classList.remove('hidden');}
 function reviveCost(){return Math.round(60+player.lvl*22+((typeof DungeonLayer!=='undefined'&&DungeonLayer.active)?DungeonLayer.depth*45:0));}
 function revive(){const cost=reviveCost();if(player.gold<cost){addMessage(t('revive_no'),'dmg');return;}
@@ -5016,6 +5134,7 @@ function afkUpdate(dt){
 function update(dt){if(_blessOpen)return;
   if(afkMode)afkUpdate(dt);
   gameTime+=dt;
+  try{_webTick(dt);}catch(e){}
   for(const k in cd)cd[k]=Math.max(0,cd[k]-dt);
   _saveT+=dt;if(_saveT>12){_saveT=0;saveGame();}
   if(player.rageT>0){player.rageT-=dt;player._rgP=(player._rgP||0)-dt;
@@ -5133,7 +5252,7 @@ function updateMonsters(dt){
       else{if(SFX.swing)SFX.swing();}                                   /* jogador esquivou -> erra */
       m.swing=1;}}
     if(m.swing>0)m.swing=Math.max(0,m.swing-dt*6);                      /* decai a investida */
-    if(m.d.selfHeal){m.healCd=(m.healCd||1.5)-dt;if(m.healCd<=0){if(m.hp>0&&m.hp<m.maxhp){m.hp=Math.min(m.maxhp,m.hp+m.d.selfHeal);addFloater(m.px,m.py-TILE*0.5,'+'+m.d.selfHeal,'#7fe0a0');}m.healCd=2;}}
+    try{_sigTick(m,dt);}catch(e){} if(m.d.selfHeal){m.healCd=(m.healCd||1.5)-dt;if(m.healCd<=0){if(m.hp>0&&m.hp<m.maxhp){m.hp=Math.min(m.maxhp,m.hp+m.d.selfHeal);addFloater(m.px,m.py-TILE*0.5,'+'+m.d.selfHeal,'#7fe0a0');}m.healCd=2;}}
     if(m.d.summon){m.summonCd=(m.summonCd||rnd(4,2))-dt;if(m.summonCd<=0){const _al=monsters.filter(q=>!q.dead&&q._summoner===m.id).length;if(_al<(m.d.summon.max||2)&&cheby(m.tx,m.ty,player.tx,player.ty)<=9){summonMinion(m,m.d.summon.type);m.summonCd=m.d.summon.cd||7;}else{m.summonCd=2;}}}
     if(m.slow>0)m.slow=Math.max(0,m.slow-dt);
     if(m.elite&&m.elite.k==='regen'&&m.hp<m.maxhp&&!m.dead){m.hp=Math.min(m.maxhp,m.hp+m.maxhp*0.015*dt);if(Math.random()<dt*2)addParticles(m.px,m.py-TILE*0.4,1,{col:'#8fe0a0',spd:20,life:0.5,size:2,up:14});}
@@ -5203,7 +5322,7 @@ function updateMonsters(dt){
         if(m.d.ranged&&near<=m.d.rrange&&m.rangedCd<=0&&dP>1){fireProjectile(m);m.rangedCd=rnd(3.2,2.0);}
         if(dP<=1&&!(m.tx===player.tx&&m.ty===player.ty)){
           m.face=player.tx<m.tx?'left':player.tx>m.tx?'right':player.ty<m.ty?'up':'down';
-          if(m.d.slam&&m.atkCd<=0&&m.windup<=0&&m.swing<=0){spawnAoe(player.px,player.py,TILE*(1.15+m.d.size*0.3),0.55,m.d.dmin,m.d.dmax,'#c8a060');m.atkCd=rnd(3.2,2.2);m.swing=1;m.atkDir=[Math.sign(player.tx-m.tx),Math.sign(player.ty-m.ty)];if(SFX.swing)SFX.swing();}
+          if(m.d.slam&&m.atkCd<=0&&m.windup<=0&&m.swing<=0){spawnAoe(player.px,player.py,TILE*(1.15+m.d.size*0.3),0.55,m.d.dmin,m.d.dmax,'#c8a060');m.atkCd=rnd(3.2,2.2);m.swing=1;try{if(SIG[m.d.id]&&SIG[m.d.id].onSlam)SIG[m.d.id].onSlam(m);}catch(e){}m.atkDir=[Math.sign(player.tx-m.tx),Math.sign(player.ty-m.ty)];if(SFX.swing)SFX.swing();}
           else if(_b==='circle'&&m.atkCd>0.6&&chance(0.45)){const pdx=Math.sign(player.tx-m.tx),pdy=Math.sign(player.ty-m.ty),sg=chance(0.5)?1:-1;if(!startStep(m,-pdy*sg,pdx*sg,m))startStep(m,pdx,pdy,m);}
           else if(m.atkCd<=0&&m.windup<=0&&m.swing<=0){m.windup=0.26+m.d.size*0.14;m.atkCd=rnd(2.2,1.4);m.atkDir=[Math.sign(player.tx-m.tx)||(player.px<m.px?-1:1),Math.sign(player.ty-m.ty)];}
         }else stepToward(m,player.tx,player.ty);
@@ -5402,7 +5521,7 @@ function render(){
   for(const p of projectiles)dr.push({y:p.y,kind:'proj',p});
   for(const ls of LANDMARK_SPRITES){const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});}
   dr.sort((a,b)=>a.y-b.y);
-  try{drawDecals(ox,oy);}catch(e){}
+  try{drawDecals(ox,oy);}catch(e){} try{_webDraw(ox,oy);}catch(e){} try{_graveDraw(ox,oy);}catch(e){}
   for(const d of dr){
     if(d.kind==='tile')drawTall(d.tx,d.ty,d.t,d.tx*TILE-ox,d.ty*TILE-oy);
     else if(d.kind==='npc')drawNpc(d.n.x*TILE+TILE/2-ox,d.n.y*TILE+TILE/2-oy,d.n);
@@ -6354,10 +6473,12 @@ function drawMonster(m,ox,oy){const cx=m.px-ox+(m.flinchX||0),cy=m.py-oy+(m.flin
   if(m.charging>0&&_ad){B.globalAlpha=0.22;B.fillStyle='#ffaa55';B.beginPath();B.ellipse(cx-_ad[0]*TILE*0.3,cy-_ad[1]*TILE*0.3-TILE*0.15*S,TILE*0.32*S,TILE*0.2*S,0,0,7);B.fill();B.globalAlpha=1;}
   B.save();B.translate(cx+_lx,cy+_ly);B.scale((m.face==='left'?-1:1)*S,S*br);
   const _png=(typeof monPng!=='undefined')&&(monPng[m.d.id]||monPng[m.d.draw]);
-  if(_png&&_png.ready){const ph=_png.h||1,pw=_png.w||1,dh=TILE*1.85,dw=dh*(pw/ph);
+  if(_png&&_png.ready){const _bk=_png.baked;
+    const ph=(_bk?_png.bh:_png.h)||1,pw=(_bk?_png.bw:_png.w)||1,dh=TILE*1.85,dw=dh*(pw/ph);
     const ox2=-dw/2,oy2=-dh+TILE*0.42;
-    B.imageSmoothingEnabled=true;B.imageSmoothingQuality='high';
-    B.drawImage(_png.img,ox2,oy2,dw,dh);
+    if(_bk){B.imageSmoothingEnabled=false;B.drawImage(_bk,ox2,oy2,dw,dh);}
+    else{B.imageSmoothingEnabled=true;B.imageSmoothingQuality='high';
+    B.drawImage(_png.img,ox2,oy2,dw,dh);}
     if(_flash){B.globalCompositeOperation='source-atop';B.globalAlpha=0.72;B.fillStyle='#fff';B.fillRect(ox2,oy2,dw,dh);B.globalAlpha=1;B.globalCompositeOperation='source-over';}
     B.imageSmoothingEnabled=false;
   }else{(MONDRAW[m.d.draw]||drawRat)(B,walk,m);}
@@ -8856,7 +8977,7 @@ const DungeonLayer={
       try{ /* Auditoria #25: competir consigo antes do placar */
         if(!meta.bestFloor)meta.bestFloor=0;
         if(_nd>meta.bestFloor&&_nd>=3){
-          meta.bestFloor=_nd;
+          meta.bestFloor=_nd; try{if(_nd>=10)_myst10();}catch(e){}
           var RB={pt:'\u2605 NOVO RECORDE \u2014 Andar ',en:'\u2605 NEW RECORD \u2014 Floor ',
                   es:'\u2605 NUEVO R\u00c9CORD \u2014 Piso ',fr:'\u2605 NOUVEAU RECORD \u2014 \u00c9tage '};
           addMessage((RB[(typeof Lg!=='undefined'&&RB[Lg])?Lg:'pt'])+_nd+'!','good');
@@ -9298,7 +9419,8 @@ function backToHeroSelect(){
   try{ if(typeof renderSlots==='function')renderSlots(); }catch(e){}
 }
 function onSessionStart(){rollQuests();dailyCheck();if(meta.rested>0)addMessage(tf('msg_rest_bonus',{n:meta.rested}),'good');
-  try{var _ml=_miraLine(); if(_ml)setTimeout(function(){addMessage(_ml,'sys');},1400);}catch(e){}updateQBadge();saveGame();}
+  try{var _ml=_miraLine(); if(_ml)setTimeout(function(){addMessage(_ml,'sys');},1400);}catch(e){}
+  try{MUS.boot();}catch(e){} try{_bloodMsg();}catch(e){} try{_ngApply();}catch(e){}updateQBadge();saveGame();}
 function continueGame(slot){if(slot!=null)activeSlot=slot;const d=loadSave(activeSlot);if(!d)return;initAudio();
   selectedCls=d.cls;selectedGender=d.gender||'m';player.custom=d.custom||null;applyClass();
   player.name=d.name||'Herói';player.lvl=d.lvl||1;player.xp=d.xp||0;player.gold=d.gold||0;
@@ -9506,7 +9628,7 @@ try{(function(){
       (function attempt(){
         var img=new Image(); var r={img:img,ready:false,w:0,h:0};
         var path=(tries%2===0)?base:altPath(base);
-        img.onload=function(){r.ready=true;r.w=img.naturalWidth||img.width;r.h=img.naturalHeight||img.height;MONPNG_SRC[key]=path.split('?')[0];next();};
+        img.onload=function(){r.ready=true;r.w=img.naturalWidth||img.width;r.h=img.naturalHeight||img.height;MONPNG_SRC[key]=path.split('?')[0];try{_brumalBake(r);}catch(e){}next();};
         img.onerror=function(){ if(tries++<5){ setTimeout(attempt, 300*tries); } else { (typeof window!=='undefined')&&((window.__spriteFails=window.__spriteFails||[]).push(key)); next(); } };
         img.src=path+(tries>1?('?r='+tries):'');
         monPng[key]=r;
@@ -11306,7 +11428,7 @@ try{(function(){
   try{
     /* ---------- 1) retomar AudioContext (tela apaga -> navegador suspende o AC) ---------- */
     function _resumeAudio(){
-      try{
+      try{ try{MUS.boot();}catch(e){} 
         if(typeof AC==='undefined'||!AC)return;
         if(AC.state==='suspended'||AC.state==='interrupted'){ AC.resume().catch(function(){}); }
       }catch(e){}
@@ -12696,7 +12818,7 @@ function _monApply(){
       if(!t){t=document.createElement('span');t.id='pTitle';pn.parentNode.insertBefore(t,pn.nextSibling);}
       t.textContent=' \u2756 '+_MONI[_monL()].tt[n-1];
       pn.style.color=(n>=5)?'#ffd76a':'';
-    }else if(t){t.remove();pn.style.color='';}
+    }else{ var alt=meta.tEsp?_qwL({pt:' \u2756 Herdeiro do Tit\u00e3',en:' \u2756 Heir of the Titan',es:' \u2756 Heredero del Tit\u00e1n',fr:' \u2756 H\u00e9ritier du Titan'}):(meta.tLua?_qwL({pt:' \u2756 Ca\u00e7ador da Lua de Sangue',en:' \u2756 Blood Moon Hunter',es:' \u2756 Cazador de la Luna de Sangre',fr:' \u2756 Chasseur de la Lune de Sang'}):null); if(alt){ if(!t){t=document.createElement('span');t.id='pTitle';pn.parentNode.insertBefore(t,pn.nextSibling);} t.textContent=alt; pn.style.color=''; } else if(t){t.remove();pn.style.color='';} }
   }catch(e){}
 }
 function _monDonate(){
@@ -12828,6 +12950,21 @@ function _miraLine(){
         es:'Mira: \u201cDicen que '+bn+' por fin cay\u00f3. Fuiste t\u00fa, \u00bfverdad? El caldo de hoy va por mi cuenta\u2026 al precio de siempre.\u201d',
         fr:'Mira : \u201cOn dit que '+bn+' est enfin tomb\u00e9. C\u2019\u00e9tait vous, non ? Le bouillon du jour est offert\u2026 au prix habituel.\u201d'});
     }
+    if(meta.ng&&!meta._mNg){meta._mNg=1;
+      L.push({pt:'Mira: \u201cO c\u00e9u est\u00e1 errado h\u00e1 dias e ningu\u00e9m mais repara. S\u00f3 eu. E voc\u00ea.\u201d',
+        en:'Mira: \u201cThe sky has been wrong for days and no one notices anymore. Only me. And you.\u201d',
+        es:'Mira: \u201cEl cielo lleva d\u00edas equivocado y ya nadie lo nota. Solo yo. Y t\u00fa.\u201d',
+        fr:'Mira : \u201cLe ciel est faux depuis des jours et plus personne ne le remarque. Sauf moi. Et vous.\u201d'});}
+    if(meta.tLua&&!meta._mLua){meta._mLua=1;
+      L.push({pt:'Mira: \u201cCa\u00e7ador da Lua, \u00e9? Na \u00faltima vermelha, tranquei a porta. Voc\u00ea saiu ca\u00e7ando.\u201d',
+        en:'Mira: \u201cBlood Moon Hunter, hm? Last red night, I bolted the door. You went hunting.\u201d',
+        es:'Mira: \u201c\u00bfCazador de la Luna? La \u00faltima noche roja, atranqu\u00e9 la puerta. T\u00fa saliste a cazar.\u201d',
+        fr:'Mira : \u201cChasseur de la Lune ? La derni\u00e8re nuit rouge, j\u2019ai verrouill\u00e9 la porte. Vous, vous \u00eates sorti chasser.\u201d'});}
+    if(_mystCount()>=5&&!meta._mMy5){meta._mMy5=1;
+      L.push({pt:'Mira: \u201cVoc\u00ea leu as cinco pedras. Poucos leem. Menos ainda continuam descendo.\u201d',
+        en:'Mira: \u201cYou read all five stones. Few do. Fewer still keep descending.\u201d',
+        es:'Mira: \u201cLe\u00edste las cinco piedras. Pocos lo hacen. Menos a\u00fan siguen bajando.\u201d',
+        fr:'Mira : \u201cVous avez lu les cinq pierres. Peu le font. Moins encore continuent de descendre.\u201d'});}
     if(meta.tEsp&&!meta._mEsp){meta._mEsp=1;
       L.push({pt:'Mira: \u201cHerdeiro do Tit\u00e3, \u00e9? A Espada n\u00e3o cantava assim desde antes da queda.\u201d',
         en:'Mira: \u201cHeir of the Titan, hm? The Sword hadn\u2019t sung like that since before the fall.\u201d',
@@ -12890,7 +13027,7 @@ function _espadaCheck(){
 function _fundCheck(){
   try{
     if(meta.fund)return;
-    if(Math.max(Math.abs(player.tx-219),Math.abs(player.ty-275))>2)return;
+    if(Math.max(Math.abs(player.tx-251),Math.abs(player.ty-301))>2)return; /* centro real da Vila (VIL 242,294 19x15) */
     meta.fund=1;
     var LNS={pt:['\u25c8 Pedra de Funda\u00e7\u00e3o: \u201cPedravau nasceu onde o Tit\u00e3 caiu de joelhos.\u201d',
                  '\u25c8 \u201cErguemos a vila com o a\u00e7o dele \u2014 e com o medo do que o derrubou.\u201d',
@@ -12910,6 +13047,492 @@ function _fundCheck(){
     try{if(typeof saveGame==='function')saveGame();}catch(e){}
   }catch(e){}
 }
+
+/* ============ MEDIO PRAZO #1 — O MISTERIO DE CINDRA ============ */
+/* Cinco inscricoes, uma por marco. A resposta espera no andar 10.  */
+var MYST={
+ tree:{n:{pt:'\u00c1rvore Ancestral',en:'Ancestral Tree',es:'\u00c1rbol Ancestral',fr:'Arbre Ancestral'},
+  l:{pt:['\u201cAntes do a\u00e7o, houve a chama. A \u00c1rvore a abrigou quando o mundo era s\u00f3 noite.\u201d','\u201cChamavam-na Cindra. Tudo o que arde ainda \u00e9 filho dela.\u201d'],
+     en:['\u201cBefore the steel, there was the flame. The Tree sheltered it when the world was only night.\u201d','\u201cThey called it Cindra. All that burns is still her child.\u201d'],
+     es:['\u201cAntes del acero, hubo la llama. El \u00c1rbol la abrig\u00f3 cuando el mundo era solo noche.\u201d','\u201cLa llamaban Cindra. Todo lo que arde sigue siendo hijo suyo.\u201d'],
+     fr:['\u201cAvant l\u2019acier, il y eut la flamme. L\u2019Arbre l\u2019abrita quand le monde n\u2019\u00e9tait que nuit.\u201d','\u201cOn l\u2019appelait Cindra. Tout ce qui br\u00fble est encore son enfant.\u201d']}},
+ spire:{n:{pt:'Mosteiro da Montanha',en:'Mountain Monastery',es:'Monasterio de la Monta\u00f1a',fr:'Monast\u00e8re de la Montagne'},
+  l:{pt:['\u201cOs monges mediam a sombra da montanha ao entardecer. Um dia, ela mediu de volta.\u201d','\u201cFoi quando soubemos: toda luz cria o que a odeia.\u201d'],
+     en:['\u201cThe monks measured the mountain\u2019s shadow at dusk. One day, it measured back.\u201d','\u201cThat is when we learned: every light creates what hates it.\u201d'],
+     es:['\u201cLos monjes med\u00edan la sombra de la monta\u00f1a al atardecer. Un d\u00eda, ella midi\u00f3 de vuelta.\u201d','\u201cEntonces lo supimos: toda luz crea lo que la odia.\u201d'],
+     fr:['\u201cLes moines mesuraient l\u2019ombre de la montagne au cr\u00e9puscule. Un jour, elle mesura en retour.\u201d','\u201cC\u2019est l\u00e0 que nous s\u00fbmes : toute lumi\u00e8re cr\u00e9e ce qui la hait.\u201d']}},
+ tower:{n:{pt:'Castelo Negro',en:'Black Castle',es:'Castillo Negro',fr:'Ch\u00e2teau Noir'},
+  l:{pt:['\u201cErgueram o Castelo para guardar a chama atr\u00e1s de pedra.\u201d','\u201cA sombra n\u00e3o escala muros. Ela os atravessa por dentro \u2014 pelo medo de quem os guarda.\u201d'],
+     en:['\u201cThey raised the Castle to keep the flame behind stone.\u201d','\u201cShadow does not climb walls. It crosses them from within \u2014 through the fear of those who guard them.\u201d'],
+     es:['\u201cAlzaron el Castillo para guardar la llama tras la piedra.\u201d','\u201cLa sombra no escala muros. Los atraviesa por dentro \u2014 por el miedo de quien los guarda.\u201d'],
+     fr:['\u201cIls b\u00e2tirent le Ch\u00e2teau pour garder la flamme derri\u00e8re la pierre.\u201d','\u201cL\u2019ombre n\u2019escalade pas les murs. Elle les traverse de l\u2019int\u00e9rieur \u2014 par la peur de ceux qui les gardent.\u201d']}},
+ sword:{n:{pt:'Espada do Tit\u00e3',en:'Titan\u2019s Sword',es:'Espada del Tit\u00e1n',fr:'\u00c9p\u00e9e du Titan'},
+  l:{pt:['\u201cEle n\u00e3o cravou a espada na terra. Cravou-a na pr\u00f3pria sombra \u2014 e ajoelhou-se para segur\u00e1-la.\u201d','\u201cAinda segura.\u201d'],
+     en:['\u201cHe did not drive the sword into the earth. He drove it into his own shadow \u2014 and knelt to hold it down.\u201d','\u201cHe holds it still.\u201d'],
+     es:['\u201cNo clav\u00f3 la espada en la tierra. La clav\u00f3 en su propia sombra \u2014 y se arrodill\u00f3 para sujetarla.\u201d','\u201cA\u00fan la sujeta.\u201d'],
+     fr:['\u201cIl ne planta pas l\u2019\u00e9p\u00e9e dans la terre. Il la planta dans sa propre ombre \u2014 et s\u2019agenouilla pour la tenir.\u201d','\u201cIl la tient encore.\u201d']}},
+ ruin:{n:{pt:'Karghast',en:'Karghast',es:'Karghast',fr:'Karghast'},
+  l:{pt:['\u201cKarghast cantou o nome dele at\u00e9 o teto ruir: VHARUN. VHARUN.\u201d','\u201cA sombra aprendeu a can\u00e7\u00e3o. Cuidado com o que responde quando voc\u00ea chama os mortos.\u201d'],
+     en:['\u201cKarghast sang his name until the roof fell: VHARUN. VHARUN.\u201d','\u201cThe shadow learned the song. Beware what answers when you call the dead.\u201d'],
+     es:['\u201cKarghast cant\u00f3 su nombre hasta que el techo cay\u00f3: VHARUN. VHARUN.\u201d','\u201cLa sombra aprendi\u00f3 la canci\u00f3n. Cuidado con lo que responde cuando llamas a los muertos.\u201d'],
+     fr:['\u201cKarghast chanta son nom jusqu\u2019\u00e0 ce que le toit tombe : VHARUN. VHARUN.\u201d','\u201cL\u2019ombre apprit le chant. Prenez garde \u00e0 ce qui r\u00e9pond quand on appelle les morts.\u201d']}}
+};
+function _mystCount(){var n=0;try{for(var k in MYST)if(meta.myst&&meta.myst[k])n++;}catch(e){}return n;}
+function _mystReveal(full){
+  var R={pt:['\u25c8 Andar 10. As paredes daqui n\u00e3o ecoam os seus passos \u2014 ecoam os DELE.',
+             '\u25c8 O \u00faltimo eco n\u00e3o \u00e9 do Tit\u00e3. \u00c9 a sombra usando a voz de Vharun.',
+             '\u25c8 Ele ainda ajoelha l\u00e1 em cima, segurando o cabo. Voc\u00ea desce para que ele nunca precise se levantar.'],
+         en:['\u25c8 Floor 10. These walls do not echo your steps \u2014 they echo HIS.',
+             '\u25c8 The last echo is not the Titan\u2019s. It is the shadow wearing Vharun\u2019s voice.',
+             '\u25c8 He still kneels above, holding the hilt. You descend so he never has to rise.'],
+         es:['\u25c8 Piso 10. Estas paredes no hacen eco de tus pasos \u2014 hacen eco de los SUYOS.',
+             '\u25c8 El \u00faltimo eco no es del Tit\u00e1n. Es la sombra usando la voz de Vharun.',
+             '\u25c8 \u00c9l a\u00fan se arrodilla arriba, sujetando la empu\u00f1adura. T\u00fa desciendes para que \u00e9l nunca deba levantarse.'],
+         fr:['\u25c8 \u00c9tage 10. Ces murs ne renvoient pas l\u2019\u00e9cho de vos pas \u2014 mais des SIENS.',
+             '\u25c8 Le dernier \u00e9cho n\u2019est pas celui du Titan. C\u2019est l\u2019ombre portant la voix de Vharun.',
+             '\u25c8 Il s\u2019agenouille encore l\u00e0-haut, tenant la garde. Vous descendez pour qu\u2019il n\u2019ait jamais \u00e0 se relever.']};
+  var P={pt:'\u25c8 Algo aqui embaixo conhece um nome que voc\u00ea ainda n\u00e3o leu. Cinco pedras o guardam \u2014 uma em cada marco do Vale.',
+         en:'\u25c8 Something down here knows a name you have not yet read. Five stones keep it \u2014 one at each landmark of the Vale.',
+         es:'\u25c8 Algo aqu\u00ed abajo conoce un nombre que a\u00fan no has le\u00eddo. Cinco piedras lo guardan \u2014 una en cada marca del Valle.',
+         fr:'\u25c8 Quelque chose ici-bas conna\u00eet un nom que vous n\u2019avez pas encore lu. Cinq pierres le gardent \u2014 une \u00e0 chaque monument du Val.'};
+  var lg=(typeof Lg!=='undefined'&&R[Lg])?Lg:'pt';
+  if(full){R[lg].forEach(function(t,i){setTimeout(function(){try{addMessage(t,'sys');}catch(e){}},400+i*1600);});}
+  else{setTimeout(function(){try{addMessage(P[lg],'sys');}catch(e){}},400);}
+  try{sfxEl('shadow',1.2);}catch(e){}
+}
+function _myst10(){
+  try{
+    if(meta.myst10===2)return;
+    var full=_mystCount()>=5;
+    if(meta.myst10===1&&!full)return;
+    meta.myst10=full?2:1;
+    _mystReveal(full);
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+function _mystCheck(){
+  try{
+    meta.myst=meta.myst||{};
+    var W2=(typeof WOFF!=='undefined')?WOFF:0;
+    for(var q=0;q<LANDMARK_SPRITES.length;q++){
+      var L2=LANDMARK_SPRITES[q];
+      if(meta.myst[L2.k])continue;
+      if(Math.max(Math.abs(player.tx-(L2.x+W2)),Math.abs(player.ty-(L2.y+W2)))>3)continue;
+      meta.myst[L2.k]=1;
+      var d=MYST[L2.k]; if(!d)return;
+      var lg=(typeof Lg!=='undefined'&&d.l[Lg])?Lg:'pt';
+      var n=_mystCount();
+      var HD={pt:'\u25c8 Inscri\u00e7\u00e3o '+n+'/5 \u2014 ',en:'\u25c8 Inscription '+n+'/5 \u2014 ',es:'\u25c8 Inscripci\u00f3n '+n+'/5 \u2014 ',fr:'\u25c8 Inscription '+n+'/5 \u2014 '};
+      addMessage(HD[lg]+d.n[lg],'good');
+      d.l[lg].forEach(function(t,i){setTimeout(function(){try{addMessage('\u25c8 '+t,'sys');}catch(e){}},700+i*1100);});
+      try{SFX.level();fxLight(player.px,player.py,TILE*2.2,'#c9a24a',1.3);}catch(e){}
+      /* completou as 5 depois de ja ter provado o andar 10? entrega a resposta agora */
+      if(n>=5&&meta.myst10===1){meta.myst10=2;setTimeout(function(){try{_mystReveal(true);}catch(e){}},3400);}
+      try{if(typeof saveGame==='function')saveGame();}catch(e){}
+      return;
+    }
+  }catch(e){}
+}
+
+/* ============ MEDIO PRAZO #4 — TEATRO DOS CHEFES, ATO I ============ */
+/* Epitafios no cartao + entrada com peso + reliquia de 1a morte (escolha entre 3). */
+var EPIT={
+ boss_carcereiro_osso:{pt:'Carcereiro de quem? As celas sempre estiveram vazias.',en:'Jailer of whom? The cells were always empty.',es:'\u00bfCarcelero de qui\u00e9n? Las celdas siempre estuvieron vac\u00edas.',fr:'Ge\u00f4lier de qui ? Les cellules ont toujours \u00e9t\u00e9 vides.'},
+ boss_coracao_fundido:{pt:'O que sobrou quando Cindra ardeu forte demais.',en:'What remained when Cindra burned too bright.',es:'Lo que qued\u00f3 cuando Cindra ardi\u00f3 demasiado.',fr:'Ce qui resta quand Cindra br\u00fbla trop fort.'},
+ boss_eco_vharun:{pt:'N\u00e3o \u00e9 ele. Lembre-se: n\u00e3o \u00e9 ele.',en:'It is not him. Remember: it is not him.',es:'No es \u00e9l. Recuerda: no es \u00e9l.',fr:'Ce n\u2019est pas lui. Souvenez-vous : ce n\u2019est pas lui.'},
+ boss_grao_tecelao:{pt:'Tece com o que a sombra descarta.',en:'It weaves with what the shadow discards.',es:'Teje con lo que la sombra descarta.',fr:'Il tisse avec ce que l\u2019ombre rejette.'},
+ boss_lamacal:{pt:'O P\u00e2ntano inteiro, com fome.',en:'The whole Swamp, hungry.',es:'El Pantano entero, con hambre.',fr:'Le Mar\u00e9cage entier, affam\u00e9.'},
+ boss_viuva_gelida:{pt:'Espera no gelo por quem n\u00e3o voltou.',en:'She waits in the ice for those who never returned.',es:'Espera en el hielo a quien no volvi\u00f3.',fr:'Elle attend dans la glace ceux qui ne sont pas revenus.'},
+ c_vorrak:{pt:'A luz aqui obedece a outro dono.',en:'The light here obeys another master.',es:'La luz aqu\u00ed obedece a otro due\u00f1o.',fr:'La lumi\u00e8re ici ob\u00e9it \u00e0 un autre ma\u00eetre.'}
+};
+function _relicPick(n){
+  try{
+    var p=document.getElementById('relicP'); if(p)p.classList.add('hidden');
+    _blessOpen=false;
+    if(n===0){var g=300+player.lvl*30; player.gold+=g;
+      addMessage(_qwL({pt:'\u2756 Ouro do Covil: +'+g+' ouro.',en:'\u2756 Lair Gold: +'+g+' gold.',es:'\u2756 Oro de la Guarida: +'+g+' de oro.',fr:'\u2756 Or de l\u2019Antre : +'+g+' or.'}),'good');
+      try{SFX.gold();}catch(e){}}
+    else if(n===1){player.maxhp+=10; player.hp=Math.min(player.maxhp,player.hp+10);
+      addMessage(_qwL({pt:'\u2756 Vigor do Covil: +10 de vida m\u00e1xima, para sempre.',en:'\u2756 Lair Vigor: +10 max health, forever.',es:'\u2756 Vigor de la Guarida: +10 de vida m\u00e1xima, para siempre.',fr:'\u2756 Vigueur de l\u2019Antre : +10 PV max, pour toujours.'}),'good');
+      try{SFX.level();}catch(e){}}
+    else{var add=function(id,q){var b=player.bag.find(function(x){return x.id===id;}); if(b)b.n+=q; else player.bag.push({id:id,n:q});};
+      add('hp_l',3); add('cure',2);
+      addMessage(_qwL({pt:'\u2756 Reservas do Covil: 3 po\u00e7\u00f5es grandes e 2 ant\u00eddotos.',en:'\u2756 Lair Reserves: 3 large potions and 2 antidotes.',es:'\u2756 Reservas de la Guarida: 3 pociones grandes y 2 ant\u00eddotos.',fr:'\u2756 R\u00e9serves de l\u2019Antre : 3 grandes potions et 2 antidotes.'}),'good');
+      try{SFX.pickup();}catch(e){}}
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){_blessOpen=false;}
+}
+function _bossRelic(m){
+  try{
+    var key=m&&m.d&&m.d.id; if(!key||!EPIT[key])return;
+    meta.relic=meta.relic||{}; if(meta.relic[key])return;
+    meta.relic[key]=1;
+    var nm=m.d.name; try{nm=mName(m);}catch(e){}
+    setTimeout(function(){
+      try{
+        var p=document.getElementById('relicP');
+        if(!p){p=document.createElement('div');p.id='relicP';p.className='overlay hidden';document.body.appendChild(p);}
+        var T={pt:['Rel\u00edquia de ','escolha UMA','\u2694 Ouro do Covil','\u2764 Vigor do Covil (+10 vida m\u00e1x.)','\u29c9 Reservas do Covil (po\u00e7\u00f5es)'],
+               en:['Relic of ','choose ONE','\u2694 Lair Gold','\u2764 Lair Vigor (+10 max HP)','\u29c9 Lair Reserves (potions)'],
+               es:['Reliquia de ','elige UNA','\u2694 Oro de la Guarida','\u2764 Vigor de la Guarida (+10 vida m\u00e1x.)','\u29c9 Reservas de la Guarida (pociones)'],
+               fr:['Relique de ','choisissez-en UNE','\u2694 Or de l\u2019Antre','\u2764 Vigueur de l\u2019Antre (+10 PV max)','\u29c9 R\u00e9serves de l\u2019Antre (potions)']};
+        var t=T[(typeof Lg!=='undefined'&&T[Lg])?Lg:'pt'];
+        p.innerHTML='<div class="card panel" style="text-align:center;max-width:340px">'
+          +'<h1 style="font-size:19px;color:#e8c15a">\u2756 '+t[0]+nm+'</h1>'
+          +'<p style="color:#8a90a0;font-size:12px;margin:2px 0 12px">'+t[1]+'</p>'
+          +'<button class="btn wide" onclick="_relicPick(0)">'+t[2]+'</button>'
+          +'<button class="btn wide" onclick="_relicPick(1)" style="margin-top:8px">'+t[3]+'</button>'
+          +'<button class="btn wide" onclick="_relicPick(2)" style="margin-top:8px">'+t[4]+'</button></div>';
+        p.classList.remove('hidden');
+        _blessOpen=true;
+        try{sfxEl('holy',1.2);}catch(e){}
+      }catch(e){}
+    },1700); /* depois da coda em camera lenta */
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+
+
+
+
+
+
+/* ============ LONGO PRAZO #9 — VALE VIRADO (NG lendario) ============ */
+/* Matar um chefe no andar 10 desbloqueia. Toggle nas Configuracoes.
+   Virado: paleta noturna (filtro no canvas), elites x2, vigor +35%, XP x1.5. */
+function _ngEliteMul(){return (meta&&meta.ng)?2:1;}
+function _ngApply(){
+  try{
+    var on=!!(meta&&meta.ng);
+    document.body.classList.toggle('ngWorld',on);
+    var row=document.getElementById('rowNg');
+    if(row)row.style.display=(meta&&meta.ngUnlocked)?'':'none';
+    var tg=document.getElementById('togNg');
+    if(tg){tg.classList.toggle('on',on);tg.classList.toggle('act',on);}
+  }catch(e){}
+}
+function _ngKillCheck(m){
+  try{
+    if(meta.ngUnlocked)return;
+    if(!m||!m.d||!m.d.boss)return;
+    if(!(typeof DungeonLayer!=='undefined'&&DungeonLayer.active))return;
+    if((DungeonLayer.depth||0)<9)return; /* depth 9 = andar 10 */
+    meta.ngUnlocked=1;
+    setTimeout(function(){
+      try{centerMsg(_qwL({pt:'O VALE PODE VIRAR',en:'THE VALE CAN TURN',es:'EL VALLE PUEDE GIRAR',fr:'LE VAL PEUT BASCULER'}));}catch(e){}
+      addMessage(_qwL({pt:'\u25c8 O ultimo eco caiu no fundo. Nas Configura\u00e7\u00f5es, o Vale agora aceita VIRAR: noite permanente, elites em dobro, feras mais vigorosas \u2014 e o Vale paga em dobro por isso.',
+        en:'\u25c8 The last echo fell in the deep. In Settings, the Vale can now TURN: permanent night, double elites, hardier beasts \u2014 and the Vale pays double for it.',
+        es:'\u25c8 El \u00faltimo eco cay\u00f3 en lo hondo. En Ajustes, el Valle ahora puede GIRAR: noche permanente, \u00e9lites al doble, bestias m\u00e1s vigorosas \u2014 y el Valle paga el doble.',
+        fr:'\u25c8 Le dernier \u00e9cho est tomb\u00e9 au fond. Dans les R\u00e9glages, le Val peut d\u00e9sormais BASCULER : nuit permanente, \u00e9lites doubl\u00e9es, b\u00eates plus vigoureuses \u2014 et le Val paie double.'}),'good');
+      try{_ngApply();sfxEl('shadow',1.5);buzz([50,80,50]);}catch(e){}
+    },2400);
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+(function(){ /* linha nas Configuracoes (oculta ate desbloquear) */
+  function wire(){
+    try{
+      if(document.getElementById('rowNg'))return;
+      var q=document.getElementById('rowQual'); if(!q||!q.parentNode)return;
+      var r=document.createElement('div'); r.className='srow'; r.id='rowNg'; r.style.display='none';
+      var T=_qwL({pt:['Vale Virado','Noite permanente \u00b7 elites \u00d72 \u00b7 XP \u00d71,5'],
+                  en:['Turned Vale','Permanent night \u00b7 elites \u00d72 \u00b7 XP \u00d71.5'],
+                  es:['Valle Girado','Noche permanente \u00b7 \u00e9lites \u00d72 \u00b7 XP \u00d71,5'],
+                  fr:['Val Bascul\u00e9','Nuit permanente \u00b7 \u00e9lites \u00d72 \u00b7 XP \u00d71,5']});
+      r.innerHTML='<div class="sic">\u263e</div><div class="stx"><b>'+T[0]+'</b><span>'+T[1]+'</span></div>'
+        +'<div class="stog" id="togNg"><i></i></div>';
+      q.parentNode.insertBefore(r,q);
+      document.getElementById('togNg').onclick=function(){
+        meta.ng=meta.ng?0:1; _ngApply();
+        try{sfxEl(meta.ng?'shadow':'holy',1.1);}catch(e){}
+        try{if(typeof saveGame==='function')saveGame();}catch(e){}
+      };
+      _ngApply();
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1000);});
+  else setTimeout(wire,1000);
+})();
+/* ============ LONGO PRAZO #5 — LUA DE SANGUE ============ */
+/* Deterministica: dia-do-calendario % 21 === 7 (igual p/ todos). Vespera anuncia.
+   Ativa: veu vermelho, motivo musical proprio, elites em dobro pagando bonus,
+   e o trofeu "voce estava la": 10 elites sob a Lua = titulo Cacador da Lua de Sangue. */
+function _bloodState(dn){
+  if(typeof window!=='undefined'&&window._bloodForce!=null)return window._bloodForce;
+  if(dn==null)dn=Math.floor(Date.now()/86400000);
+  var r=((dn%21)+21)%21;
+  return r===7?2:(r===6?1:0);
+}
+function _bloodEliteMul(){return _bloodState()===2?2:1;}
+function _bloodVeil(on){
+  try{
+    var v=document.getElementById('bloodVeil');
+    if(on){
+      if(!v){v=document.createElement('div');v.id='bloodVeil';document.body.appendChild(v);}
+      v.classList.add('on');
+    }else if(v){v.classList.remove('on');}
+  }catch(e){}
+}
+function _bloodTick(){
+  try{
+    var dg=(typeof DungeonLayer!=='undefined')&&DungeonLayer.active;
+    _bloodVeil(_bloodState()===2&&!dg&&(typeof running==='undefined'||running));
+  }catch(e){}
+}
+function _bloodMsg(){
+  try{
+    var st=_bloodState(); if(!st)return;
+    var d=(typeof todayStr==='function')?todayStr():String(Math.floor(Date.now()/86400000));
+    if(meta.lastBloodMsg===d+'_'+st)return; meta.lastBloodMsg=d+'_'+st;
+    if(st===1){
+      addMessage(_qwL({pt:'\ud83c\udf19 A lua nascer\u00e1 vermelha amanh\u00e3. Tranque o que ama \u2014 ou afie o que corta.',
+        en:'\ud83c\udf19 The moon rises red tomorrow. Lock away what you love \u2014 or sharpen what cuts.',
+        es:'\ud83c\udf19 La luna saldr\u00e1 roja ma\u00f1ana. Guarda lo que amas \u2014 o afila lo que corta.',
+        fr:'\ud83c\udf19 La lune se l\u00e8vera rouge demain. Prot\u00e9gez ce que vous aimez \u2014 ou aiguisez ce qui tranche.'}),'sys');
+    }else{
+      try{centerMsg(_qwL({pt:'LUA DE SANGUE',en:'BLOOD MOON',es:'LUNA DE SANGRE',fr:'LUNE DE SANG'}));}catch(e){}
+      addMessage(_qwL({pt:'\ud83c\udf19 A LUA DE SANGUE subiu. Elites em dobro, ouro em dobro. Cace 10 e o Vale lembrar\u00e1.',
+        en:'\ud83c\udf19 The BLOOD MOON has risen. Double elites, double gold. Hunt 10 and the Vale will remember.',
+        es:'\ud83c\udf19 La LUNA DE SANGRE ha subido. Elites al doble, oro al doble. Caza 10 y el Valle recordar\u00e1.',
+        fr:'\ud83c\udf19 La LUNE DE SANG s\u2019est lev\u00e9e. \u00c9lites doubl\u00e9es, or doubl\u00e9. Chassez-en 10 et le Val se souviendra.'}),'good');
+      try{sfxEl('shadow',1.4);buzz([40,60,40]);}catch(e){}
+    }
+  }catch(e){}
+}
+function _bloodOnElite(m){
+  try{
+    if(_bloodState()!==2)return;
+    var dn=Math.floor(Date.now()/86400000);
+    if(meta.bloodDn!==dn){meta.bloodDn=dn;meta.bloodK=0;}
+    meta.bloodK=(meta.bloodK||0)+1;
+    var bl=Math.max(8,Math.round((m.d.xp||10)*0.8));
+    player.gold+=bl;
+    try{addFloater(m.px,m.py-TILE*1.15,'+'+bl+'\u29bf \ud83c\udf19','#ff6a5a');}catch(e){}
+    if(meta.bloodK>=10&&!meta.tLua){
+      meta.tLua=1;
+      addMessage(_qwL({pt:'\ud83c\udf19 Dez elites sob a Lua. Um t\u00edtulo desperta: Ca\u00e7ador da Lua de Sangue.',
+        en:'\ud83c\udf19 Ten elites under the Moon. A title awakens: Blood Moon Hunter.',
+        es:'\ud83c\udf19 Diez \u00e9lites bajo la Luna. Un t\u00edtulo despierta: Cazador de la Luna de Sangre.',
+        fr:'\ud83c\udf19 Dix \u00e9lites sous la Lune. Un titre s\u2019\u00e9veille : Chasseur de la Lune de Sang.'}),'good');
+      try{addRing(player.px,player.py,'#ff6a5a',TILE*3,0.9);fxLight(player.px,player.py,TILE*4,'#ff6a5a',2);sfxEl('holy',1.3);}catch(e){}
+      try{_monApply();}catch(e){}
+    }
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+/* ============ MEDIO PRAZO #8 — COESAO BRUMAL (bestiario) ============ */
+/* Assa cada sprite de criatura na assinatura do Vale: grade 64px, alpha binario,
+   8 niveis por canal, luz NW, contorno escuro. AI-art -> direcao de arte. */
+function _brumalBake(rec){
+  try{
+    if(!rec||!rec.img||rec.baked)return;
+    var iw=rec.img.naturalWidth||rec.img.width||0, ih=rec.img.naturalHeight||rec.img.height||0;
+    if(!iw||!ih)return;
+    var H=64, Wd=Math.max(8,Math.round(H*iw/ih));
+    var c=document.createElement('canvas'); c.width=Wd; c.height=H;
+    var g=c.getContext('2d');
+    g.imageSmoothingEnabled=true; try{g.imageSmoothingQuality='high';}catch(e){}
+    g.drawImage(rec.img,0,0,Wd,H);
+    var id=g.getImageData(0,0,Wd,H), d=id.data;
+    for(var p=3;p<d.length;p+=4){d[p]=d[p]<48?0:255;}           /* alpha crisp */
+    for(var y=0;y<H;y++)for(var x=0;x<Wd;x++){                   /* quantiza + luz NW */
+      var q4=(y*Wd+x)*4; if(!d[q4+3])continue;
+      var f=1.10-0.20*((x/Wd+y/H)/2);
+      for(var ch=0;ch<3;ch++){var v=Math.round((d[q4+ch]*f)/34)*34; d[q4+ch]=v<0?0:v>255?255:v;}
+    }
+    var A=function(x,y){return (x<0||y<0||x>=Wd||y>=H)?0:d[(y*Wd+x)*4+3];};
+    var edge=[];
+    for(var y2=0;y2<H;y2++)for(var x2=0;x2<Wd;x2++){             /* contorno 1px */
+      if(A(x2,y2))continue;
+      if(A(x2+1,y2)||A(x2-1,y2)||A(x2,y2+1)||A(x2,y2-1))edge.push((y2*Wd+x2)*4);
+    }
+    for(var e2=0;e2<edge.length;e2++){var q5=edge[e2];d[q5]=20;d[q5+1]=22;d[q5+2]=30;d[q5+3]=255;}
+    g.putImageData(id,0,0);
+    rec.baked=c; rec.bw=Wd; rec.bh=H;
+  }catch(e){}
+}
+/* ============ MEDIO PRAZO #2 (Top100) — TUMULOS DOS SEUS ============ */
+/* Cada morte no mundo aberto planta uma lapide, compartilhada entre os 6 herois
+   (localStorage proprio). Ajoelhar-se diante do tumulo de OUTRO heroi concede um
+   memento: +descanso (bonus de XP por baixa) — a memoria dele te acompanha. */
+var _gravesCache=null;
+function _gravesLoad(){
+  if(_gravesCache)return _gravesCache;
+  try{_gravesCache=JSON.parse(localStorage.getItem('acos_graves')||'[]');}catch(e){_gravesCache=[];}
+  if(!Array.isArray(_gravesCache))_gravesCache=[];
+  return _gravesCache;
+}
+function _gravesSave(g){
+  _gravesCache=g.slice(-10);
+  try{localStorage.setItem('acos_graves',JSON.stringify(_gravesCache));}catch(e){}
+}
+function _gravePlant(){
+  try{
+    if((typeof DungeonLayer!=='undefined')&&DungeonLayer.active)return; /* v1: so no mundo aberto */
+    meta.hid=meta.hid||('h'+Math.random().toString(36).slice(2,8));
+    var g=_gravesLoad().filter(function(q){
+      return Math.max(Math.abs(q.x-player.tx),Math.abs(q.y-player.ty))>1; /* mesma cova: a nova substitui */
+    });
+    g.push({n:player.name||'?',lv:player.lvl||1,cls:player.cls||'',x:player.tx,y:player.ty,t:Date.now(),hid:meta.hid});
+    _gravesSave(g);
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){}
+}
+function _graveCheck(){
+  try{
+    meta.hid=meta.hid||('h'+Math.random().toString(36).slice(2,8));
+    meta.graveClaims=meta.graveClaims||[];
+    var g=_gravesLoad();
+    for(var i=0;i<g.length;i++){var q=g[i];
+      if(q.hid===meta.hid)continue;                    /* o proprio tumulo nao consola */
+      if(meta.graveClaims.indexOf(q.t)>=0)continue;    /* um memento por tumulo, por heroi */
+      if(Math.max(Math.abs(player.tx-q.x),Math.abs(player.ty-q.y))>1)continue;
+      meta.graveClaims.push(q.t);
+      var mem=Math.min(60,10+(q.lv||1)*2);
+      meta.rested=(meta.rested||0)+mem;
+      addMessage(_qwL({pt:'\u26b0 Voc\u00ea se ajoelha diante de '+q.n+' (Nv '+q.lv+'). A mem\u00f3ria dele te acompanha: +'+mem+' de descanso.',
+        en:'\u26b0 You kneel before '+q.n+' (Lv '+q.lv+'). Their memory walks with you: +'+mem+' rest.',
+        es:'\u26b0 Te arrodillas ante '+q.n+' (Nv '+q.lv+'). Su memoria te acompa\u00f1a: +'+mem+' de descanso.',
+        fr:'\u26b0 Vous vous agenouillez devant '+q.n+' (Nv '+q.lv+'). Sa m\u00e9moire vous accompagne : +'+mem+' de repos.'}),'good');
+      try{SFX.level();fxLight(player.px,player.py,TILE*2,'#bfc6d8',1.4);buzz(25);}catch(e){}
+      try{if(typeof saveGame==='function')saveGame();}catch(e){}
+      return;
+    }
+  }catch(e){}
+}
+function _graveDraw(ox,oy){
+  try{
+    var g=_gravesLoad(); if(!g.length)return;
+    if((typeof DungeonLayer!=='undefined')&&DungeonLayer.active)return;
+    for(var i=0;i<g.length;i++){var q=g[i];
+      if(Math.max(Math.abs(player.tx-q.x),Math.abs(player.ty-q.y))>14)continue;
+      var sx=q.x*TILE+TILE/2-ox, sy=q.y*TILE+TILE-oy;
+      B.save();
+      B.fillStyle='rgba(0,0,0,0.25)';B.beginPath();B.ellipse(sx,sy-2,9,3.5,0,0,7);B.fill();
+      B.fillStyle='#8d93a2';B.fillRect(sx-6,sy-16,12,14);
+      B.beginPath();B.arc(sx,sy-16,6,Math.PI,0);B.fill();
+      B.fillStyle='#6f7482';B.fillRect(sx-6,sy-4,12,2);
+      B.fillStyle='#5d6270';B.fillRect(sx-1,sy-15,2,7);B.fillRect(sx-3,sy-12,6,2);
+      B.fillStyle='#7fae6a';B.fillRect(sx-6,sy-3,3,1);
+      if(Math.max(Math.abs(player.tx-q.x),Math.abs(player.ty-q.y))<=3){
+        B.font='700 8px system-ui';B.textAlign='center';
+        B.fillStyle='rgba(0,0,0,0.55)';B.fillText(q.n+' \u00b7 Nv'+q.lv,sx+1,sy-21);
+        B.fillStyle='#cfd3dc';B.fillText(q.n+' \u00b7 Nv'+q.lv,sx,sy-22);
+      }
+      B.restore();
+    }
+  }catch(e){}
+}
+/* ---- Ato III: teias vivas do Tecelao (retardam MONSTROS que pisam nelas; DoT leve no jogador) ---- */
+var _webs=[];
+function _webAdd(x,y){_webs.push({x:x,y:y,r:TILE*1.15,t:7});}
+function _webTick(dt){
+  if(!_webs.length)return;
+  for(var i=_webs.length-1;i>=0;i--){var w=_webs[i];w.t-=dt;if(w.t<=0){_webs.splice(i,1);continue;}
+    var dx=player.px-w.x,dy=player.py-w.y;
+    if(!player.dead&&dx*dx+dy*dy<w.r*w.r){
+      w._pt=(w._pt||0)+dt;
+      if(w._pt>=0.6){w._pt=0;
+        try{var dW=Math.max(2,Math.round(2+player.lvl*0.35));
+            if(player.hp>1){player.hp=Math.max(1,player.hp-dW);
+              addFloater(player.px,player.py-TILE*0.6,'-'+dW+' \u2618','#a0e060');}}catch(e){}}
+    }
+    try{for(const mm of monsters){if(mm.dead)continue;
+      var ax=mm.px-w.x,ay=mm.py-w.y;
+      if(ax*ax+ay*ay<w.r*w.r)mm.slow=Math.max(mm.slow||0,0.5);}}catch(e){}
+  }
+}
+function _webDraw(ox,oy){
+  try{ if(!_webs.length)return;
+    for(const w of _webs){var sx=w.x-ox,sy=w.y-oy;
+      B.save();B.globalAlpha=Math.min(0.5,w.t*0.22);B.strokeStyle='#cfd6c2';B.lineWidth=1.5;
+      B.beginPath();B.arc(sx,sy,w.r*0.92,0,7);B.stroke();
+      for(var k2=0;k2<6;k2++){var a2=k2*Math.PI/3;
+        B.beginPath();B.moveTo(sx,sy);B.lineTo(sx+Math.cos(a2)*w.r*0.92,sy+Math.sin(a2)*w.r*0.92);B.stroke();}
+      B.restore();}
+  }catch(e){}
+}
+/* ---- Luto Congelante: lacaio da Viuva morre -> nova de gelo ao redor DELA (cd 4s) ---- */
+function _widowMourn(m){
+  try{
+    if(!m||!m._summoner)return;
+    var ow=monsters.find(function(q){return q.id===m._summoner&&!q.dead&&q.d&&q.d.id==='boss_viuva_gelida';});
+    if(!ow)return;
+    if((ow._mournCd||0)>gameTime)return; ow._mournCd=gameTime+4;
+    for(var k=0;k<8;k++){var a=k*Math.PI/4;
+      spawnAoe(ow.px+Math.cos(a)*TILE*2.0,ow.py+Math.sin(a)*TILE*2.0,TILE*0.95,0.6,
+               Math.round(ow.d.dmin*0.6),Math.round(ow.d.dmax*0.6),'#bfe0ea');}
+    addRing(ow.px,ow.py,'#bfe0ea',TILE*2.6,0.9);sfxEl('ice',1.1);
+    addFloater(ow.px,ow.py-TILE,'\u2744','#bfe0ea');
+  }catch(e){}
+}
+/* ============ TEATRO DOS CHEFES — ATO II: ASSINATURAS ============ */
+var SIG={
+ /* Teia Rastejante: 3 teias (uma sob voce). Monstros nelas rastejam — atraia-o para a propria teia. */
+ boss_grao_tecelao:{cd:8,run:function(m){
+   _webAdd(player.px,player.py);
+   for(var k=0;k<2;k++){var a=Math.random()*Math.PI*2;
+     _webAdd(player.px+Math.cos(a)*TILE*1.7,player.py+Math.sin(a)*TILE*1.7);}
+   try{addFloater(player.px,player.py-TILE*0.9,'\u2618','#cfd6c2');sfxEl('poison',0.9);}catch(e){}
+ }},
+ /* Particao: aos 50%, o Lamacal se parte em 3 gosmas (uma vez). */
+ boss_lamacal:{onHalf:function(m){
+   try{for(var k=0;k<3;k++)summonMinion(m,'acidooze');}catch(e){}
+   try{addRing(m.px,m.py,'#a0e060',TILE*2.2,0.9);sfxEl('poison',1.2);
+       addFloater(m.px,m.py-TILE,_qwL({pt:'PARTI\u00c7\u00c3O',en:'SPLIT',es:'PARTICI\u00d3N',fr:'SCISSION'}),'#a0e060');}catch(e){}
+ }},
+ /* Pisca-Eco: ao cruzar 75/50/25% de vida, o Eco se desloca — ecos nao param no lugar. */
+ boss_eco_vharun:{onBand:function(m){
+   for(var t2=0;t2<10;t2++){
+     var a3=Math.random()*Math.PI*2, d3=2+Math.random()*1.5;
+     var nx=Math.round(m.tx+Math.cos(a3)*d3), ny=Math.round(m.ty+Math.sin(a3)*d3);
+     if(typeof walkable==='function'&&!walkable(nx,ny))continue;
+     try{addRing(m.px,m.py,'#c8a060',TILE*1.2,0.6);}catch(e){}
+     m.tx=nx;m.ty=ny;m.px=nx*TILE+TILE/2;m.py=ny*TILE+TILE/2;
+     try{m.path=[];}catch(e){}
+     try{addRing(m.px,m.py,'#c8a060',TILE*1.2,0.6);sfxEl('shadow',0.9);}catch(e){}
+     break;
+   }
+ }},
+ /* Jaula de Osso: 4 discos AO REDOR do jogador; o centro e seguro. Ficar parado salva. */
+ boss_carcereiro_osso:{cd:9,run:function(m){
+   var px=player.px,py=player.py,R=TILE*1.6,ar=TILE*1.05;
+   [[R,0],[-R,0],[0,R],[0,-R]].forEach(function(o){
+     spawnAoe(px+o[0],py+o[1],ar,0.8,Math.round(m.d.dmin*0.8),Math.round(m.d.dmax*0.8),'#d8d4c8');
+   });
+   try{addFloater(px,py-TILE*0.9,'\u2612','#d8d4c8');sfxEl('earth',0.9);buzz(25);}catch(e){}
+ }},
+ /* Anel Fundido: a cada 2o slam, 3 ondas de discos em circulo crescente. Correr para fora. */
+ boss_coracao_fundido:{onSlam:function(m){
+   m._alt=!m._alt; if(!m._alt)return;
+   var cx=m.px,cy=m.py;
+   for(var w=1;w<=3;w++){
+     var r=TILE*(1.9+w*1.1), dl=0.55+w*0.38, n=6;
+     for(var k=0;k<n;k++){
+       var a=(k/n)*Math.PI*2+(w*0.35);
+       spawnAoe(cx+Math.cos(a)*r,cy+Math.sin(a)*r,TILE*0.95,dl,
+                Math.round(m.d.dmin*0.55),Math.round(m.d.dmax*0.6),'#ff6a3a');
+     }
+   }
+   try{addRing(cx,cy,'#ff6a3a',TILE*5.2,1.5);sfxEl('fire',1.1);}catch(e){}
+ }}
+};
+function _sigTick(m,dt){
+  if(!m.d||!m.d.boss)return;
+  var s=SIG[m.d.id]; if(!s)return;
+  if(player.dead)return;
+  if(Math.max(Math.abs(player.tx-m.tx),Math.abs(player.ty-m.ty))>8)return;
+  if(s.run){
+    m._sigCd=(m._sigCd==null?3.5:m._sigCd)-dt;
+    if(m._sigCd<=0){m._sigCd=s.cd; try{s.run(m);}catch(e){}}
+  }
+  if(s.onHalf&&!m._half&&m.hp<=m.maxhp*0.5){m._half=1;try{s.onHalf(m);}catch(e){}}
+  if(s.onBand){
+    var fr=m.hp/m.maxhp, b=(fr<=0.25?3:fr<=0.5?2:fr<=0.75?1:0);
+    if(b>(m._band||0)){m._band=b;try{s.onBand(m);}catch(e){}}
+  }
+}
+if(typeof window!=='undefined')window._aoeN=function(){try{return aoes.length;}catch(e){return -1;}};
 function _bossCard(m){
   try{
     let el=document.getElementById('bossCard');
@@ -12917,7 +13540,7 @@ function _bossCard(m){
     const S={pt:'CHEFE',en:'BOSS',es:'JEFE',fr:'BOSS'};
     const sub=S[(typeof Lg!=='undefined'&&S[Lg])?Lg:'pt'];
     let nm=m.d.name; try{nm=mName(m);}catch(e){}
-    el.innerHTML='<small>\u2620 '+sub+' \u2620</small><b>'+nm+'</b>';
+    var _ep=EPIT[m.d.id]; var _epT=_ep?((typeof Lg!=='undefined'&&_ep[Lg])?_ep[Lg]:_ep.pt):'';el.innerHTML='<small>\u2620 '+sub+' \u2620</small><b>'+nm+'</b>'+(_epT?'<i>'+_epT+'</i>':'');try{var vg=document.getElementById('bossVig');if(!vg){vg=document.createElement('div');vg.id='bossVig';document.body.appendChild(vg);}vg.classList.remove('on');void vg.offsetWidth;vg.classList.add('on');}catch(e){}
     el.classList.add('show');
     try{sfxEl('earth',1.6);shake(3);buzz(30);}catch(e){}
     try{fxLight(m.px,m.py,TILE*3,'#c8362a',1.2);}catch(e){}
@@ -12991,7 +13614,7 @@ window._acWorldTick=function(){
         if(map[_idx]!==T.brazier)map[_idx]=T.brazier;
       }
     }catch(e){}
-    try{_espadaCheck();_fundCheck();}catch(e){}
+    try{_espadaCheck();_fundCheck();_mystCheck();MUS.update();_graveCheck();_bloodTick();}catch(e){}
     /* ---- Auditoria #9: cartao de chefe ---- */
     for(const m of monsters){
       if(m.dead||!m.d||!m.d.boss||m._carded)continue;
