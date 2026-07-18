@@ -2623,6 +2623,23 @@ function buildSpawns(){
  */
 const mkC=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;};
 const LMSPR={};
+/* ---- marcos em PNG (arte externa opcional; procedural continua sendo o fallback) ----
+   Arquivos esperados ao lado do index: lm_tree.png, lm_tower.png, lm_sword.png,
+   lm_spire.png, lm_ruin.png. Se nao existirem, nada muda. */
+const LMPNG={};
+function loadLmPng(){
+  if(typeof Image==='undefined')return;
+  ['tree','tower','sword','spire','ruin'].forEach(function(k){
+    try{
+      var img=new Image(), rec={img:img,ready:false};
+      img.onload=function(){rec.ready=true;};
+      img.onerror=function(){rec.ready=false;};
+      img.src='lm_'+k+'.png';
+      LMPNG[k]=rec;
+    }catch(e){}
+  });
+}
+try{loadLmPng();}catch(e){}
 const LANDMARK_SPRITES=[
  {x:332,y:214,k:'tree'},   /* Árvore Ancestral */
  {x:406,y:398,k:'tower'},  /* Castelo Negro */
@@ -5371,7 +5388,7 @@ function render(){
     else if(d.kind==='comp')drawCompanion(ox,oy);
     else if(d.kind==='player')drawPlayer(ox,oy);
     else if(d.kind==='proj')drawProjectile(d.p.x-ox,d.p.y-oy,d.p);
-    else if(d.kind==='lmspr'){const spr=LMSPR[d.ls.k];if(spr){const ax=(d.ls.x+WOFF)*TILE+TILE/2-ox,ay=(d.ls.y+WOFF)*TILE+TILE-oy;B.drawImage(spr,ax-spr.width/2,ay-spr.height);}}}
+    else if(d.kind==='lmspr'){const spr=LMSPR[d.ls.k],_lm=LMPNG[d.ls.k];const ax=(d.ls.x+WOFF)*TILE+TILE/2-ox,ay=(d.ls.y+WOFF)*TILE+TILE-oy;if(_lm&&_lm.ready){const H=(spr&&spr.height)||TILE*5,Wd=H*((_lm.img.naturalWidth||1)/(_lm.img.naturalHeight||1));B.imageSmoothingEnabled=true;B.imageSmoothingQuality='high';B.drawImage(_lm.img,ax-Wd/2,ay-H,Wd,H);B.imageSmoothingEnabled=false;}else if(spr){B.drawImage(spr,ax-spr.width/2,ay-spr.height);}}}
   for(const s of slashes)drawSlash(s,ox,oy);
   try{drawFxLights(ox,oy);}catch(e){}
   for(const r of rings)drawRing(r,ox,oy);
