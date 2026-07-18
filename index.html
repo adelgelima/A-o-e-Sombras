@@ -446,6 +446,47 @@
 .xrow .xmark{width:22px;text-align:center;color:#e8c15a;font-weight:800;flex:none}
 .xrow.on{border-color:rgba(232,193,90,.5);background:rgba(232,193,90,.08)}
 #xbarRows{display:flex;flex-direction:column;gap:7px;max-height:52vh;overflow:auto}
+
+/* viagem rápida (rodapé do mapa grande) */
+#wpBar{margin-top:10px}
+.wpTitle{font:800 10px system-ui;letter-spacing:.12em;text-transform:uppercase;color:#9a8552;margin:0 0 6px}
+.wpRow{display:flex;gap:7px;flex-wrap:wrap}
+.wpBtn{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:#171a22;border:1px solid #323848;
+  border-radius:10px;color:#d8dbe2;font:700 12px system-ui;padding:8px 11px;min-height:40px}
+.wpBtn span{font:600 10.5px system-ui;color:#ead27a}
+.wpBtn.here{opacity:.4}
+.wpBtn:active{border-color:var(--acc)}
+
+/* celebração de habilidade nova */
+@keyframes skPulse{0%,100%{box-shadow:0 0 0 0 rgba(232,193,90,0)}50%{box-shadow:0 0 14px 4px rgba(232,193,90,.55)}}
+.skill.skNew{animation:skPulse 1.1s ease-in-out 3;border-color:var(--acc)!important}
+
+/* cartão de chefe (Auditoria #9) */
+#bossCard{position:absolute;top:calc(30% + var(--sat));left:50%;transform:translateX(-50%) scale(.92);z-index:5;
+  text-align:center;opacity:0;pointer-events:none;transition:opacity .35s,transform .35s}
+#bossCard.show{opacity:1;transform:translateX(-50%) scale(1)}
+#bossCard small{display:block;font:800 10px system-ui;letter-spacing:.5em;color:#ff8a8a;margin-bottom:4px}
+#bossCard b{font:800 clamp(19px,5.6vw,26px) Georgia,serif;letter-spacing:2px;color:#f2e8c8;
+  text-shadow:0 2px 12px rgba(0,0,0,.95),0 0 22px rgba(200,54,42,.45)}
+
+.dteaser{color:#9a8552;border-top:1px dashed #3a3f4e;margin-top:8px;padding-top:7px;font-size:12px}
+
+/* Monumento do Vale */
+#pTitle{font-size:10px;color:#c9a24a;letter-spacing:.04em;margin-left:5px;font-weight:800}
+#monRow{margin-top:12px;padding-top:11px;border-top:1px dashed #3a3f4e;display:flex;flex-direction:column;gap:6px}
+#monRow b{color:#e8c15a;font-size:13px}
+#monRow .monT{font-size:11.5px;color:#9aa0ae}
+.monBtn{background:linear-gradient(180deg,#e8c15a,#c9992e)!important;color:#241a06!important;font-weight:800}
+
+/* comparação vs equipado */
+.cmpH{margin-top:7px;padding-top:6px;border-top:1px dashed #3a3f4e;font:800 9.5px system-ui;letter-spacing:.08em;text-transform:uppercase;color:#9a8552}
+.cmpr{display:flex;justify-content:space-between;gap:12px;font:600 11.5px system-ui;color:#aeb4c2}
+.cmpr .up{color:#8fe08a}.cmpr .dn{color:#ff9a8a}
+/* ordenar mochila */
+#inv .card{position:relative}
+#bagSortBtn{position:absolute;top:9px;right:46px;width:34px;height:30px;border-radius:9px;
+  background:#171a22;border:1px solid #323848;color:#cfd3dc;font-size:15px}
+#bagSortBtn:active{border-color:var(--acc)}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -972,7 +1013,7 @@ function wfxDesc(id){return t('wfx_'+id+'_d');}
 const ITEM_DESC={'k0':{en:'Has seen better days.',es:'Ha visto d\u00edas mejores.',fr:'A connu des jours meilleurs.'},'k1':{en:'Every knight\u2019s first steel.',es:'El primer acero de todo caballero.',fr:'Le premier acier de tout chevalier.'},'k2':{en:'Forged by the dozen, dependable.',es:'Forjada a montones, fiable.',fr:'Forg\u00e9e en masse, fiable.'},'k3':{en:'Heavy as the crossing.',es:'Pesada como la traves\u00eda.',fr:'Lourd comme la travers\u00e9e.'},'k4':{en:'Watched walls for generations.',es:'Vigil\u00f3 murallas por generaciones.',fr:'A gard\u00e9 des murailles des g\u00e9n\u00e9rations durant.'},'k5':{en:'Drips a patient green.',es:'Escurre un verde paciente.',fr:'Distille un vert patient.'},'k6':{en:'The cold that stops the prey.',es:'El fr\u00edo que detiene a la presa.',fr:'Le froid qui arr\u00eate la proie.'},'k7':{en:'Never cooled since the forge.',es:'Nunca se enfr\u00eda desde la forja.',fr:'Jamais refroidie depuis la forge.'},'k8':{en:'They say it split a throne.',es:'Dicen que parti\u00f3 un trono.',fr:'On dit qu\u2019elle a bris\u00e9 un tr\u00f4ne.'},'k9':{en:'Holds an entire noon.',es:'Guarda un mediod\u00eda entero.',fr:'Renferme un midi entier.'},'k10':{en:'It pulsed inside the mountain.',es:'Lati\u00f3 dentro de la monta\u00f1a.',fr:'A palpit\u00e9 au c\u0153ur de la montagne.'},'k11':{en:'The last light before night.',es:'La \u00faltima luz antes de la noche.',fr:'La derni\u00e8re lueur avant la nuit.'},'k12':{en:'With it, the Vale saw its first day.',es:'Con ella, el Valle vio el primer d\u00eda.',fr:'Avec elle, la Vall\u00e9e vit son premier jour.'},'k13':{en:'Torn from Vharun\u2019s heart.',es:'Arrancado del coraz\u00f3n de Vharun.',fr:'Arrach\u00e9 au c\u0153ur de Vharun.'},'r0':{en:'Creaks, but shoots.',es:'Cruje, pero dispara.',fr:'Grince, mais tire.'},'r1':{en:'A trail companion.',es:'Compa\u00f1ero de senda.',fr:'Compagnon de sentier.'},'r2':{en:'Wood that never forgets.',es:'Madera que no olvida.',fr:'Bois qui n\u2019oublie pas.'},'r3':{en:'Curves that multiply force.',es:'Curvas que multiplican fuerza.',fr:'Des courbes qui d\u00e9multiplient la force.'},'r4':{en:'Sees before the eye.',es:'Ve antes que el ojo.',fr:'Voit avant l\u2019\u0153il.'},'r5':{en:'Arrows slick with venom.',es:'Flechas untadas de veneno.',fr:'Fl\u00e8ches enduites de venin.'},'r6':{en:'The north speaks softly.',es:'El norte habla bajito.',fr:'Le nord parle tout bas.'},'r7':{en:'Hisses with every shot.',es:'Silba en cada disparo.',fr:'Siffle \u00e0 chaque tir.'},'r8':{en:'Misses only on purpose.',es:'Falla solo a prop\u00f3sito.',fr:'Ne rate que volontairement.'},'r9':{en:'Arrows of pure dusk.',es:'Flechas de puro atardecer.',fr:'Fl\u00e8ches de pur cr\u00e9puscule.'},'r10':{en:'Burns between two skies.',es:'Arde entre dos cielos.',fr:'Br\u00fble entre deux ciels.'},'r11':{en:'The whole forest draws the string.',es:'El bosque entero tira de la cuerda.',fr:'La for\u00eat enti\u00e8re tend la corde.'},'r12':{en:'Each arrow carries a thousand leaves.',es:'Cada flecha lleva mil hojas.',fr:'Chaque fl\u00e8che emporte mille feuilles.'},'r13':{en:'The string sings like magma.',es:'La cuerda canta como magma.',fr:'La corde chante comme le magma.'},'m0':{en:'Insists on being a staff.',es:'Insiste en ser bast\u00f3n.',fr:'S\u2019obstine \u00e0 \u00eatre un b\u00e2ton.'},'m1':{en:'Channels the basics well.',es:'Canaliza lo b\u00e1sico bien.',fr:'Canalise bien l\u2019essentiel.'},'m2':{en:'Clear focus.',es:'Foco l\u00edmpido.',fr:'Focalisation limpide.'},'m3':{en:'Runes that hum softly.',es:'Runas que zumban bajito.',fr:'Runes qui bourdonnent tout bas.'},'m4':{en:'Echoes the spell in a whisper.',es:'Repite el hechizo en sordina.',fr:'R\u00e9p\u00e8te le sort en sourdine.'},'m5':{en:'Drips green from the tip.',es:'Escurre verde desde arriba.',fr:'Distille du vert par le sommet.'},'m6':{en:'The air freezes around it.',es:'El aire se congela alrededor.',fr:'L\u2019air g\u00e8le tout autour.'},'m7':{en:'An ember that knows no ash.',es:'Brasa que no conoce ceniza.',fr:'Braise qui ignore la cendre.'},'m8':{en:'Refracts what doesn\u2019t exist.',es:'Refracta lo que no existe.',fr:'R\u00e9fracte ce qui n\u2019existe pas.'},'m9':{en:'Between night and day.',es:'Entre la noche y el d\u00eda.',fr:'Entre la nuit et le jour.'},'m10':{en:'Recalls the lair\u2019s fire.',es:'Recuerda el fuego de la guarida.',fr:'Rappelle le feu du repaire.'},'m11':{en:'Crowned kings the Vale forgot.',es:'Coron\u00f3 reyes que el Valle olvid\u00f3.',fr:'A couronn\u00e9 des rois oubli\u00e9s de la Vall\u00e9e.'},'m12':{en:'A dawn trapped in amber.',es:'Un amanecer atrapado en \u00e1mbar.',fr:'Une aube fig\u00e9e dans l\u2019ambre.'},'m13':{en:'Pulses with the eternal forge\u2019s beat.',es:'Late al ritmo de la forja eterna.',fr:'Bat au rythme de la forge \u00e9ternelle.'},'ko0':{en:'Better than nothing.',es:'Mejor que nada.',fr:'Mieux que rien.'},'ko1':{en:'A firm parry.',es:'Una parada firme.',fr:'Une parade ferme.'},'ko2':{en:'The runes absorb the blow.',es:'Las runas absorben el golpe.',fr:'Les runes absorbent le coup.'},'ko3':{en:'Torn from the devourer itself.',es:'Arrancada del propio devorador.',fr:'Arrach\u00e9e au d\u00e9voreur lui-m\u00eame.'},'ko4':{en:'Salted steel that never yields.',es:'Acero salado que nunca cede.',fr:'Acier sal\u00e9 qui ne c\u00e8de jamais.'},'ro0':{en:'Arrows always at hand.',es:'Flechas siempre a mano.',fr:'Des fl\u00e8ches toujours \u00e0 port\u00e9e.'},'ro1':{en:'Almost instant draw.',es:'Desenfunde casi instant\u00e1neo.',fr:'Tirage presque instantan\u00e9.'},'ro2':{en:'The wind delivers the next.',es:'El viento entrega la siguiente.',fr:'Le vent apporte la suivante.'},'ro3':{en:'Leather the fire respects.',es:'Cuero que el fuego respeta.',fr:'Un cuir que le feu respecte.'},'ro4':{en:'Arrows fletched with harpy feathers.',es:'Flechas emplumadas con plumas de arp\u00eda.',fr:'Fl\u00e8ches empenn\u00e9es de plumes de harpie.'},'mo0':{en:'Loose pages, firm lore.',es:'P\u00e1ginas sueltas, saber firme.',fr:'Pages \u00e9parses, savoir solide.'},'mo1':{en:'A blue that amplifies.',es:'Azul que amplifica.',fr:'Un bleu qui amplifie.'},'mo2':{en:'Written in storm ink.',es:'Escrito con tinta de tormenta.',fr:'\u00c9crit \u00e0 l\u2019encre d\u2019orage.'},'mo3':{en:'Bound in dragon leather.',es:'Encuadernado en cuero de drag\u00f3n.',fr:'Reli\u00e9 en cuir de dragon.'},'mo4':{en:'Pages cured in ancient brine.',es:'P\u00e1ginas curadas en salmuera ancestral.',fr:'Pages trait\u00e9es \u00e0 la saumure ancestrale.'},'a0':{en:'Basic protection.',es:'Protecci\u00f3n b\u00e1sica.',fr:'Protection \u00e9l\u00e9mentaire.'},'a1':{en:'Sewn across a thousand roads.',es:'Cosido en mil caminos.',fr:'Cousu sur mille routes.'},'a2':{en:'Patient links.',es:'Eslabones pacientes.',fr:'Des maillons patients.'},'a3':{en:'Iron head to toe.',es:'Hierro de pies a cabeza.',fr:'Du fer de la t\u00eate aux pieds.'},'a4':{en:'Ancient runes turn the worst aside.',es:'Runas antiguas desv\u00edan lo peor.',fr:'D\u2019anciennes runes d\u00e9tournent le pire.'},'a5':{en:'Tempered in Vorrak\u2019s lair.',es:'Templada en la guarida de Vorrak.',fr:'Tremp\u00e9e dans le repaire de Vorrak.'},'a6':{en:'Northern furs sewn against the cold.',es:'Pieles del norte cosidas contra el fr\u00edo.',fr:'Fourrures du nord cousues contre le froid.'},'a7':{en:'Forged in ashes that never cool.',es:'Forjada en las cenizas que no se enfr\u00edan.',fr:'Forg\u00e9e dans les cendres qui ne refroidissent pas.'},'hp_s':{en:'Restores 80 health.',es:'Restaura 80 de vida.',fr:'Restaure 80 de vie.'},'hp_m':{en:'Restores 180 health.',es:'Restaura 180 de vida.',fr:'Restaure 180 de vie.'},'hp_l':{en:'Restores 340 health.',es:'Restaura 340 de vida.',fr:'Restaure 340 de vie.'},'cure':{en:'Purges poison from the veins.',es:'Purga el veneno de las venas.',fr:'Purge le poison des veines.'}};
 function itemDesc(it){if(!it)return '';const tb=ITEM_DESC[it.id];return (tb&&tb[LANG])||it.desc||'';}
 function itemName(it){if(!it)return '';const tb=ITEM_NAMES[it.id];return (tb&&tb[LANG])||it.name;}
-const BLESS_I18N={dano:{name:{en:'Cruel Edge',es:'Filo Cruel',fr:'Fil Cruel'},desc:{en:'+8% damage',es:'+8% de da\u00f1o',fr:'+8% de d\u00e9g\u00e2ts'}},vida:{name:{en:'Stonewatch Vigor',es:'Vigor de Pedravao',fr:'Vigueur de Pierregarde'},desc:{en:'+12% max health',es:'+12% de vida m\u00e1xima',fr:'+12% de vie max'}},recarga:{name:{en:'Swift Mind',es:'Mente Veloz',fr:'Esprit Vif'},desc:{en:'-7% skill cooldown',es:'-7% de recarga de habilidades',fr:'-7% de recharge des comp\u00e9tences'}},passo:{name:{en:'Gloom Step',es:'Paso de la Tiniebla',fr:'Pas des T\u00e9n\u00e8bres'},desc:{en:'+6% move speed',es:'+6% de velocidad',fr:'+6% de vitesse'}},crit:{name:{en:'Hunter\u2019s Eye',es:'Ojo del Cazador',fr:'\u0152il du Chasseur'},desc:{en:'+5% crit chance',es:'+5% de prob. cr\u00edtica',fr:'+5% de chance critique'}},critd:{name:{en:'Devastating Blow',es:'Golpe Devastador',fr:'Coup D\u00e9vastateur'},desc:{en:'+25% crit damage',es:'+25% de da\u00f1o cr\u00edtico',fr:'+25% de d\u00e9g\u00e2ts critiques'}},orbe:{name:{en:'Voracious Essence',es:'Esencia Voraz',fr:'Essence Vorace'},desc:{en:'Health orbs heal +5%',es:'Los orbes de vida curan +5%',fr:'Les orbes de vie soignent +5%'}},ouro:{name:{en:'Midas Touch',es:'Mano de Midas',fr:'Main de Midas'},desc:{en:'+12% gold looted',es:'+12% de oro saqueado',fr:'+12% d\u2019or pill\u00e9'}},espinhos:{name:{en:'Thornskin',es:'Piel de Espinas',fr:'Peau d\u2019\u00c9pines'},desc:{en:'Reflects 8% of damage taken',es:'Refleja 8% del da\u00f1o recibido',fr:'Renvoie 8% des d\u00e9g\u00e2ts subis'}},vamp:{name:{en:'Dark Thirst',es:'Sed Sombr\u00eda',fr:'Soif Sombre'},desc:{en:'Heals 3% of damage dealt',es:'Cura 3% del da\u00f1o causado',fr:'Soigne 3% des d\u00e9g\u00e2ts inflig\u00e9s'}}};
+const BLESS_I18N={dano:{name:{en:'Cruel Edge',es:'Filo Cruel',fr:'Fil Cruel'},desc:{en:'+8% damage',es:'+8% de da\u00f1o',fr:'+8% de d\u00e9g\u00e2ts'}},vida:{name:{en:'Stonewatch Vigor',es:'Vigor de Pedravao',fr:'Vigueur de Pierregarde'},desc:{en:'+12% max health',es:'+12% de vida m\u00e1xima',fr:'+12% de vie max'}},recarga:{name:{en:'Swift Mind',es:'Mente Veloz',fr:'Esprit Vif'},desc:{en:'-7% skill cooldown',es:'-7% de recarga de habilidades',fr:'-7% de recharge des comp\u00e9tences'}},passo:{name:{en:'Gloom Step',es:'Paso de la Tiniebla',fr:'Pas des T\u00e9n\u00e8bres'},desc:{en:'+0.03s shadow-dodge after being hit',es:'+0,03s de esquiva umbr\u00eda tras recibir golpe',fr:'+0,03s d\u2019esquive d\u2019ombre apr\u00e8s un coup'}},crit:{name:{en:'Hunter\u2019s Eye',es:'Ojo del Cazador',fr:'\u0152il du Chasseur'},desc:{en:'+5% crit chance',es:'+5% de prob. cr\u00edtica',fr:'+5% de chance critique'}},critd:{name:{en:'Devastating Blow',es:'Golpe Devastador',fr:'Coup D\u00e9vastateur'},desc:{en:'+25% crit damage',es:'+25% de da\u00f1o cr\u00edtico',fr:'+25% de d\u00e9g\u00e2ts critiques'}},orbe:{name:{en:'Voracious Essence',es:'Esencia Voraz',fr:'Essence Vorace'},desc:{en:'Health orbs heal +5%',es:'Los orbes de vida curan +5%',fr:'Les orbes de vie soignent +5%'}},ouro:{name:{en:'Midas Touch',es:'Mano de Midas',fr:'Main de Midas'},desc:{en:'+12% gold looted',es:'+12% de oro saqueado',fr:'+12% d\u2019or pill\u00e9'}},espinhos:{name:{en:'Thornskin',es:'Piel de Espinas',fr:'Peau d\u2019\u00c9pines'},desc:{en:'Reflects 8% of damage taken',es:'Refleja 8% del da\u00f1o recibido',fr:'Renvoie 8% des d\u00e9g\u00e2ts subis'}},vamp:{name:{en:'Dark Thirst',es:'Sed Sombr\u00eda',fr:'Soif Sombre'},desc:{en:'Heals 3% of damage dealt',es:'Cura 3% del da\u00f1o causado',fr:'Soigne 3% des d\u00e9g\u00e2ts inflig\u00e9s'}}};
 const ACH_I18N={lvl10:{name:{en:'Veteran',es:'Veterano',fr:'V\u00e9t\u00e9ran'},desc:{en:'Reach level 10',es:'Alcanza el nivel 10',fr:'Atteignez le niveau 10'}},lvl20:{name:{en:'Legend of the Vale',es:'Leyenda del Valle',fr:'L\u00e9gende de la Vall\u00e9e'},desc:{en:'Reach level 20',es:'Alcanza el nivel 20',fr:'Atteignez le niveau 20'}},k100:{name:{en:'Executioner',es:'Verdugo',fr:'Bourreau'},desc:{en:'Defeat 100 creatures',es:'Derrota 100 criaturas',fr:'Vainquez 100 cr\u00e9atures'}},k500:{name:{en:'Scourge of Cindra',es:'Azote de Cindra',fr:'Fl\u00e9au de Cindra'},desc:{en:'Defeat 500 creatures',es:'Derrota 500 criaturas',fr:'Vainquez 500 cr\u00e9atures'}},e10:{name:{en:'Elite Hunter',es:'Caza\u00e9lites',fr:'Chasseur d\u2019\u00c9lites'},desc:{en:'Defeat 10 Elites',es:'Derrota 10 \u00c9lites',fr:'Vainquez 10 \u00c9lites'}},vorrak:{name:{en:'Dragonslayer',es:'Mata-Dragones',fr:'Tueur de Dragon'},desc:{en:'Defeat Vorrak',es:'Derrota a Vorrak',fr:'Vainquez Vorrak'}},thief:{name:{en:'Light-Foot',es:'Pies Ligeros',fr:'Pied L\u00e9ger'},desc:{en:'Catch a Gilded Thief',es:'Alcanza un Ladr\u00f3n Dorado',fr:'Rattrapez un Voleur Dor\u00e9'}},zones:{name:{en:'Cartographer',es:'Cart\u00f3grafo',fr:'Cartographe'},desc:{en:'Discover 9 regions of the Vale',es:'Descubre las 9 regiones del Valle',fr:'D\u00e9couvrez 9 r\u00e9gions de la Vall\u00e9e'}},zones2:{name:{en:'Master Cartographer',es:'Cart\u00f3grafo Mayor',fr:'Cartographe en Chef'},desc:{en:'Discover 13 regions of the expanded Vale',es:'Descubre las 13 regiones del Valle expandido',fr:'D\u00e9couvrez 13 r\u00e9gions de la Vall\u00e9e \u00e9tendue'}},gelido:{name:{en:'Tamer of the North',es:'Domador del Norte',fr:'Dompteur du Nord'},desc:{en:'Defeat a Roaming Frostling',es:'Derrota a un G\u00e9lido Errante',fr:'Vainquez un Glacial Errant'}},trofeus:{name:{en:'Hunt Master',es:'Maestro de Caza',fr:'Ma\u00eetre de Chasse'},desc:{en:'Earn 5 hunt trophies',es:'Consigue 5 trofeos de cacer\u00eda',fr:'Obtenez 5 troph\u00e9es de chasse'}},vharun:{name:{en:'Forgebreaker',es:'Rompeforjas',fr:'Brise-Forge'},desc:{en:'Defeat Vharun, the First Forged',es:'Derrota a Vharun, el Primer Forjado',fr:'Vainquez Vharun, le Premier Forg\u00e9'}},chests:{name:{en:'Treasure Hunter',es:'Cazatesoros',fr:'Chasseur de Tr\u00e9sors'},desc:{en:'Open 5 hidden chests',es:'Abre 5 cofres ocultos',fr:'Ouvrez 5 coffres cach\u00e9s'}},gold5k:{name:{en:'Living Treasure',es:'Tesoro Viviente',fr:'Tr\u00e9sor Vivant'},desc:{en:'Hold 5,000 gold',es:'Acumula 5.000 de oro',fr:'Amassez 5 000 or'}},legend:{name:{en:'Dawnbearer',es:'Portador de la Aurora',fr:'Porteur de l\u2019Aurore'},desc:{en:'Obtain a Legendary item',es:'Consigue un objeto Legendario',fr:'Obtenez un objet L\u00e9gendaire'}}};
 function blessName(b){const tb=BLESS_I18N[b.id];return (tb&&tb.name[LANG])||b.t;}
 function blessDesc(b){const tb=BLESS_I18N[b.id];return (tb&&tb.desc[LANG])||b.d;}
@@ -1027,7 +1068,7 @@ function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi;
   return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
 function fbm(x,y,oct,gain,lac){oct=oct||4;gain=gain||0.5;lac=lac||2;
   let f=0,amp=0.5,frq=1,norm=0;for(let i=0;i<oct;i++){f+=amp*vnoise(x*frq,y*frq);norm+=amp;amp*=gain;frq*=lac;}return f/norm;}
-function shake(a){cam.shake=Math.max(cam.shake,a);}
+function shake(a){if(window._acNoShake)return;cam.shake=Math.max(cam.shake,a);}
 function lighten(hex,d){return shift(hex,d);} function darken(hex,d){return shift(hex,-d);}
 function shift(hex,d){const h=hex.replace('#','');let r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16);
   r=clamp(r+d,0,255);g=clamp(g+d,0,255);b=clamp(b+d,0,255);return `rgb(${r|0},${g|0},${b|0})`;}
@@ -1636,7 +1677,11 @@ function scatterMicro(){
                     o que quebra a silhueta e deixa o jogador atravessar a ruina. */
       for(const d of[[0,0],[2,1]])s(x+d[0],y+d[1],T.dwall);
       for(const d of[[1,0],[0,1],[1,1],[2,0],[-1,1],[1,2]])s(x+d[0],y+d[1],T.ruin);
-      s(x+1,y+1,T.dfloor);},
+      s(x+1,y+1,T.dfloor);
+      /* Auditoria #17: ~1/8 das ruinas guarda um bau raro (semeado apos o boot) */
+      if(typeof window!=='undefined'){window._ruinChests=window._ruinChests||[];
+        if(Math.random()<0.125)window._ruinChests.push({x:x+1,y:y+1});}
+    },
     camp:(x,y)=>{s(x,y,T.brazier);for(const d of[[2,0],[-2,1],[0,2]])s(x+d[0],y+d[1],T.wall);s(x+1,y,T.dfloor);},
     circle:(x,y)=>{for(let a=0;a<6;a++)s(Math.round(x+Math.cos(a/6*6.28)*2.5),Math.round(y+Math.sin(a/6*6.28)*2.5),T.pillar);},
     graves:(x,y)=>{for(const d of[[0,0],[2,0],[0,2],[2,2],[1,1]])s(x+d[0],y+d[1],T.dwall);},
@@ -2300,7 +2345,7 @@ const POIManager = {
       player.gold += g2;
       addFloater(player.px, player.py - TILE * 0.7, '+' + g2 + ' ouro', '#e8c15a');
       const id = this._lootFor(p.x, p.y, p.rar || 'common');
-      if (id) { pushBag(id, 1); addMessage(t('m_treasure') + ' ' + itemName(itemById(id)), 'good'); }
+      if (id) { pushBag(id, 1); try{fxRarity(itemById(id));}catch(e){} addMessage(t('m_treasure') + ' ' + itemName(itemById(id)), 'good'); }
       SFX.gold(); shake(3); buzz(30); saveGame();       // persiste imediatamente
     } else {                                            // 'cave': entra na masmorra (camada vertical)
       DungeonLayer.enter(p);                            // gera sub-mapa, troca o estado do mundo
@@ -3857,6 +3902,30 @@ function taskAbandon(k){meta.tasks.active=meta.tasks.active.filter(a=>a!==k);
   meta.tasks.prog[k]=0;saveGame();renderQuests();}
 function xpForLevel(l){return Math.floor(50*Math.pow(l,2.15));}
 function xpFloor(){return player.lvl>1?xpForLevel(player.lvl):0;}
+
+function fxRarity(it){ /* Auditoria #8+#21+#52: o prêmio merece cerimônia */
+  try{
+    if(!it||!it.rar)return;
+    var R=(typeof RAR!=='undefined'&&RAR[it.rar])?RAR[it.rar]:null; if(!R)return;
+    var big=(it.rar==='legendary'||it.rar==='mythic');
+    if(it.rar==='epic'||big){
+      addRing(player.px,player.py,R.c,TILE*(big?1.5:1.1),big?0.7:0.5);
+      addFloater(player.px,player.py-TILE*1.05,itemName(it),R.c);
+      try{fxLight(player.px,player.py,TILE*(big?3:2.2),R.c,big?1.4:0.8);}catch(e){}
+      try{ if(big){sfxEl('holy',1.2);}else{SFX.gold();} }catch(e){}
+      if(big)try{hitStop=Math.max(hitStop,0.03);}catch(e){}
+    }
+    /* #21: 1º raro+ da vida deste heroi -> apontar a forja */
+    if(!meta.fH&&(it.rar==='rare'||it.rar==='epic'||big)){
+      meta.fH=1;
+      var F={pt:'Dica: itens assim ficam mais fortes na FORJA da vila.',
+             en:'Tip: items like this grow stronger at the village FORGE.',
+             es:'Consejo: objetos as\u00ed se fortalecen en la FORJA de la aldea.',
+             fr:'Astuce : ces objets se renforcent \u00e0 la FORGE du village.'};
+      addMessage(F[(typeof Lg!=='undefined'&&F[Lg])?Lg:'pt'],'sys');
+    }
+  }catch(e){}
+}
 function pushBag(id,c=1){const _it=itemById(arguments[0]);if(_it&&_it.rar==='legendary'&&meta&&meta.stats)meta.stats.legend=1;const e=player.bag.find(b=>b.id===id);if(e)e.count+=c;else player.bag.push({id,count:c});}
 function takeBag(id,c=1){const e=player.bag.find(b=>b.id===id);if(!e)return false;e.count-=c;if(e.count<=0)player.bag=player.bag.filter(b=>b!==e);return true;}
 function recompute(){
@@ -3890,6 +3959,7 @@ function recompute(){
   player.xpMul=1+_bv('saber',0.10,5)+_cp('m_lucidez',0.08)+_cp('r_folego',0.05);
   player.potMul=1+_bv('alquimia',0.15,5)+_cp('m_elixir',0.12);
   player.luck=_bv('sorte',0.08,5)+_cp('r_rastro',0.07);
+  player.invT=0.15+_bv('passo',0.03,5);   /* Passo do Breu: esquiva das sombras (invuln pós-golpe) */
   player.dmgRed=Math.min(0.60,_bv('couraca',0.04,6)+_cp('k_baluarte',0.03)+_cp('m_barreira',0.03));
   player.orbHeal=0.12+_bv('orbe',0.05,4)+_cp('m_essencia',0.04);
   player.thorns=Math.min(1.2,_bv('espinhos',0.08,5)+_cp('k_retribui',0.05));
@@ -3944,7 +4014,7 @@ function spawnMonster(sp){const d=MTYPES[sp.type];if(sp&&typeof isSafeZone==='fu
     hp:d.hp,maxhp:d.hp,face:'down',moving:false,mprog:0,mdur:d.step,tox:0,toy:0,fromx:0,fromy:0,stepMul:1,
     atkCd:0,hurtFlash:0,anim:rnd(6),wander:0,slow:0,poison:0,poisonT:0,burn:0,burnT:0,home:sp,dead:false,rangedCd:rnd(3),swing:0,windup:0,atkDir:null,chargeWind:0,charging:0,chargeCd:rnd(4,2),_omdur:0};
   const _ec=[0.02,0.05,0.07,0.10,0.14,0.18][dangerAt(sp.x,sp.y)]||0.07;
-  if(!d.boss&&!d.flee&&Math.random()<_ec){
+  if(!d.boss&&!d.flee&&Math.random()<_ec*(_wkAct(2)?1.6:1)){
     const AF=[{n:'Veloz',c:'#7fd4ff',k:'fast',g:'ice'},{n:'Brutal',c:'#ff8a4a',k:'brute',g:'fire'},
       {n:'Vampírico',c:'#ff5aa0',k:'vamp',g:'holy'},{n:'Férreo',c:'#c8cdd8',k:'iron',g:'warm'},
       {n:'Explosivo',c:'#ffd24a',k:'boom',g:'fire'},
@@ -3996,7 +4066,7 @@ function _dropCls(){ /* 20% de chance de dropar item de OUTRA vocacao (pra vende
   return player.cls;
 }
 function dropLoot(m){const b={gold:0,items:[]};
-  const _lk=1+(player.luck||0);   /* perk: Sorte do Errante / Rastro Frio */
+  const _lk=(1+(player.luck||0))*(_wkAct(3)?1.2:1);   /* perk: Sorte do Errante / Rastro Frio */
   for(const e of m.d.loot){if(!chance(e.id==='gold'?e.p:Math.min(1,e.p*_lk)))continue;
     if(e.id==='gold')b.gold+=ri(e.min||1,e.max||1);
     else if(e.w!==undefined)b.items.push(WEAPONS[player.cls][e.w].id);
@@ -4085,6 +4155,18 @@ function strikeMonster(m,mult=1){
   const el=player.el;
   const eb=el!=='none'?Math.round(dmg*(elemMult(el,m.d.type)-1)):0;
   let total=Math.max(1,Math.round(dmg+eb-(m.d.def*rnd(1,.4))-(m.d.arm+(m.armB||0))*0.5));
+   /* Auditoria #5: revelar o sistema elemental — 1 aviso por tipo+sinal a cada 4s */
+   if(eb!==0){
+     window._elFlT=window._elFlT||{};
+     const _ek=m.d.type+(eb>0?'+':'-'), _en=Date.now();
+     if(!_elFlT[_ek]||_en-_elFlT[_ek]>4000){
+       _elFlT[_ek]=_en;
+       const _et={pt:['vulner\u00e1vel!','resistente\u2026'],en:['vulnerable!','resistant\u2026'],
+                  es:['\u00a1vulnerable!','resistente\u2026'],fr:['vuln\u00e9rable !','r\u00e9sistant\u2026']};
+       const _ea=(_et[(typeof Lg!=='undefined'&&_et[Lg])?Lg:'pt'])[eb>0?0:1];
+       try{addFloater(m.px,m.py-TILE*0.95,_ea,eb>0?'#a8e060':'#8a90a0');}catch(e){}
+     }
+   }
   var _execB=0; if(player.wfx==='exec'&&!m.d.boss&&m.hp<=m.maxhp*0.30){total=Math.round(total*1.7);_execB=1;}  /* carrasco */
   m.hp-=total;m.hurtFlash=1;
   {const fdx=Math.sign(m.px-player.px)||0.5,fdy=Math.sign(m.py-player.py);
@@ -4215,9 +4297,18 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
       const dd=cheby(o.tx,o.ty,player.tx,player.ty);if(dd<=Math.max(1,player.rng)&&dd<nd){nd=dd;nx=o;}}
     if(nx){player.target=nx;player.autoTgt=true;}}
   monsters=monsters.filter(x=>x!==m);renderBattle();}
-function giveXp(x){x=Math.round(x*(player.xpMul||1));player.xp+=x;   /* perk: Saber Antigo / Lucidez */const _lv0=player.lvl;
+function giveXp(x){x=Math.round(x*(player.xpMul||1)*(_wkAct(1)?1.2:1));player.xp+=x;   /* perk: Saber Antigo / Lucidez */const _lv0=player.lvl;
   while(player.xp>=xpForLevel(player.lvl+1)){player.lvl++;recompute();player.hp=player.maxhp;
     SFX.level();buzz([30,50,40,30]);centerMsg(tf('c_lvl',{lvl:player.lvl}));addMessage(tf('msg_lvlup',{lvl:player.lvl}),'good');
+    window._justLvl=Date.now();
+    try{ /* Auditoria #7: o momento-poder mais barato do jogo, agora celebrado */
+      SPELL_ORDER.filter(function(id){return SPELLS[id].cls===player.cls&&SPELLS[id].lv===player.lvl;})
+        .forEach(function(id){
+          var P={pt:'\u2726 Nova habilidade: ',en:'\u2726 New skill: ',es:'\u2726 Nueva habilidad: ',fr:'\u2726 Nouvelle comp\u00e9tence : '};
+          addMessage((P[(typeof Lg!=='undefined'&&P[Lg])?Lg:'pt'])+SPELLS[id].name+'!','good');
+          try{fxLight(player.px,player.py,TILE*2.4,'#e8c15a',1.0);}catch(e){}
+        });
+    }catch(e){}
     const _lc=CLASSES[player.cls].col;
     addRing(player.px,player.py,'#fff4d0',TILE*1.4,0.42);        /* anel interno rápido */
     addRing(player.px,player.py,_lc,TILE*2.6,0.72);              /* anel da classe */
@@ -4256,7 +4347,7 @@ function applyPlayerDamage(dmg,src){
      10*(1-0.12000000000000001) = 8.799999999999999 e o numero flutuante aparecia inteiro na tela.
      Math.max(1,...) preserva a regra antiga de que todo golpe que acerta tira ao menos 1. */
   dmg=Math.max(1,Math.round(dmg*(1-(player.dmgRed||0))));
-  player.hp-=dmg;player.hurtFlash=1;player.invuln=0.15;
+  player.hp-=dmg;player.hurtFlash=1;player.invuln=Math.max(player.invuln||0,player.invT||0.15);
   addFloater(player.px,player.py-TILE*0.6,'-'+dmg,'#ff7a6a');SFX.hurt();buzz(24);
   if(player.rng<=1)shake(Math.min(8,3+dmg*0.12));  // ranged não treme a câmera (não atrapalha a mira)
   if(dmg>player.maxhp*0.15&&player.rng<=1)hitStop=Math.min(0.09,Math.max(hitStop,0.04));
@@ -4621,7 +4712,13 @@ function explodeAt(x,y){
   addParticles(x,y,12,{col:'#ffd9a0',spd:90,life:0.4,size:2.6,glow:true});
   for(const m of monsters.slice()){
     if(dist(m.px,m.py,x,y)<=TILE*1.7)strikeMonster(m,1.25);}}
-function renderSkillLocks(){['sk1','sk2','sk6','sk7'].forEach(id=>{const el=$(id);if(!el||!el.querySelector)return;el.classList.remove('locked');const lk=el.querySelector('.lk');if(lk)lk.style.display='none';});}
+function renderSkillLocks(){['sk1','sk2','sk6','sk7'].forEach(id=>{const el=$(id);if(!el||!el.querySelector)return;
+    const was=el.classList.contains('locked');
+    el.classList.remove('locked');const lk=el.querySelector('.lk');if(lk)lk.style.display='none';
+    /* pulso dourado no slot que ACABOU de abrir (janela de 2,5s pós-level) */
+    if(was&&window._justLvl&&Date.now()-window._justLvl<2500){
+      el.classList.add('skNew');setTimeout(()=>{try{el.classList.remove('skNew');}catch(e){}},3400);
+    }});}
 
 
 function usePotion(kind){if(player.dead||cd.pot>0)return;
@@ -5167,10 +5264,11 @@ function updateLoot(dt){for(const L of loots){L.t+=dt;
         if(SFX.pickup)SFX.pickup();addParticles(player.px,player.py,16,{col:'#b9e0ff',spd:90,life:0.7,size:2.4,glow:true,up:16});
         giveXp(_xp);saveGame();}}}
   compact(loots,_keepAlive);}
-function pickupLoot(L){if(L.gold>0){const g2=Math.round(L.gold*(player.goldMul||1));player.gold+=g2;qProg('gold',g2);addFloater(player.px,player.py-TILE*0.7,'+'+g2+' ouro','#e8c15a');SFX.gold();}
-  for(const id of L.items){if(!itemById(id))continue;pushBag(id,1);const it=itemById(id);addMessage(t('m_got')+' '+itemName(it),'good');}
+function pickupLoot(L){if(L.gold>0){const g2=Math.round(L.gold*(player.goldMul||1)*(_wkAct(0)?1.25:1));player.gold+=g2;qProg('gold',g2);addFloater(player.px,player.py-TILE*0.7,'+'+g2+' ouro','#e8c15a');SFX.gold();}
+  for(const id of L.items){if(!itemById(id))continue;pushBag(id,1);const it=itemById(id);fxRarity(it);addMessage(t('m_got')+' '+itemName(it),'good');}
   if(L.items.length)SFX.pickup();
   if(L.items.some(id=>{const it=itemById(id);return it&&(it.rar==='legendary'||it.rar==='epic');})){shake(4);buzz([20,30,20]);centerMsg(t('rare_item'));}
+  if(L._rc){meta.rc=meta.rc||{};meta.rc[L._rc]=1;}
   updateInvIfOpen();}
 function updateCamera(dt){
   const fv={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[player.face]||[0,0];
@@ -6197,6 +6295,15 @@ function drawMonster(m,ox,oy){const cx=m.px-ox+(m.flinchX||0),cy=m.py-oy+(m.flin
     B.strokeStyle=m.elite.c;B.globalAlpha=0.45+pu*0.4;B.lineWidth=2;
     B.beginPath();B.ellipse(cx,cy+TILE*0.3*S,TILE*0.4*S+pu*3,TILE*0.19*S+pu*1.5,0,0,7);B.stroke();
     B.globalAlpha=1;}
+  /* Auditoria #28: status nunca so por cor — glifos sobre o alvo */
+  if(m.poison>0||m.slow>0){
+    let _gx=cx-(m.poison>0&&m.slow>0?6:0), _gy=cy-TILE*0.72*S;
+    if(m.poison>0){B.fillStyle='#2e4a22';B.beginPath();B.arc(_gx,_gy,3.4,0,7);B.fill();
+      B.fillStyle='#a8e060';B.beginPath();B.arc(_gx,_gy-0.6,2.1,0,7);B.fill();
+      B.fillRect(_gx-0.8,_gy+1.6,1.6,2.4); _gx+=12;}
+    if(m.slow>0){B.fillStyle='#12303a';B.save();B.translate(_gx,_gy);B.rotate(Math.PI/4);
+      B.fillRect(-3,-3,6,6);B.fillStyle='#bfe0ea';B.fillRect(-1.9,-1.9,3.8,3.8);B.restore();}
+  }
   _flash=m.hurtFlash>0.5;
   let _lx=0,_ly=0;const _ad=m.atkDir;
   if(m.windup>0&&_ad){const _wt=0.26+m.d.size*0.14,wp=m.windup/_wt,pu=1-wp;const pull=Math.sin(pu*Math.PI)*3;_lx=-_ad[0]*pull;_ly=-_ad[1]*pull;
@@ -6456,7 +6563,7 @@ function bmZoomInit(){const v=$('bmView');if(!v||v._zoomed)return;v._zoomed=1;
   const zi=$('bmZIn'),zo=$('bmZOut');
   if(zi)zi.onclick=()=>bmSetZoom(bmZ.z*1.35);
   if(zo)zo.onclick=()=>bmSetZoom(bmZ.z/1.35);}
-function openBigMap(){closeAllPanels();renderBigMap();
+function openBigMap(){closeAllPanels();renderBigMap();try{_wpRenderBar();}catch(e){}
   bmZ.z=1;bmZ.px=0;bmZ.py=0;bmApply();bmZoomInit();
   $('bigmap').classList.remove('hidden');}
 function roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
@@ -8174,7 +8281,7 @@ function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
   else if(k==='armor')stats=`${t('tip_armor')} +${it.arm}`+(it.hp?`<br>${t('life')} +${it.hp}`:'')+(it.fireRes?`<br>${t('tip_fireres')} ${Math.round(it.fireRes*100)}%`:'')+`<br>${t('tip_reqlvl')} ${it.req}`;
   else stats=it.kind==='hp'?tf('tip_restores',{n:it.amt}):t('tip_purge');
   const kindLab=k==='weapon'?t('weapon'):k==='off'?classOff(it.cls||player.cls):k==='armor'?t('armor'):t('kind_consumable');
-  tp.innerHTML=`<div class="tn" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="tr">${rarName(it.rar)} · ${kindLab}</div><div class="st">${stats}</div><div class="desc">${itemDesc(it)}</div>`;
+  tp.innerHTML=`<div class="tn" style="color:${RAR[it.rar].c}">${itemName(it)}</div><div class="tr">${rarName(it.rar)} · ${kindLab}</div><div class="st">${stats}</div><div class="desc">${itemDesc(it)}</div>`;try{tp.innerHTML+=_cmpBlock(it);}catch(e){}
   try{
     var _k=itemKind(it);
     var _slotMap={weapon:'weapon',off:'shield',armor:'armor',head:'head',legs:'legs'};
@@ -8216,7 +8323,7 @@ function openShop(kind='shop'){closeAllPanels();shopKind=kind;
   $('shopTitle').textContent=kind==='smith'?t('shop_smith'):kind==='psmith'?t('shop_psmith'):kind==='alch'?t('shop_alch'):kind==='wander'?t('shop_wander'):t('shop_merchant');
   $('shop').classList.remove('hidden');renderShop();}
 function closeShop(){$('shop').classList.add('hidden');window._acPanelShield=Date.now()+450;}
-function renderShop(){$('shopGold').textContent=player.gold;const rows=$('shopRows');rows.innerHTML='';
+function renderShop(){$('shopGold').textContent=player.gold;try{setTimeout(_monRenderRow,0);}catch(e){}const rows=$('shopRows');rows.innerHTML='';
   if(typeof window._shopTab==='undefined')window._shopTab='buy';
   var _L=(typeof LANG!=='undefined'?LANG:'pt');
   var _TB={
@@ -8699,7 +8806,7 @@ const DungeonLayer={
     meta.dungeons=meta.dungeons||{};
     const st=meta.dungeons[poi.id]=meta.dungeons[poi.id]||{deepest:1,opened:{},secrets:{}};
     const depth=Math.min(10,st.deepest||1);   // andares 1-10; retoma no mais fundo alcançado
-    this.active=true;this._build(depth);
+    this.active=true; try{_wkAnnounce();}catch(e){}this._build(depth);
     addMessage(t('dng_enter').replace('{d}',this.depth),'sys');shake(4);buzz(30);if(SFX.pickup)SFX.pickup();saveGame();
   },
   descend(){if(!this.active)return;
@@ -8707,6 +8814,16 @@ const DungeonLayer={
        Andares 1..10: livres, exatamente como antes (nada muda p/ quem ja joga).
        Andares 11+: exigem nivel (D-10)*10  =>  11:nv10  20:nv100  30:nv200  40:nv300 */
     var _nd=this.depth+1;
+      try{ /* Auditoria #25: competir consigo antes do placar */
+        if(!meta.bestFloor)meta.bestFloor=0;
+        if(_nd>meta.bestFloor&&_nd>=3){
+          meta.bestFloor=_nd;
+          var RB={pt:'\u2605 NOVO RECORDE \u2014 Andar ',en:'\u2605 NEW RECORD \u2014 Floor ',
+                  es:'\u2605 NUEVO R\u00c9CORD \u2014 Piso ',fr:'\u2605 NOUVEAU RECORD \u2014 \u00c9tage '};
+          addMessage((RB[(typeof Lg!=='undefined'&&RB[Lg])?Lg:'pt'])+_nd+'!','good');
+          try{addFloater(player.px,player.py-TILE*0.9,'\u2605 '+_nd,'#ffd76a');SFX.gold();}catch(e){}
+        }else if(_nd>meta.bestFloor){meta.bestFloor=_nd;}
+      }catch(e){}
     if(_nd>window._DNG_MAX){ addMessage(_dngT('max').replace('{d}',window._DNG_MAX),'sys'); this.downReady=false; return; }
     var _req=_dngReq(_nd);
     if(player.lvl<_req){ addMessage(_dngT('req').replace('{d}',_nd).replace('{n}',_req),'sys');
@@ -8874,7 +8991,7 @@ const BLESS=[
  {id:'dano',ic:'&#9876;&#65039;',t:'Fio Cruel',d:'+8% de dano',mx:25},
  {id:'vida',ic:'&#10084;&#65039;',t:'Vigor de Pedravau',d:'+12% de vida m\u00e1xima',mx:25},
  {id:'recarga',ic:'&#9203;',t:'Mente C\u00e9lere',d:'-7% de recarga das habilidades',mx:25},
- {id:'passo',ic:'&#128168;',t:'Passo do Breu',d:'+6% de velocidade de movimento',mx:25},
+ {id:'passo',ic:'&#128168;',t:'Passo do Breu',d:'+0,03s de esquiva das sombras ap\u00f3s levar golpe',mx:5}, /* repropósito aprovado: era velocidade (efeito morto) */
  {id:'crit',ic:'&#127919;',t:'Olho do Ca\u00e7ador',d:'+5% de chance cr\u00edtica',mx:25},
  {id:'critdmg',ic:'&#128165;',t:'Golpe Devastador',d:'+25% de dano cr\u00edtico',mx:25},
  {id:'orbe',ic:'&#128308;',t:'Ess\u00eancia Voraz',d:'Orbes de vida curam +5%',mx:25},
@@ -9031,7 +9148,15 @@ function dailyCheck(){const td=todayStr();
 function renderDaily(streak){const day=((streak-1)%7)+1;const r=DAILY_R[day-1];
   let itens='';for(const id in (r.it||{})){const it=itemById(id);itens+=`<div class="drow">${r.it[id]}\u00d7 ${itemName(it)}</div>`;}
   $('dailyBody').innerHTML=`<div class="dday">Dia ${day} de 7 <small>\u00b7 sequência de ${streak} ${streak>1?'dias':'dia'}</small></div>
-    <div class="drow" style="color:#ffd76a">+${r.g} de ouro</div>${itens}`;}
+    <div class="drow" style="color:#ffd76a">+${r.g} de ouro</div>${itens}${day<7?_d7T():''}`;}
+
+function _d7T(){ /* Auditoria #23: antecipacao declarada retem mais que surpresa */
+  try{
+    var r=DAILY_R[6], its='';
+    for(var id in (r.it||{})){var it=itemById(id); if(it)its+=' + '+r.it[id]+'\u00d7 '+itemName(it);}
+    return '<div class="drow dteaser">\u2605 Dia 7: +'+r.g+' de ouro'+its+'</div>';
+  }catch(e){ return ''; }
+}
 function claimDaily(){if(_pendingDaily==null)return;
   const streak=_pendingDaily;const day=((streak-1)%7)+1;const r=DAILY_R[day-1];
   player.gold+=r.g;for(const id in (r.it||{}))pushBag(id,r.it[id]);
@@ -9216,7 +9341,7 @@ function init(){
     if(p&&p.length){player.path=p;player.target=null;}
     else if(typeof toast==='function')toast(t('msg_map_blocked'));
   };$('bmClose').onclick=closeAllPanels;
-  $('mmIn').onclick=e=>{e.stopPropagation();miniZoom=Math.min(12,miniZoom+2);renderMinimap();};
+  $('mmIn').onclick=e=>{e.stopPropagation();miniZoom=Math.min(12,miniZoom+2);renderMinimap();try{_miniCompass();}catch(e){}};
   $('mmOut').onclick=e=>{e.stopPropagation();miniZoom=Math.max(3,miniZoom-2);renderMinimap();};
   $('mmBig').onclick=e=>{e.stopPropagation();openBigMap();};
   $('btnQuests').onclick=openQuests;$('qClose').onclick=closeAllPanels;$('dailyBtn').onclick=claimDaily;$('tracker').onclick=(e)=>{ if(e.target&&e.target.closest&&e.target.closest('.tHead')){trackerOpen=false;renderTracker();} else openQuests(); };
@@ -9312,7 +9437,7 @@ try{(function(){
   for(var id in C){var a=C[id]; var isBoss=(a[K.ro]==='boss');
     MONPNG_SRC[id]=id+'.png';
     MTYPES[id]={id:id,name:a[K.n],type:a[K.ty],hp:a[K.hp],dmin:a[K.dl],dmax:a[K.dh],def:a[K.df],arm:a[K.ar],
-      step:300,xp:a[K.xp],aggro:a[K.ag],size:a[K.sz],col:'#6b6b74',draw:'_ph',
+      step:300,xp:a[K.xp],aggro:a[K.ag],size:a[K.sz],col:'#6b6b74',draw:(a[K.dr]||'_ph'),   /* BUG: draw estava carimbado como placeholder ('_ph' = bolinha cinza) e ignorava a familia que o proprio dado ja trazia no indice K.dr. 155 criaturas desenhavam como bolha. */
       beh:isBoss?'boss':'chase', slam:false, pois:false,
       _biome:a[K.bi],_tier:a[K.ti],_fmin:a[K.fm],_fmax:a[K.fx],boss:isBoss,
       loot:[{id:'gold',p:1,min:Math.max(1,Math.round(a[K.xp]*0.35)),max:Math.max(3,Math.round(a[K.xp]*1.1))},
@@ -12403,6 +12528,398 @@ try{ window.addEventListener('resize',function(){_badgeYc=null;_badgeHc=-1;}); }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,900);});
   else setTimeout(wire,900);
+})();
+
+/* ============ VIAGEM RÁPIDA + DESCOBERTA DE MARCOS (Auditoria #1, #2, #4, #5) ============
+   Marcos descobertos (chegar a ~7 casas) liberam teleporte pago em ouro no mapa grande.
+   A primeira travessia continua a pé (ela ensina); a décima ganha atalho (ela entediava).
+   Descobrir paga na hora (ouro+XP): curiosidade com selo. A Vila vem liberada de fábrica.
+   Coordenadas em espaço-de-mapa; marcos do LANDMARK_SPRITES levam +WOFF. */
+var WAYPOINTS=[
+  {id:'vila',    n:'Vila de Pedravau',      x:218,        y:278},
+  {id:'porto',   n:'Porto de Brumal',       x:126,        y:305},
+  {id:'arvore',  n:'\u00c1rvore Ancestral', x:332+WOFF,   y:214+WOFF+2},
+  {id:'espada',  n:'Espada do Tit\u00e3',   x:128+WOFF,   y:370+WOFF+2},
+  {id:'mosteiro',n:'Mosteiro da Montanha',  x:335+WOFF,   y:112+WOFF+2},
+  {id:'castelo', n:'Castelo Negro',         x:406+WOFF,   y:398+WOFF+2},
+  {id:'karghast',n:'Karghast',              x:425+WOFF,   y:428+WOFF+2}
+];
+var _WPI={
+  pt:{disc:'Marco descoberto: {n}! Viagem r\u00e1pida liberada no mapa.',bar:'Viagem r\u00e1pida',
+      dun:'A masmorra o prende \u2014 viaje da superf\u00edcie.',poor:'Ouro insuficiente para a viagem.',
+      hint:'Dizem na vila que uma \u00c1rvore colossal, a nordeste, concede um dom a quem a encontra.'},
+  en:{disc:'Landmark discovered: {n}! Fast travel unlocked on the map.',bar:'Fast travel',
+      dun:'The dungeon holds you \u2014 travel from the surface.',poor:'Not enough gold to travel.',
+      hint:'Villagers say a colossal Tree to the northeast grants a gift to those who find it.'},
+  es:{disc:'\u00a1Hito descubierto: {n}! Viaje r\u00e1pido desbloqueado en el mapa.',bar:'Viaje r\u00e1pido',
+      dun:'La mazmorra te retiene \u2014 viaja desde la superficie.',poor:'Oro insuficiente para viajar.',
+      hint:'Dicen que un \u00c1rbol colosal, al noreste, concede un don a quien lo encuentra.'},
+  fr:{disc:'Rep\u00e8re d\u00e9couvert : {n} ! Voyage rapide d\u00e9bloqu\u00e9 sur la carte.',bar:'Voyage rapide',
+      dun:'Le donjon vous retient \u2014 voyagez depuis la surface.',poor:'Or insuffisant pour voyager.',
+      hint:'On dit qu\u2019un Arbre colossal, au nord-est, offre un don \u00e0 qui le trouve.'}
+};
+function _wpL(){try{return _WPI[Lg]?Lg:'pt';}catch(e){return 'pt';}}
+function _wpEnsure(){if(!meta.wp)meta.wp={};if(!meta.wp.vila)meta.wp.vila=1;}
+function wpCost(w){const d=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y));
+  return Math.round((30+d*1.2)*(1+player.lvl*0.03));}
+function _wpDiscover(w){
+  _wpEnsure(); if(meta.wp[w.id])return;
+  meta.wp[w.id]=1;
+  const g=150+player.lvl*15, xp=Math.round(60+player.lvl*22);
+  player.gold+=g; try{giveXp(xp);}catch(e){}
+  try{addMessage(_WPI[_wpL()].disc.replace('{n}',w.n),'good');}catch(e){}
+  try{addFloater(player.px,player.py-TILE*0.8,'+'+g+' \u25c8','#ffcf5a');}catch(e){}
+  try{SFX.level();}catch(e){}
+  try{fxLight(player.px,player.py,TILE*2.6,'#e8c15a',1.2);}catch(e){}
+  try{if(typeof saveGame==='function')saveGame();}catch(e){}
+}
+function wpTravel(id){
+  _wpEnsure();
+  const w=WAYPOINTS.find(v=>v.id===id); if(!w||!meta.wp[w.id])return false;
+  if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active){try{addMessage(_WPI[_wpL()].dun,'sys');}catch(e){} return false;}
+  const c=wpCost(w);
+  if(player.gold<c){try{addMessage(_WPI[_wpL()].poor,'sys');}catch(e){} return false;}
+  player.gold-=c;
+  try{fxGather('arcane',player.px,player.py);sfxEl('arcane',1);}catch(e){}
+  /* pouso: procura casa pisável em espiral curta a partir do destino */
+  let tx=w.x,ty=w.y,ok=false;
+  outer: for(let r=0;r<5;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+    try{if(walkable(w.x+dx,w.y+dy)){tx=w.x+dx;ty=w.y+dy;ok=true;break outer;}}catch(e){}
+  }
+  placeAt(tx,ty);
+  player.target=null;player.path=[];player.invuln=Math.max(player.invuln||0,0.8);
+  try{fxBurst('arcane',player.px,player.py,1.2);fxLight(player.px,player.py,TILE*2.4,'#b9a8ff',0.8);}catch(e){}
+  try{showZone(zoneAt(tx,ty));}catch(e){}
+  try{addFloater(player.px,player.py-TILE*0.8,'-'+c+' \u25c8','#ffcf5a');}catch(e){}
+  try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  const bm=document.getElementById('bigmap'); if(bm)bm.classList.add('hidden');
+  return true;
+}
+
+
+/* ============ REGRA DA SEMANA NA MASMORRA (Auditoria #15) ============
+   Uma regra rotativa, deterministica pelo calendario (mesma para todos os
+   jogadores), valida SO dentro da masmorra. Novidade barata de veterano:
+   toda semana a descida tem um tempero diferente. */
+function _wkIdx(){ if(window._wkForce!=null)return window._wkForce;
+  return Math.floor((Date.now()/864e5+3)/7)%4; }
+function _wkAct(i){ try{ return (typeof DungeonLayer!=='undefined'&&DungeonLayer.active&&_wkIdx()===i); }catch(e){ return false; } }
+function _wkAnnounce(){
+  try{
+    var N={pt:['OURO DO PROFUNDO \u2014 +25% de ouro','SABEDORIA DAS PEDRAS \u2014 +20% de XP',
+               'SEMANA DAS ELITES \u2014 elites \u00d71,6','M\u00c3OS \u00c1VIDAS \u2014 +20% de esp\u00f3lio'],
+           en:['DEEP GOLD \u2014 +25% gold','WISDOM OF STONES \u2014 +20% XP',
+               'ELITE WEEK \u2014 elites \u00d71.6','GREEDY HANDS \u2014 +20% loot'],
+           es:['ORO PROFUNDO \u2014 +25% de oro','SABIDUR\u00cdA DE PIEDRA \u2014 +20% de XP',
+               'SEMANA DE \u00c9LITES \u2014 \u00e9lites \u00d71,6','MANOS \u00c1VIDAS \u2014 +20% de bot\u00edn'],
+           fr:['OR DES PROFONDEURS \u2014 +25% d\u2019or','SAGESSE DES PIERRES \u2014 +20% d\u2019XP',
+               'SEMAINE DES \u00c9LITES \u2014 \u00e9lites \u00d71,6','MAINS AVIDES \u2014 +20% de butin']};
+    var P={pt:'\u2726 Regra da semana: ',en:'\u2726 Rule of the week: ',es:'\u2726 Regla de la semana: ',fr:'\u2726 R\u00e8gle de la semaine : '};
+    var lg=(typeof Lg!=='undefined'&&N[Lg])?Lg:'pt';
+    addMessage(P[lg]+N[lg][_wkIdx()],'good');
+  }catch(e){}
+}
+
+/* ============ MONUMENTO DO VALE (Auditoria #16 — sink de prestigio) ============
+   5 patamares de doacao (~6,35M no total) pagos em PRESTIGIO, nunca em poder:
+   titulo honorario ao lado do nome, braseiros acendendo ao redor do centro da vila
+   (1 por patamar; o tick recoloca apos trocas de mapa) e nome dourado no ultimo.
+   O ouro do fim de jogo finalmente tem onde morrer com orgulho. */
+var MON_T=[50000,200000,600000,1500000,4000000];
+var MON_SPOTS=[[216,276],[220,276],[216,280],[220,280],[218,275]];
+var _MONI={
+  pt:{tt:['Doador','Patrono','Benfeitor','Guardi\u00e3o','Lenda do Vale'],
+      name:'Monumento do Vale',don:'Doar',lvl:'Patamar',
+      up:'\u2756 O Monumento cresce \u2014 voc\u00ea agora \u00e9 ',full:'O Vale lembra seu nome.'},
+  en:{tt:['Donor','Patron','Benefactor','Guardian','Legend of the Vale'],
+      name:'Monument of the Vale',don:'Donate',lvl:'Tier',
+      up:'\u2756 The Monument grows \u2014 you are now ',full:'The Vale remembers your name.'},
+  es:{tt:['Donante','Patrono','Benefactor','Guardi\u00e1n','Leyenda del Valle'],
+      name:'Monumento del Valle',don:'Donar',lvl:'Nivel',
+      up:'\u2756 El Monumento crece \u2014 ahora eres ',full:'El Valle recuerda tu nombre.'},
+  fr:{tt:['Donateur','Patron','Bienfaiteur','Gardien','L\u00e9gende du Val'],
+      name:'Monument du Val',don:'Donner',lvl:'Palier',
+      up:'\u2756 Le Monument grandit \u2014 vous \u00eates d\u00e9sormais ',full:'Le Val se souvient de votre nom.'}};
+function _monL(){try{return _MONI[Lg]?Lg:'pt';}catch(e){return 'pt';}}
+function _monApply(){
+  try{
+    var n=meta.mon||0, pn=document.getElementById('pname'); if(!pn)return;
+    var t=document.getElementById('pTitle');
+    if(n>0){
+      if(!t){t=document.createElement('span');t.id='pTitle';pn.parentNode.insertBefore(t,pn.nextSibling);}
+      t.textContent=' \u2756 '+_MONI[_monL()].tt[n-1];
+      pn.style.color=(n>=5)?'#ffd76a':'';
+    }else if(t){t.remove();pn.style.color='';}
+  }catch(e){}
+}
+function _monDonate(){
+  try{
+    var n=meta.mon||0; if(n>=5)return false;
+    var c=MON_T[n]; if(player.gold<c)return false;
+    player.gold-=c; meta.mon=n+1;
+    var L=_monL();
+    addMessage(_MONI[L].up+_MONI[L].tt[n]+'!','good');
+    try{addFloater(player.px,player.py-TILE*0.9,'\u2756','#ffd76a');SFX.level();
+        fxLight(player.px,player.py,TILE*3,'#ffd76a',1.6);hitStop=Math.max(hitStop,0.03);}catch(e){}
+    _monApply();
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+    try{renderShop();}catch(e){}
+    return true;
+  }catch(e){return false;}
+}
+function _monRenderRow(){
+  try{
+    var rows=document.getElementById('shopRows'); if(!rows||document.getElementById('monRow'))return;
+    var n=meta.mon||0, L=_monL(), M=_MONI[L];
+    var d=document.createElement('div'); d.id='monRow';
+    var body;
+    if(n>=5){ body='<b>\u2756 '+M.name+'</b><span class="monT">'+M.tt[4]+' \u2014 '+M.full+'</span>'; }
+    else{
+      var c=MON_T[n], pode=player.gold>=c;
+      body='<b>\u2756 '+M.name+'</b><span class="monT">'+M.lvl+' '+n+'/5'+(n?(' \u00b7 '+M.tt[n-1]):'')+'</span>'+
+           '<button class="btn monBtn" id="monBtn"'+(pode?'':' disabled style="opacity:.45"')+'>'+
+           M.don+' \u2014 '+String(c).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' \u25c8</button>';
+    }
+    d.innerHTML=body;
+    rows.appendChild(d);
+    var b=document.getElementById('monBtn'); if(b)b.onclick=_monDonate;
+  }catch(e){}
+}
+
+/* ============ TRIO DE UI (Auditoria #11/#12/#19) ============ */
+/* ---- #12: comparar com o equipado (decisao de loot sem memoria) ---- */
+function _cmpBlock(it){
+  try{
+    var kk=null; try{kk=itemKind(it);}catch(e){}
+    if(!kk||!player.equip||!(kk in player.equip))return '';
+    var cid=player.equip[kk]; if(!cid||cid===it.id)return '';
+    var cur=itemById(cid); if(!cur)return '';
+    var H={pt:'vs equipado',en:'vs equipped',es:'vs equipado',fr:'vs \u00e9quip\u00e9'};
+    var lg=(typeof Lg!=='undefined'&&H[Lg])?Lg:'pt';
+    var rows='', F=[['atk','ATQ'],['spd','VEL'],['def','DEF'],['arm','ARM'],['hp','VIDA']];
+    for(var i=0;i<F.length;i++){
+      var f=F[i][0], a=+(it[f]||0), b=+(cur[f]||0);
+      if(!a&&!b)continue;
+      var d=Math.round((a-b)*100)/100; if(!d)continue;
+      rows+='<div class="cmpr"><span>'+F[i][1]+'</span><b class="'+(d>0?'up':'dn')+'">'+(d>0?'+':'')+d+'</b></div>';
+    }
+    if(it.el!==cur.el&&(it.el||cur.el)){
+      rows+='<div class="cmpr"><span>ELEM</span><b>'+(cur.el||'\u2014')+' \u2192 '+(it.el||'\u2014')+'</b></div>';
+    }
+    if(!rows)rows='<div class="cmpr"><span>=</span></div>';
+    return '<div class="cmpH">'+H[lg]+' \u00b7 '+itemName(cur)+'</div>'+rows;
+  }catch(e){return '';}
+}
+/* ---- #19: ordenar mochila (tipo > raridade > forca) ---- */
+function sortBag(){
+  try{
+    var KO={weapon:0,off:1,armor:2,head:3,legs:4,hp:5,cure:6};
+    var RO=['mythic','legendary','epic','rare','uncommon','common'];
+    player.bag.sort(function(A,B){
+      var a=itemById(A.id)||{},b=itemById(B.id)||{};
+      var ka=(function(){try{return itemKind(a);}catch(e){return a.kind;}})();
+      var kb=(function(){try{return itemKind(b);}catch(e){return b.kind;}})();
+      var k=(KO[ka]!==undefined?KO[ka]:9)-(KO[kb]!==undefined?KO[kb]:9);
+      if(k)return k;
+      var r=RO.indexOf(a.rar||'common')-RO.indexOf(b.rar||'common');
+      if(r)return r;
+      var f=((b.atk||0)+(b.def||0)+(b.arm||0))-((a.atk||0)+(a.def||0)+(a.arm||0));
+      if(f)return f;
+      return String(a.name||'').localeCompare(String(b.name||''));
+    });
+    try{renderInv();}catch(e){}
+    try{SFX.pickup();}catch(e){}
+  }catch(e){}
+}
+/* ---- #11: bussola do minimapa (missao de zona OU marco nao-descoberto) ---- */
+var _MZONE={snow:{x:268,y:100,c:'#bfe0ea'},ash:{x:432,y:424,c:'#e0a06a'}};
+function _miniTarget(){
+  try{
+    if(meta.quests&&meta.quests.list){
+      for(var i=0;i<meta.quests.list.length;i++){
+        var q=meta.quests.list[i];
+        if(q&&!q.done&&_MZONE[q.id])return {x:_MZONE[q.id].x,y:_MZONE[q.id].y,c:_MZONE[q.id].c,k:'quest'};
+      }
+    }
+    if(typeof WAYPOINTS!=='undefined'){
+      var best=null,bd=1e9; meta.wp=meta.wp||{};
+      for(var j=0;j<WAYPOINTS.length;j++){
+        var w=WAYPOINTS[j]; if(meta.wp[w.id])continue;
+        var d=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y));
+        if(d<bd){bd=d;best=w;}
+      }
+      if(best)return {x:best.x,y:best.y,c:'#8ac8e0',k:'wp'};
+    }
+  }catch(e){}
+  return null;
+}
+function _miniCompass(){
+  try{
+    var t=_miniTarget(); if(!t||!miniCtx)return;
+    var dx=t.x-player.tx, dy=t.y-player.ty;
+    var half=Math.floor(138/miniZoom/2);
+    if(Math.abs(dx)<=half&&Math.abs(dy)<=half)return;  /* alvo visivel: sem seta */
+    var a=Math.atan2(dy,dx), cx=69,cy=69,R=60;
+    var px2=cx+Math.cos(a)*R, py2=cy+Math.sin(a)*R, g=miniCtx;
+    g.save(); g.translate(px2,py2); g.rotate(a);
+    g.fillStyle=t.c; g.strokeStyle='rgba(0,0,0,.6)'; g.lineWidth=1;
+    g.beginPath(); g.moveTo(6,0); g.lineTo(-4,-4.5); g.lineTo(-2,0); g.lineTo(-4,4.5); g.closePath();
+    g.fill(); g.stroke(); g.restore();
+  }catch(e){}
+}
+function _bossCard(m){
+  try{
+    let el=document.getElementById('bossCard');
+    if(!el){el=document.createElement('div');el.id='bossCard';document.body.appendChild(el);}
+    const S={pt:'CHEFE',en:'BOSS',es:'JEFE',fr:'BOSS'};
+    const sub=S[(typeof Lg!=='undefined'&&S[Lg])?Lg:'pt'];
+    let nm=m.d.name; try{nm=mName(m);}catch(e){}
+    el.innerHTML='<small>\u2620 '+sub+' \u2620</small><b>'+nm+'</b>';
+    el.classList.add('show');
+    try{sfxEl('earth',1.6);shake(3);buzz(30);}catch(e){}
+    try{fxLight(m.px,m.py,TILE*3,'#c8362a',1.2);}catch(e){}
+    clearTimeout(el._t); el._t=setTimeout(function(){el.classList.remove('show');},2600);
+  }catch(e){}
+}
+function _wpRenderBar(){
+  _wpEnsure();
+  const cv=document.getElementById('bmCanvas'); if(!cv||!cv.parentNode)return;
+  let bar=document.getElementById('wpBar');
+  if(!bar){bar=document.createElement('div');bar.id='wpBar';cv.parentNode.appendChild(bar);}
+  const L=_wpL();
+  let html='<div class="wpTitle">\u26a1 '+_WPI[L].bar+'</div><div class="wpRow">';
+  for(const w of WAYPOINTS){
+    if(!meta.wp[w.id])continue;
+    const here=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y))<=8;
+    html+='<button class="wpBtn'+(here?' here':'')+'" data-wp="'+w.id+'"'+(here?' disabled':'')+'>'+
+          w.n+'<span>'+wpCost(w)+' \u25c8</span></button>';
+  }
+  html+='</div>';
+  bar.innerHTML=html;
+  bar.querySelectorAll('.wpBtn[data-wp]').forEach(b=>{
+    b.onclick=function(){wpTravel(this.dataset.wp);};
+  });
+}
+/* descoberta + avisos de primeira vez (1,2s; barato) */
+window._acWorldTick=function(){
+  try{
+    if(typeof running==='undefined'||!running||!player||player.dead)return;
+    if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active)return;
+    _wpEnsure();
+    for(const w of WAYPOINTS){
+      if(meta.wp[w.id])continue;
+      if(Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y))<=7)_wpDiscover(w);
+    }
+    /* Auditoria #2: a morte custa ouro — avisar ANTES da primeira vez fora da zona segura */
+    if(!meta.dW && typeof isSafeZone==='function' && !isSafeZone(player.tx,player.ty)){
+      meta.dW=1;
+      try{addMessage(tf('revive_btn',{g:reviveCost()}).replace(/^[^\d]*/,' \u26a0 ')+
+        ({pt:' \u00e9 o pre\u00e7o de tombar aqui fora. O Templo revive de gra\u00e7a \u2014 mas longe.',
+          en:' is the price of falling out here. The Temple revives free \u2014 but far away.',
+          es:' es el precio de caer aqu\u00ed fuera. El Templo revive gratis \u2014 pero lejos.',
+          fr:' est le prix d\u2019une chute ici. Le Temple ranime gratuitement \u2014 mais loin.'}[_wpL()]),'sys');}catch(e){}
+    }
+    /* Auditoria #4 (versão leve): guia até a Árvore no nível 8+ */
+    if(!meta.hT && player.lvl>=8 && !meta.wp.arvore){
+      meta.hT=1;
+      try{addMessage(_WPI[_wpL()].hint,'sys');}catch(e){}
+    }
+    /* ---- Monumento: braseiros por patamar + titulo no HUD ---- */
+    try{
+      if(!window._monApplied){window._monApplied=1;_monApply();}
+      var _mn=meta.mon||0;
+      window._monPos=window._monPos||[];
+      for(var _mi=0;_mi<_mn&&_mi<MON_SPOTS.length;_mi++){
+        /* o ponto nominal pode cair em parede/mobilia da vila: espiral r<=2 ate um
+           tile elegivel, e o escolhido fica em cache (estavel dentro do boot) */
+        var _p=window._monPos[_mi];
+        if(!_p){
+          var _bx=MON_SPOTS[_mi][0],_by=MON_SPOTS[_mi][1];
+          esp: for(var _r=0;_r<=2;_r++)for(var _dy=-_r;_dy<=_r;_dy++)for(var _dx=-_r;_dx<=_r;_dx++){
+            if(Math.max(Math.abs(_dx),Math.abs(_dy))!==_r)continue;
+            var _t2=map[(_by+_dy)*MAPW+(_bx+_dx)];
+            if(_t2===T.stone||_t2===T.grass||_t2===T.dfloor||_t2===T.brazier){
+              _p=window._monPos[_mi]=[_bx+_dx,_by+_dy]; break esp;
+            }
+          }
+          if(!_p)continue;
+        }
+        var _idx=_p[1]*MAPW+_p[0];
+        if(map[_idx]!==T.brazier)map[_idx]=T.brazier;
+      }
+    }catch(e){}
+    /* ---- Auditoria #9: cartao de chefe ---- */
+    for(const m of monsters){
+      if(m.dead||!m.d||!m.d.boss||m._carded)continue;
+      if(Math.max(Math.abs(m.tx-player.tx),Math.abs(m.ty-player.ty))<=11){
+        m._carded=1; _bossCard(m); break;
+      }
+    }
+    /* ---- Auditoria #17: semear baus de ruina (overworld) ---- */
+    if(typeof loots!=='undefined'&&window._ruinChests&&window._ruinChests.length){
+      window._rcLive=window._rcLive||{}; meta.rc=meta.rc||{};
+      for(const c of window._ruinChests){
+        const key='rc:'+c.x+','+c.y;
+        if(meta.rc[key]||window._rcLive[key])continue;
+        window._rcLive[key]=1;
+        let gold=0,items=[];
+        try{
+          const zn=zoneAt(c.x,c.y), dg=(typeof DANGER!=='undefined'&&DANGER[zn])||1;
+          gold=ri(70,130)*(1+dg);
+          const Wp=WEAPONS[player.cls];
+          const lo=Math.min(Wp.length-1,dg*2),hi=Math.min(Wp.length-1,lo+3);
+          items.push(Wp[ri(lo,hi)].id);
+          if(chance(0.35))items.push(chance(0.5)?'hp_m':'hp_l');
+        }catch(e){gold=gold||120;}
+        loots.push({id:(typeof uid!=='undefined'?uid++:Date.now()+Math.random()),
+          tx:c.x,ty:c.y,px:c.x*TILE+TILE/2,py:c.y*TILE+TILE/2,gold,items,t:0,dead:false,_rc:key});
+      }
+    }
+  }catch(e){}
+};
+setInterval(window._acWorldTick,1200);
+
+/* Auditoria #27: acessibilidade — reduzir tremor de tela (por aparelho) */
+(function(){
+  try{window._acNoShake=localStorage.getItem('ac_noshake')==='1';}catch(e){}
+  function wire(){
+    try{
+      var anchor=document.getElementById('rowQual'); if(!anchor||document.getElementById('rowShake'))return;
+      var L={pt:['Reduzir tremor de tela','Desliga o tremor da c\u00e2mera (impactos continuam)'],
+             en:['Reduce screen shake','Turns off camera shake (impacts remain)'],
+             es:['Reducir vibraci\u00f3n de pantalla','Apaga el temblor de c\u00e1mara (los impactos siguen)'],
+             fr:['R\u00e9duire les secousses','Coupe le tremblement de cam\u00e9ra (les impacts restent)']};
+      var lg=(typeof Lg!=='undefined'&&L[Lg])?Lg:'pt';
+      var r=document.createElement('div'); r.className='srow'; r.id='rowShake';
+      r.innerHTML='<div class="sic">\ud83d\udcf3</div><div class="stx"><b>'+L[lg][0]+'</b><span>'+L[lg][1]+'</span></div>'+
+                  '<div class="stog'+(window._acNoShake?' on':'')+'" id="togShake"><i></i></div>';
+      anchor.parentNode.insertBefore(r,anchor.nextSibling);
+      document.getElementById('togShake').onclick=function(){
+        window._acNoShake=!window._acNoShake;
+        this.classList.toggle('on',window._acNoShake);
+        try{localStorage.setItem('ac_noshake',window._acNoShake?'1':'0');}catch(e){}
+      };
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,950);});
+  else setTimeout(wire,950);
+})();
+
+(function(){ /* botao de ordenar a mochila */
+  function wire(){
+    try{
+      var card=document.querySelector('#inv .card');
+      if(!card||document.getElementById('bagSortBtn'))return;
+      var b=document.createElement('button'); b.id='bagSortBtn'; b.innerHTML='\u21c5';
+      var T={pt:'Ordenar mochila',en:'Sort bag',es:'Ordenar mochila',fr:'Trier le sac'};
+      b.title=T[(typeof Lg!=='undefined'&&T[Lg])?Lg:'pt'];
+      b.onclick=sortBag;
+      card.appendChild(b);
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1000);});
+  else setTimeout(wire,1000);
 })();
 </script>
 </body>
