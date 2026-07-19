@@ -5640,7 +5640,7 @@ function render(){
   if(companion)dr.push({y:companion.py+TILE*0.4,kind:'comp'});
   dr.push({y:player.py+TILE*0.4,kind:'player'});
   for(const p of projectiles)dr.push({y:p.y,kind:'proj',p});
-  for(const ls of LANDMARK_SPRITES){if(ls.k==='sword'&&meta&&meta.cindraChoice==='selou')continue;const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});}
+  for(const ls of LANDMARK_SPRITES){if(ls.k==='sword'&&meta&&meta.cindraChoice==='selou')continue;const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});} for(const g of GATES){for(let pi=0;pi<2;pi++){const P=_gatePillar(g,pi);if(P.ax>=x0-4&&P.ax<x1+4&&P.ay>=y0-6&&P.ay<y1+4)dr.push({y:P.ay*TILE+TILE,kind:'gate',g,pi});}}
   dr.sort((a,b)=>a.y-b.y);
   try{_scarDraw(ox,oy);}catch(e){} try{drawDecals(ox,oy);}catch(e){} try{_webDraw(ox,oy);}catch(e){} try{_graveDraw(ox,oy);}catch(e){} try{_statueDraw(ox,oy);}catch(e){} try{_guardMark(ox,oy);}catch(e){}
   for(const d of dr){
@@ -5650,6 +5650,7 @@ function render(){
     else if(d.kind==='comp')drawCompanion(ox,oy);
     else if(d.kind==='player')drawPlayer(ox,oy);
     else if(d.kind==='proj')drawProjectile(d.p.x-ox,d.p.y-oy,d.p);
+    else if(d.kind==='gate'){try{_gateSpr(d.g,d.pi,ox,oy);}catch(e){}}
     else if(d.kind==='lmspr'){const spr=LMSPR[d.ls.k],_lm=LMPNG[d.ls.k];const ax=(d.ls.x+WOFF)*TILE+TILE/2-ox,ay=(d.ls.y+WOFF)*TILE+TILE-oy;if(_lm&&_lm.ready){const H=(spr&&spr.height)||TILE*5,Wd=H*((_lm.img.naturalWidth||1)/(_lm.img.naturalHeight||1));B.imageSmoothingEnabled=true;B.imageSmoothingQuality='high';B.drawImage(_lm.img,ax-Wd/2,ay-H,Wd,H);B.imageSmoothingEnabled=false;}else if(spr){B.drawImage(spr,ax-spr.width/2,ay-spr.height);}}}
   for(const s of slashes)drawSlash(s,ox,oy);
   try{drawFxLights(ox,oy);}catch(e){}
@@ -9541,7 +9542,7 @@ function backToHeroSelect(){
 }
 function onSessionStart(){rollQuests();dailyCheck();if(meta.rested>0)addMessage(tf('msg_rest_bonus',{n:meta.rested}),'good');
   try{var _ml=_miraLine(); if(_ml)setTimeout(function(){addMessage(_ml,'sys');},1400);}catch(e){}
-  try{MUS.boot();}catch(e){} try{_bloodMsg();}catch(e){} try{_ngApply();}catch(e){}updateQBadge();saveGame();}
+  try{_gatesRebuild();}catch(e){} try{MUS.boot();}catch(e){} try{_bloodMsg();}catch(e){} try{_ngApply();}catch(e){}updateQBadge();saveGame();}
 function continueGame(slot){if(slot!=null)activeSlot=slot;const d=loadSave(activeSlot);if(!d)return;initAudio();
   selectedCls=d.cls;selectedGender=d.gender||'m';player.custom=d.custom||null;applyClass();
   player.name=d.name||'Herói';player.lvl=d.lvl||1;player.xp=d.xp||0;player.gold=d.gold||0;
@@ -13074,7 +13075,7 @@ function _miniCompass(){
 }
 
 /* ============ QUICK WINS DO RELATORIO 10/10 — "O Vale lembra" ============ */
-function _qwL(d){var lg=(typeof Lg!=='undefined'&&d[Lg])?Lg:'pt';return d[lg];}
+function _qwL(d){var _lg=(typeof LANG!=='undefined'&&LANG)||(typeof Lg!=='undefined'&&Lg)||'pt';return (d&&d[_lg])?d[_lg]:d.pt;}
 /* ---- QW#7: Mira, a primeira personagem (1 fala com memoria por dia) ---- */
 function _miraLine(){
   try{
@@ -13620,6 +13621,148 @@ function _guardMark(ox,oy){
     B.restore();
   }catch(e){}
 }
+
+/* ============ OS QUATRO PORTOES DE PEDRAVAU ============ */
+/* Feedback de jogadores: saidas invisiveis. Solucao: 4 portoes cardeais pomposos —
+   aberturas pavimentadas, avenidas atravessando (5 dentro / 3 fora), obstaculos dos
+   corredores removidos, frestas orfas SELADAS por varredura, e por cima: pilares de
+   pedra com braseiros acesos, lintel/estandartes e placa com nome + destino real. */
+var GATES=[
+ {k:'n',x:250.5,y:293,dx:0,dy:-1,w:2},
+ {k:'s',x:250.5,y:309,dx:0,dy:1,w:2},
+ {k:'w',x:241,y:301,dx:-1,dy:0,w:3},
+ {k:'e',x:261,y:301,dx:1,dy:0,w:3}
+];
+function _gateSpan(g){ /* tiles da abertura */
+  var t=[];
+  if(g.dy!==0){for(var x=250;x<=251;x++)t.push([x,g.y]);}
+  else{for(var y=300;y<=302;y++)t.push([g.x,y]);}
+  return t;
+}
+function _gatePillar(g,pi){ /* tile de cada pilar (na linha do muro) */
+  if(g.dy!==0)return {ax:(pi?252:249),ay:g.y};
+  return {ax:g.x,ay:(pi?303:299)};
+}
+function _gatesRebuild(){
+  try{
+    if(typeof setTile!=='function'||typeof tileAt!=='function'||typeof T==='undefined')return;
+    if(tileAt(251,301)===T.rock)return; /* mapa ainda nao pronto */
+    if(tileAt(250,293)===T.sand&&tileAt(241,301)===T.sand)return; /* sentinela: este mundo ja foi reformado */
+    var pave=function(x,y){setTile(x,y,T.sand);};
+    GATES.forEach(function(g){
+      _gateSpan(g).forEach(function(p){pave(p[0],p[1]);});        /* abertura */
+      for(var d=1;d<=5;d++)_gateSpan(g).forEach(function(p){       /* avenida p/ dentro */
+        pave(p[0]-g.dx*d,p[1]-g.dy*d);});
+      for(var d2=1;d2<=3;d2++)_gateSpan(g).forEach(function(p){    /* rastro p/ fora */
+        pave(p[0]+g.dx*d2,p[1]+g.dy*d2);});
+    });
+    /* varredura: sela toda fresta do perimetro fora das 4 aberturas */
+    var spans={}; GATES.forEach(function(g){_gateSpan(g).forEach(function(p){spans[p[0]+','+p[1]]=1;});});
+    var xa=VIL.x-1,xb=VIL.x+VIL.w,ya=VIL.y-1,yb=VIL.y+VIL.h;
+    var borda=[];
+    for(var x2=xa;x2<=xb;x2++){borda.push([x2,ya]);borda.push([x2,yb]);}
+    for(var y2=ya+1;y2<yb;y2++){borda.push([xa,y2]);borda.push([xb,y2]);}
+    borda.forEach(function(p){
+      if(spans[p[0]+','+p[1]])return;
+      if(WALKABLE[tileAt(p[0],p[1])])setTile(p[0],p[1],T.wall);
+    });
+
+  }catch(e){}
+}
+
+/* dicionario de toponimos p/ as placas dos portoes (nao mexe no zoneAt: PT e chave de sistemas) */
+var ZONE_L10N={
+ 'Campos de Cindra':{en:'Fields of Cindra',es:'Campos de Cindra',fr:'Champs de Cindra'},
+ 'Bosque Antigo':{en:'Ancient Grove',es:'Bosque Antiguo',fr:'Bois Ancien'},
+ 'Sop\u00e9 dos Picos':{en:'Foot of the Peaks',es:'Pie de los Picos',fr:'Pied des Pics'},
+ 'Picos Uivantes':{en:'Howling Peaks',es:'Picos Aulladores',fr:'Pics Hurlants'},
+ 'Selva Sombria':{en:'Shadowed Jungle',es:'Selva Umbr\u00eda',fr:'Jungle Sombre'},
+ 'Cripta dos Reis Ca\u00eddos':{en:'Crypt of the Fallen Kings',es:'Cripta de los Reyes Ca\u00eddos',fr:'Crypte des Rois D\u00e9chus'},
+ 'Matagal de Cinzas':{en:'Ashen Thicket',es:'Matorral de Cenizas',fr:'Fourr\u00e9 de Cendres'},
+ 'Vila de Pedravau':{en:'Pedravau Village',es:'Aldea de Pedravau',fr:'Village de Pedravau'},
+ 'Porto de Brumal':{en:'Port of Brumal',es:'Puerto de Brumal',fr:'Port de Brumal'},
+ 'Cinzas de Vorrak':{en:'Ashes of Vorrak',es:'Cenizas de Vorrak',fr:'Cendres de Vorrak'},
+ 'Ermo Escaldante':{en:'Scalding Waste',es:'P\u00e1ramo Abrasador',fr:'Lande Br\u00fblante'},
+ 'Caldeira de Vorrak':{en:'Vorrak\u2019s Caldera',es:'Caldera de Vorrak',fr:'Chaudi\u00e8re de Vorrak'}
+};
+function _zoneName(z){
+  try{
+    var lg=(typeof LANG!=='undefined'&&LANG)||'pt';
+    if(lg==='pt')return z;
+    var e=ZONE_L10N[z]; return (e&&e[lg])?e[lg]:z;
+  }catch(e){return z;}
+}
+function _gateDest(g){
+  if(g._dest)return g._dest;
+  try{g._dest=zoneAt(Math.round(g.x+g.dx*6),Math.round(g.y+g.dy*6))||'';}catch(e){g._dest='';}
+  return g._dest;
+}
+function _gateSpr(g,pi,ox,oy){
+  var P=_gatePillar(g,pi);
+  var px=P.ax*TILE+TILE/2-ox, py=P.ay*TILE+TILE-oy;
+  var Hp=TILE*2.6, Wp=TILE*0.62;
+  var gt=(typeof gameTime!=='undefined')?gameTime:0;
+  B.save();
+  /* sombra + base */
+  B.fillStyle='rgba(0,0,0,0.28)';B.beginPath();B.ellipse(px,py-2,Wp*0.9,4.5,0,0,7);B.fill();
+  B.fillStyle='#5d6270';B.fillRect(px-Wp*0.62,py-7,Wp*1.24,7);
+  /* fuste em tres tons */
+  B.fillStyle='#7c8290';B.fillRect(px-Wp/2,py-Hp,Wp,Hp-7);
+  B.fillStyle='#8d93a2';B.fillRect(px-Wp/2,py-Hp,Wp*0.45,Hp-7);
+  B.fillStyle='#666b78';B.fillRect(px+Wp*0.18,py-Hp,Wp*0.32,Hp-7);
+  /* juntas de pedra */
+  B.strokeStyle='rgba(20,22,30,0.35)';B.lineWidth=1;
+  for(var j=1;j<4;j++){B.beginPath();B.moveTo(px-Wp/2,py-Hp*j/4);B.lineTo(px+Wp/2,py-Hp*j/4);B.stroke();}
+  /* capitel dourado + braseiro aceso */
+  B.fillStyle='#c9a24a';B.fillRect(px-Wp*0.68,py-Hp-5,Wp*1.36,5);
+  B.fillStyle='#4a4f5c';B.beginPath();B.ellipse(px,py-Hp-8,Wp*0.5,4,0,0,7);B.fill();
+  var fl=0.7+0.3*Math.sin(gt*9+P.ax*2.3), f2=0.6+0.4*Math.sin(gt*13+P.ay);
+  B.fillStyle='rgba(255,150,60,'+(0.75*fl)+')';
+  B.beginPath();B.moveTo(px-4,py-Hp-8);B.quadraticCurveTo(px,py-Hp-20-6*fl,px+4,py-Hp-8);B.fill();
+  B.fillStyle='rgba(255,220,120,'+(0.8*f2)+')';
+  B.beginPath();B.moveTo(px-2,py-Hp-8);B.quadraticCurveTo(px,py-Hp-15-4*f2,px+2,py-Hp-8);B.fill();
+  /* conector (uma vez, no pilar 0) */
+  if(pi===0){
+    var Q=_gatePillar(g,1);
+    var qx=Q.ax*TILE+TILE/2-ox, qy=Q.ay*TILE+TILE-oy;
+    if(g.dy!==0){ /* N/S: lintel de pedra + pedra-chave + estandarte central */
+      B.fillStyle='#7c8290';B.fillRect(px+Wp/2,py-Hp-2,(qx-px)-Wp,7);
+      B.fillStyle='#8d93a2';B.fillRect(px+Wp/2,py-Hp-2,(qx-px)-Wp,3);
+      var mx=(px+qx)/2;
+      B.fillStyle='#c9a24a';B.beginPath();
+      B.moveTo(mx-6,py-Hp-2);B.lineTo(mx+6,py-Hp-2);B.lineTo(mx,py-Hp+6);B.closePath();B.fill();
+      B.fillStyle='#a3323a';B.fillRect(mx-7,py-Hp+5,14,16);
+      B.beginPath();B.moveTo(mx-7,py-Hp+21);B.lineTo(mx,py-Hp+27);B.lineTo(mx+7,py-Hp+21);B.closePath();B.fill();
+      B.fillStyle='#ffd76a';B.font='800 9px system-ui';B.textAlign='center';
+      B.fillText('\u2694',mx,py-Hp+16);
+    }else{ /* E/O: guirlanda com flamulas entre os pilares */
+      var midx=(px+qx)/2+ (g.dx>0?-6:6), midy=(py+qy)/2-Hp-2+10;
+      B.strokeStyle='#c9a24a';B.lineWidth=1.6;
+      B.beginPath();B.moveTo(px,py-Hp-4);B.quadraticCurveTo(midx,midy,qx,qy-Hp-4);B.stroke();
+      for(var f=1;f<=3;f++){var tt=f/4;
+        var bx=(1-tt)*(1-tt)*px+2*(1-tt)*tt*midx+tt*tt*qx;
+        var by=(1-tt)*(1-tt)*(py-Hp-4)+2*(1-tt)*tt*midy+tt*tt*(qy-Hp-4);
+        B.fillStyle=(f===2)?'#a3323a':'#c9a24a';
+        B.beginPath();B.moveTo(bx-4,by);B.lineTo(bx+4,by);B.lineTo(bx,by+9);B.closePath();B.fill();}
+    }
+    /* placa: nome + destino real, ao se aproximar */
+    var gx=(g.dy!==0)?(px+qx)/2:px, gy=Math.min(py,qy);
+    if(Math.max(Math.abs(player.tx-g.x),Math.abs(player.ty-g.y))<=5){
+      var NM={n:{pt:'PORT\u00c3O NORTE',en:'NORTH GATE',es:'PUERTA NORTE',fr:'PORTE NORD'},
+              s:{pt:'PORT\u00c3O SUL',en:'SOUTH GATE',es:'PUERTA SUR',fr:'PORTE SUD'},
+              e:{pt:'PORT\u00c3O LESTE',en:'EAST GATE',es:'PUERTA ESTE',fr:'PORTE ESTE'},
+              w:{pt:'PORT\u00c3O OESTE',en:'WEST GATE',es:'PUERTA OESTE',fr:'PORTE OUEST'}}[g.k];
+      var nm=_qwL(NM), ds=_gateDest(g);
+      B.font='800 9.5px system-ui';B.textAlign='center';
+      B.fillStyle='rgba(0,0,0,0.6)';B.fillText(nm,gx+1,gy-Hp-25);
+      B.fillStyle='#ffd76a';B.fillText(nm,gx,gy-Hp-26);
+      if(ds){var dsL=_zoneName(ds);B.font='600 8px system-ui';
+        B.fillStyle='rgba(0,0,0,0.6)';B.fillText('\u2192 '+dsL,gx+1,gy-Hp-15);
+        B.fillStyle='#cfd3dc';B.fillText('\u2192 '+dsL,gx,gy-Hp-16);}
+    }
+  }
+  B.restore();
+}
 /* ============ TOP100 #13 — OS SINOS DE KARGHAST ============ */
 /* 1x/dia, junto a catedral em ruinas: o sino toca (sintese WebAudio, 2 badaladas),
    o som atravessa o Vale, e uma bencao menor e sorteada. Ritual diario com corpo. */
@@ -13828,7 +13971,7 @@ function _ngKillCheck(m){
       _ngApply();
     }catch(e){}
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1000);});
+  try{setTimeout(_gatesRebuild,900);}catch(e){} if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1000);});
   else setTimeout(wire,1000);
 })();
 /* ============ LONGO PRAZO #5 — LUA DE SANGUE ============ */
