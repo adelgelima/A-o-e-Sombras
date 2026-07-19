@@ -532,6 +532,29 @@ body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-inde
 .cdxChip{background:#171a22;border:1px solid #2c313e;border-radius:8px;padding:2px 7px;
   font:600 11px system-ui;color:#aeb4c2}
 .cdxChip.dim{color:#6a7080;border-style:dashed}
+
+/* a revelação */
+#mystVeil{position:fixed;inset:0;background:#05060a;z-index:80;opacity:0;transition:opacity 1.2s;
+  display:flex;align-items:center;justify-content:center;cursor:pointer}
+#mystVeil.on{opacity:1}
+#mystTxt{max-width:82%;text-align:center;font:italic 400 17px Georgia,serif;color:#b8a668;
+  letter-spacing:.06em;line-height:1.7;opacity:0}
+#mystTxt.eco{animation:mEco 1.55s ease forwards}
+#mystTxt.eco.nome{color:#e8c15a;font-size:21px;letter-spacing:.22em;font-style:normal;font-weight:700}
+#mystTxt.fim{animation:mFim 1.4s ease forwards;font-size:18px;color:#d8c890}
+#mystTxt.fim span{display:block;margin-top:14px;font-size:13.5px;color:#8a90a0}
+@keyframes mEco{0%{opacity:0;transform:translateY(8px)}18%{opacity:1;transform:none}82%{opacity:1}100%{opacity:0}}
+@keyframes mFim{0%{opacity:0}100%{opacity:1}}
+
+/* a escolha irreversível */
+.cinCard{max-width:340px;text-align:center}
+.cinCard h1{font-size:19px;color:#e8c15a;letter-spacing:.14em;margin:0 0 6px}
+.cinCard p{font:italic 400 12.5px Georgia,serif;color:#9aa0b0;margin:0 0 14px;line-height:1.55}
+.cinCard .btn.wide{display:block;width:100%;margin-top:8px}
+.cinCard .cinA{border-color:#7a3040;color:#ff9a8a}
+.cinCard .cinB{border-color:#7a6a30;color:#ffd76a}
+.cinCard .cinC{opacity:.7}
+.stog.lock{opacity:.45;pointer-events:auto}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -1166,9 +1189,11 @@ var MUS={cur:null,deg:2,_t:null,_g:null,_lp:null,_dr:null,_drG:null,_on:false,
      var d=MUSD[this.cur||'campos']; this._dr.frequency.value=d.dr;
      this._dr.start();
      this._on=true;
+    try{if(typeof running!=='undefined'&&!running&&!window._tT1){window._tT1=1;_themePlay('title');}}catch(e){}
      this.tick();
    }catch(e){}
  },
+ hush:function(on){try{if(this._g&&AC)this._g.gain.setTargetAtTime(on?0:0.085,AC.currentTime,0.6);if(this._drG&&AC)this._drG.gain.setTargetAtTime(on?0:0.020,AC.currentTime,0.6);}catch(e){}},
  setBiome:function(k){
    if(!MUSD[k]||k===this.cur)return;
    this.cur=k; this.deg=Math.min(this.deg,MUSD[k].sc.length-1);
@@ -1186,6 +1211,14 @@ var MUS={cur:null,deg:2,_t:null,_g:null,_lp:null,_dr:null,_drG:null,_on:false,
      this.setBiome((!dg&&typeof _bloodState==='function'&&_bloodState()===2)?'sangue':this._key(z,dg));
      if(this._drG&&AC){var alvo=(typeof soundOn==='undefined'||soundOn)?0.020:0.0;
        this._drG.gain.setTargetAtTime(alvo,AC.currentTime,0.8);}
+     if(this.cur==='vila'&&AC&&(typeof soundOn==='undefined'||soundOn)&&(typeof running==='undefined'||running)){
+       if(this._nextTheme==null)this._nextTheme=AC.currentTime+20;
+       if(AC.currentTime>=this._nextTheme){
+         var L2=_themePlay('vila');
+         this._hold=AC.currentTime+L2;
+         this._nextTheme=AC.currentTime+L2+45+Math.random()*30;
+       }
+     }
    }catch(e){}
  },
  tick:function(){
@@ -1196,6 +1229,7 @@ var MUS={cur:null,deg:2,_t:null,_g:null,_lp:null,_dr:null,_drG:null,_on:false,
      if(this._t)clearTimeout(this._t);
      this._t=setTimeout(function(){try{self.tick();}catch(e){}},passo);
      if(typeof AC==='undefined'||!AC||!this._g)return;
+     try{if(this._hold&&AC.currentTime<this._hold)return;}catch(e){}
      if(typeof soundOn!=='undefined'&&!soundOn)return;
      if(typeof running!=='undefined'&&!running)return;
      if(typeof player!=='undefined'&&player&&player.dead)return;
@@ -1221,6 +1255,55 @@ var MUS={cur:null,deg:2,_t:null,_g:null,_lp:null,_dr:null,_drG:null,_on:false,
    }catch(e){}
  }
 };
+
+/* ============ INESQUECIVEL #4 — O TEMA DO VALE (leitmotif) ============ */
+/* 10 notas, menor natural, gancho em 5->b6->5. Tres formas: titulo/vila (quente),
+   revelacao (grave e lento, canta SOB o hush via ganho proprio), morte (fragmento). */
+var THEME={
+  deg:[0,3,5,8,7,5,3,5,3,0],
+  beats:[1,1,1,1.5,0.5,1,1,1,1,2],
+  harm:{3:1,9:1},
+  kinds:{
+    title: {root:196.00,rate:1.00,wave:'triangle',g:0.070,lp:1400,n:10,harm:true},
+    vila:  {root:196.00,rate:1.00,wave:'triangle',g:0.050,lp:1200,n:10,harm:true},
+    reveal:{root:146.83,rate:0.62,wave:'sine',    g:0.085,lp:900, n:7, harm:false},
+    death: {root:146.83,rate:0.50,wave:'sine',    g:0.045,lp:800, n:4, harm:false}
+  }
+};
+function _themePlay(kind){
+  try{
+    var K=THEME.kinds[kind]||THEME.kinds.title;
+    var beat=60/76, total=0;
+    for(var i=0;i<K.n;i++)total+=THEME.beats[i]*beat/K.rate;
+    if(typeof AC==='undefined'||!AC||!master)return total;
+    if(typeof soundOn!=='undefined'&&!soundOn)return total;
+    var g=AC.createGain(); g.gain.value=1;
+    var lp=AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=K.lp;
+    g.connect(lp); lp.connect(master);
+    var t=AC.currentTime+0.05;
+    for(var i2=0;i2<K.n;i2++){
+      var dur=THEME.beats[i2]*beat/K.rate;
+      var f=K.root*Math.pow(2,THEME.deg[i2]/12);
+      var o=AC.createOscillator(),ng=AC.createGain();
+      o.type=K.wave;o.frequency.value=f;
+      ng.gain.setValueAtTime(0,t);
+      ng.gain.linearRampToValueAtTime(K.g,t+Math.min(0.18,dur*0.3));
+      ng.gain.setValueAtTime(K.g,t+dur*0.75);
+      ng.gain.linearRampToValueAtTime(0.0001,t+dur*1.35);
+      o.connect(ng);ng.connect(g);o.start(t);o.stop(t+dur*1.4);
+      if(K.harm&&THEME.harm[i2]){
+        var o2=AC.createOscillator(),h2=AC.createGain();
+        o2.type=K.wave;o2.frequency.value=f*Math.pow(2,-5/12);
+        h2.gain.setValueAtTime(0,t+0.05);
+        h2.gain.linearRampToValueAtTime(K.g*0.55,t+0.25);
+        h2.gain.linearRampToValueAtTime(0.0001,t+dur*1.3);
+        o2.connect(h2);h2.connect(g);o2.start(t+0.05);o2.stop(t+dur*1.35);
+      }
+      t+=dur;
+    }
+    return total;
+  }catch(e){return 0;}
+}
 function beep(f,d,type='sine',v=0.3,to=null){if(!AC||!soundOn)return;const g=AC.createGain();g.gain.value=v;g.connect(master);
   const o=AC.createOscillator();o.type=type;o.frequency.value=f;if(to)o.frequency.exponentialRampToValueAtTime(to,AC.currentTime+d);
   g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);o.connect(g);o.start();o.stop(AC.currentTime+d);}
@@ -4403,7 +4486,7 @@ function deathFx(m){const df=DEATH_THEME[DEATH_FAM[m.type]];const sz=0.75+m.d.si
 function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,m.py-TILE*0.4,10,{col:m.d.col,spd:70,life:0.5,size:2.4,grav:60});return;}
   m.dead=true;SFX.die();
   hitStop=Math.min(0.09,Math.max(hitStop,m.d.size>=1.25?0.07:0.045));
-  try{_widowMourn(m);}catch(e){} if(m.d.boss){ /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
+  try{_widowMourn(m);}catch(e){} if(m.d.boss){ try{_scarAdd('crater',m.tx,m.ty);}catch(e){} /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
     window._slowT=1.4;
     try{meta.bossEcho=mName(m);}catch(e){meta.bossEcho=m.d.name;} try{_vengOnKill(m);}catch(e){}
     try{_bossRelic(m);}catch(e){}
@@ -4423,7 +4506,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
   let rm=1;if(meta.rested>0){meta.rested--;rm=1.3;}
   const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm*(meta.ng?1.5:1));
   if(killStreak>=3)addFloater(m.px,m.py-TILE*0.95,tf('fl_combo',{n:killStreak}),'#ffd76a',killStreak>=6);
-  meta.stats.kills++;qProg('kill');taskProg(m.type); try{if(m.elite)_bloodOnElite(m);}catch(e){} try{_codexReg(m);}catch(e){}
+  meta.stats.kills++;qProg('kill');taskProg(m.type); try{if(m.elite){_bloodOnElite(m);_scarAdd('mark',m.tx,m.ty,(m.elite&&m.elite.c)||'#c8a060');}}catch(e){} try{_codexReg(m);}catch(e){}
   if(m._invader&&invasion){invasion.killed++;const bg=Math.round((m.d.xp||10)*0.6);player.gold+=bg;addFloater(m.px,m.py-TILE*1.0,'+'+bg+'\u29bf','#ffd76a');}
   const _kz=zoneAt(m.tx,m.ty);
   if(_kz==='Picos Uivantes')qProg('snow');
@@ -4525,7 +4608,7 @@ function poisonPlayer(n){if(player.dead)return;
   if(player.poison<=0)addMessage(t('msg_poisoned'),'dmg');
   player.poison=Math.max(player.poison,n);
   addParticles(player.px,player.py,8,{col:'#8fe08a',spd:50,life:0.5,size:2.4,glow:true});}
-function die(src){player.dead=true;buzz([60,60,120]);
+function die(src){player.dead=true;buzz([60,60,120]); try{_themePlay('death');}catch(e){}
   addParticles(player.px,player.py,24,{col:'#c0392b',spd:110,life:0.7,size:3.2,grav:60});
   document.getElementById('deathMsg').textContent=src?tf('death_by',{src:src}):t('death_shadows');
   const cost=reviveCost(),rb=document.getElementById('reviveBtn');
@@ -5557,9 +5640,9 @@ function render(){
   if(companion)dr.push({y:companion.py+TILE*0.4,kind:'comp'});
   dr.push({y:player.py+TILE*0.4,kind:'player'});
   for(const p of projectiles)dr.push({y:p.y,kind:'proj',p});
-  for(const ls of LANDMARK_SPRITES){const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});}
+  for(const ls of LANDMARK_SPRITES){if(ls.k==='sword'&&meta&&meta.cindraChoice==='selou')continue;const ax=ls.x+WOFF,ay=ls.y+WOFF;if(ax>=x0-5&&ax<x1+5&&ay>=y0-10&&ay<y1+5)dr.push({y:ay*TILE+TILE,kind:'lmspr',ls});}
   dr.sort((a,b)=>a.y-b.y);
-  try{drawDecals(ox,oy);}catch(e){} try{_webDraw(ox,oy);}catch(e){} try{_graveDraw(ox,oy);}catch(e){} try{_statueDraw(ox,oy);}catch(e){}
+  try{_scarDraw(ox,oy);}catch(e){} try{drawDecals(ox,oy);}catch(e){} try{_webDraw(ox,oy);}catch(e){} try{_graveDraw(ox,oy);}catch(e){} try{_statueDraw(ox,oy);}catch(e){} try{_guardMark(ox,oy);}catch(e){}
   for(const d of dr){
     if(d.kind==='tile')drawTall(d.tx,d.ty,d.t,d.tx*TILE-ox,d.ty*TILE-oy);
     else if(d.kind==='npc')drawNpc(d.n.x*TILE+TILE/2-ox,d.n.y*TILE+TILE/2-oy,d.n);
@@ -12871,7 +12954,7 @@ function _monApply(){
       if(!t){t=document.createElement('span');t.id='pTitle';pn.parentNode.insertBefore(t,pn.nextSibling);}
       t.textContent=' \u2756 '+_MONI[_monL()].tt[n-1];
       pn.style.color=(n>=5)?'#ffd76a':'';
-    }else{ var alt=meta.tEsp?_qwL({pt:' \u2756 Herdeiro do Tit\u00e3',en:' \u2756 Heir of the Titan',es:' \u2756 Heredero del Tit\u00e1n',fr:' \u2756 H\u00e9ritier du Titan'}):(meta.tLua?_qwL({pt:' \u2756 Ca\u00e7ador da Lua de Sangue',en:' \u2756 Blood Moon Hunter',es:' \u2756 Cazador de la Luna de Sangre',fr:' \u2756 Chasseur de la Lune de Sang'}):null); if(alt){ if(!t){t=document.createElement('span');t.id='pTitle';pn.parentNode.insertBefore(t,pn.nextSibling);} t.textContent=alt; pn.style.color=''; } else if(t){t.remove();pn.style.color='';} }
+    }else{ var alt=(meta.cindraChoice==='selou')?_qwL({pt:' \u2756 Guardi\u00e3o do Selo',en:' \u2756 Guardian of the Seal',es:' \u2756 Guardi\u00e1n del Sello',fr:' \u2756 Gardien du Sceau'}):meta.tEsp?_qwL({pt:' \u2756 Herdeiro do Tit\u00e3',en:' \u2756 Heir of the Titan',es:' \u2756 Heredero del Tit\u00e1n',fr:' \u2756 H\u00e9ritier du Titan'}):(meta.tLua?_qwL({pt:' \u2756 Ca\u00e7ador da Lua de Sangue',en:' \u2756 Blood Moon Hunter',es:' \u2756 Cazador de la Luna de Sangre',fr:' \u2756 Chasseur de la Lune de Sang'}):null); if(alt){ if(!t){t=document.createElement('span');t.id='pTitle';pn.parentNode.insertBefore(t,pn.nextSibling);} t.textContent=alt; pn.style.color=''; } else if(t){t.remove();pn.style.color='';} }
   }catch(e){}
 }
 function _monDonate(){
@@ -13035,6 +13118,16 @@ function _miraLine(){
         en:'Mira: \u201cHeir of the Titan, hm? The Sword hadn\u2019t sung like that since before the fall.\u201d',
         es:'Mira: \u201c\u00bfHeredero del Tit\u00e1n? La Espada no cantaba as\u00ed desde antes de la ca\u00edda.\u201d',
         fr:'Mira : \u201cH\u00e9ritier du Titan ? L\u2019\u00c9p\u00e9e n\u2019avait pas chant\u00e9 ainsi depuis la chute.\u201d'});}
+    if(meta.cindraChoice==='libertou'&&!meta._mCLib){meta._mCLib=1;
+      L.push({pt:'Mira: \u201cO c\u00e9u mudou de vez, e s\u00f3 n\u00f3s dois sabemos o pre\u00e7o. Ele descansou. Isso conta.\u201d',
+        en:'Mira: \u201cThe sky changed for good, and only we two know the price. He rests now. That counts.\u201d',
+        es:'Mira: \u201cEl cielo cambi\u00f3 para siempre, y solo nosotros dos sabemos el precio. \u00c9l descansa. Eso cuenta.\u201d',
+        fr:'Mira : \u201cLe ciel a chang\u00e9 pour de bon, et nous seuls savons le prix. Il repose. \u00c7a compte.\u201d'});}
+    if(meta.cindraChoice==='selou'&&!meta._mCSel){meta._mCSel=1;
+      L.push({pt:'Mira: \u201cA Espada sumiu e ningu\u00e9m na vila reparou. Guardi\u00e3o \u00e9 isso: o mundo dormir tranquilo sem saber por qu\u00ea.\u201d',
+        en:'Mira: \u201cThe Sword is gone and no one in the village noticed. That is what a Guardian is: the world sleeping soundly, never knowing why.\u201d',
+        es:'Mira: \u201cLa Espada desapareci\u00f3 y nadie en la aldea lo not\u00f3. Eso es un Guardi\u00e1n: el mundo durmiendo tranquilo sin saber por qu\u00e9.\u201d',
+        fr:'Mira : \u201cL\u2019\u00c9p\u00e9e a disparu et personne au village ne l\u2019a remarqu\u00e9. Voil\u00e0 un Gardien : le monde dort en paix sans savoir pourquoi.\u201d'});}
     if((meta.mon||0)>=5&&!meta._mMon5){meta._mMon5=1;
       L.push({pt:'Mira: \u201cErgueram uma est\u00e1tua sua na pra\u00e7a. Pequena \u2014 mas a vila inteira passa por ela todo dia.\u201d',
         en:'Mira: \u201cThey raised a statue of you in the square. Small \u2014 but the whole village passes it every day.\u201d',
@@ -13075,7 +13168,7 @@ function _miraLine(){
   }catch(e){return null;}
 }
 /* ---- QW#6: A Espada Responde (lendario+ equipado junto ao marco, 1x) ---- */
-function _espadaCheck(){
+function _espadaCheck(){ if(meta&&meta.cindraChoice==='selou')return;
   try{
     if(meta.tEsp)return;
     var w=WAYPOINTS.find(function(v){return v.id==='espada';}); if(!w)return;
@@ -13166,9 +13259,56 @@ function _mystReveal(full){
          es:'\u25c8 Algo aqu\u00ed abajo conoce un nombre que a\u00fan no has le\u00eddo. Cinco piedras lo guardan \u2014 una en cada marca del Valle.',
          fr:'\u25c8 Quelque chose ici-bas conna\u00eet un nom que vous n\u2019avez pas encore lu. Cinq pierres le gardent \u2014 une \u00e0 chaque monument du Val.'};
   var lg=(typeof Lg!=='undefined'&&R[Lg])?Lg:'pt';
-  if(full){R[lg].forEach(function(t,i){setTimeout(function(){try{addMessage(t,'sys');}catch(e){}},400+i*1600);});}
-  else{setTimeout(function(){try{addMessage(P[lg],'sys');}catch(e){}},400);}
-  try{sfxEl('shadow',1.2);}catch(e){}
+  if(!full){
+    setTimeout(function(){try{addMessage(P[lg],'sys');}catch(e){}},400);
+    try{sfxEl('shadow',1.2);}catch(e){}
+    return;
+  }
+  /* ---- O MOMENTO: breu, silencio, as cinco pedras, a verdade, o sangue ---- */
+  var ECO={pt:['Antes do a\u00e7o, houve a chama.','Toda luz cria o que a odeia.','A sombra atravessa por dentro.','Ele ajoelhou para segur\u00e1-la.','VHARUN. VHARUN.'],
+           en:['Before the steel, there was the flame.','Every light creates what hates it.','The shadow crosses from within.','He knelt to hold it down.','VHARUN. VHARUN.'],
+           es:['Antes del acero, hubo la llama.','Toda luz crea lo que la odia.','La sombra atraviesa por dentro.','\u00c9l se arrodill\u00f3 para sujetarla.','VHARUN. VHARUN.'],
+           fr:['Avant l\u2019acier, il y eut la flamme.','Toute lumi\u00e8re cr\u00e9e ce qui la hait.','L\u2019ombre traverse de l\u2019int\u00e9rieur.','Il s\u2019agenouilla pour la tenir.','VHARUN. VHARUN.']};
+  try{
+    var v=document.getElementById('mystVeil');
+    if(!v){v=document.createElement('div');v.id='mystVeil';
+      v.innerHTML='<div id="mystTxt"></div>';document.body.appendChild(v);}
+    var tx=v.querySelector('#mystTxt');
+    var timers=[], done=false;
+    var fim=function(){
+      if(done)return; done=true;
+      timers.forEach(clearTimeout);
+      try{_themePlay('reveal');}catch(e){}
+      try{MUS.setBiome('sangue');MUS.hush(false);}catch(e){}
+      tx.className='fim';
+      tx.innerHTML=R[lg][1].slice(2)+'<br><span>'+R[lg][2].slice(2)+'</span>';
+      setTimeout(function(){
+        try{v.classList.remove('on');_blessOpen=false;
+          R[lg].forEach(function(t){try{addMessage(t,'sys');}catch(e){}});
+          setTimeout(function(){try{v.remove();}catch(e){}},1400);
+        }catch(e){}
+      },3400);
+    };
+    v.onclick=fim;
+    _blessOpen=true;
+    try{MUS.hush(true);}catch(e){}
+    try{sfxEl('shadow',1.4);buzz([30,60,90]);}catch(e){}
+    requestAnimationFrame(function(){v.classList.add('on');});
+    ECO[lg].forEach(function(t,i){
+      timers.push(setTimeout(function(){
+        if(done)return;
+        tx.className=''; void tx.offsetWidth;
+        tx.className='eco'+(i===4?' nome':'');
+        tx.textContent=t;
+        try{sfxEl(i===4?'shadow':'holy',0.5+i*0.12);}catch(e){}
+      },1400+i*1700));
+    });
+    timers.push(setTimeout(fim,1400+5*1700+900));
+  }catch(e){
+    /* fallback: nunca deixar o jogador sem a verdade */
+    try{_blessOpen=false;}catch(e2){}
+    R[lg].forEach(function(t,i){setTimeout(function(){try{addMessage(t,'sys');}catch(e2){}},400+i*1600);});
+  }
 }
 function _myst10(){
   try{
@@ -13281,6 +13421,68 @@ function _vengOnKill(m){
   }catch(e){}
 }
 
+
+/* ============ INESQUECIVEL #1 — CICATRIZES QUE FICAM ============ */
+/* O chao do Vale guarda as batalhas grandes: cratera onde um chefe caiu, marca na
+   cor do afixo onde um elite morreu. Por APARELHO (acos_scars) — o heroi novo ve as
+   guerras do antigo. Teto 40, mesma cova substitui, so mundo aberto. */
+var _scarsCache=null;
+function _scarsLoad(){
+  if(_scarsCache)return _scarsCache;
+  try{_scarsCache=JSON.parse(localStorage.getItem('acos_scars')||'[]');}catch(e){_scarsCache=[];}
+  if(!Array.isArray(_scarsCache))_scarsCache=[];
+  return _scarsCache;
+}
+function _scarsSave(g){
+  _scarsCache=g.slice(-40);
+  try{localStorage.setItem('acos_scars',JSON.stringify(_scarsCache));}catch(e){}
+}
+function _scarAdd(t,tx,ty,c){
+  try{
+    if((typeof DungeonLayer!=='undefined')&&DungeonLayer.active)return;
+    var g=_scarsLoad().filter(function(q){
+      return Math.max(Math.abs(q.x-tx),Math.abs(q.y-ty))>1;
+    });
+    g.push({t:t,x:tx,y:ty,c:c||null,ts:Date.now()});
+    _scarsSave(g);
+  }catch(e){}
+}
+function _scarDraw(ox,oy){
+  var n=0;
+  try{
+    if((typeof DungeonLayer!=='undefined')&&DungeonLayer.active)return 0;
+    var g=_scarsLoad(); if(!g.length)return 0;
+    for(var i=0;i<g.length;i++){var q=g[i];
+      if(Math.max(Math.abs(player.tx-q.x),Math.abs(player.ty-q.y))>16)continue;
+      var sx=q.x*TILE+TILE/2-ox, sy=q.y*TILE+TILE/2-oy;
+      B.save();
+      if(q.t==='crater'){
+        B.globalAlpha=0.42;
+        B.fillStyle='#12141a';
+        B.beginPath();B.ellipse(sx,sy,TILE*0.85,TILE*0.55,0,0,7);B.fill();
+        B.globalAlpha=0.30;
+        B.strokeStyle='#3a3f4c';B.lineWidth=2.5;
+        B.beginPath();B.ellipse(sx,sy,TILE*0.92,TILE*0.60,0,0,7);B.stroke();
+        B.globalAlpha=0.22;
+        for(var k=0;k<5;k++){var a=k*1.256+((q.x*7+q.y*13)%10)*0.3;
+          B.strokeStyle='#2a2e38';B.lineWidth=1.6;
+          B.beginPath();B.moveTo(sx+Math.cos(a)*TILE*0.7,sy+Math.sin(a)*TILE*0.45);
+          B.lineTo(sx+Math.cos(a)*TILE*1.25,sy+Math.sin(a)*TILE*0.85);B.stroke();}
+      }else{
+        B.globalAlpha=0.34;
+        B.fillStyle=q.c||'#c8a060';
+        var r0=(q.x*7+q.y*13)%6;
+        for(var k2=0;k2<4;k2++){var a2=k2*1.57+r0*0.4, d2=TILE*(0.18+((k2+r0)%3)*0.12);
+          B.beginPath();B.ellipse(sx+Math.cos(a2)*d2,sy+Math.sin(a2)*d2,3.4,2.2,a2,0,7);B.fill();}
+        B.globalAlpha=0.20;
+        B.strokeStyle=q.c||'#c8a060';B.lineWidth=1.4;
+        B.beginPath();B.arc(sx,sy,TILE*0.42,0,7);B.stroke();
+      }
+      B.restore(); n++;
+    }
+  }catch(e){}
+  return n;
+}
 /* ============ TOP100 #25 — GRITO DE GUERRA ============ */
 var WARCRY={
  knight:{pt:'A\u00c7O E SOMBRAS!',en:'STEEL AND SHADOWS!',es:'\u00a1ACERO Y SOMBRAS!',fr:'ACIER ET OMBRES !'},
@@ -13321,6 +13523,102 @@ function _statueDraw(ox,oy){
     B.restore();
     return true;
   }catch(e){return false;}
+}
+
+/* ============ INESQUECIVEL #5 — A ESCOLHA IRREVERSIVEL ============ */
+/* Com a Revelacao vivida (myst10===2), voltar a Espada abre a decisao:
+   LIBERTAR (o Vale Vira para sempre; a terra racha onde a espada cedeu) ou
+   SELAR (a Espada some do mundo; Marca do Guardiao no topo da cadeia + glifo).
+   Dois toques confirmam. "Ainda nao" adia. Nunca desfaz. */
+var _cinPend=null;
+function _cindraPanel(){
+  var p=document.getElementById('cindraP');
+  if(!p){p=document.createElement('div');p.id='cindraP';p.className='overlay hidden';
+    document.body.appendChild(p);}
+  var lg=(typeof Lg!=='undefined')?Lg:'pt';
+  var T={pt:['A ESPADA ESPERA','Vharun ainda ajoelha, segurando o cabo. O que voc\u00ea fizer aqui, o Vale carrega para sempre.','\u26e7 Libertar o que ela prende','\u2756 Selar \u2014 e ajoelhar com ele','Ainda n\u00e3o','CONFIRMAR: SEM VOLTA'],
+         en:['THE SWORD WAITS','Vharun still kneels, holding the hilt. What you do here, the Vale carries forever.','\u26e7 Free what it pins','\u2756 Seal \u2014 and kneel with him','Not yet','CONFIRM: NO WAY BACK'],
+         es:['LA ESPADA ESPERA','Vharun a\u00fan se arrodilla, sujetando la empu\u00f1adura. Lo que hagas aqu\u00ed, el Valle lo carga para siempre.','\u26e7 Liberar lo que sujeta','\u2756 Sellar \u2014 y arrodillarte con \u00e9l','A\u00fan no','CONFIRMAR: SIN VUELTA'],
+         fr:['L\u2019\u00c9P\u00c9E ATTEND','Vharun s\u2019agenouille encore, tenant la garde. Ce que vous ferez ici, le Val le portera \u00e0 jamais.','\u26e7 Lib\u00e9rer ce qu\u2019elle retient','\u2756 Sceller \u2014 et s\u2019agenouiller avec lui','Pas encore','CONFIRMER : SANS RETOUR']};
+  var t=T[lg]||T.pt;
+  p.innerHTML='<div class="card panel cinCard">'
+    +'<h1>\u2694 '+t[0]+'</h1><p>'+t[1]+'</p>'
+    +'<button class="btn wide cinA" id="cinLib">'+t[2]+'</button>'
+    +'<button class="btn wide cinB" id="cinSel">'+t[3]+'</button>'
+    +'<button class="btn wide cinC" id="cinNao">'+t[4]+'</button></div>';
+  _cinPend=null;
+  var arm=function(id,which){
+    document.getElementById(id).onclick=function(){
+      if(_cinPend===which){_cindraPick(which);return;}
+      _cinPend=which;
+      this.textContent=t[5];
+      try{buzz(30);sfxEl('shadow',0.8);}catch(e){}
+    };
+  };
+  arm('cinLib','libertou'); arm('cinSel','selou');
+  document.getElementById('cinNao').onclick=function(){
+    p.classList.add('hidden'); _blessOpen=false; _cinPend=null;
+  };
+  p.classList.remove('hidden');
+  _blessOpen=true;
+  try{sfxEl('shadow',1.2);}catch(e){}
+}
+function _cindraPick(which){
+  try{
+    meta.cindraChoice=which; _cinPend=null;
+    var p=document.getElementById('cindraP'); if(p)p.classList.add('hidden');
+    _blessOpen=false;
+    var sw=LANDMARK_SPRITES.find(function(l){return l.k==='sword';});
+    var W2=(typeof WOFF!=='undefined')?WOFF:0;
+    if(which==='libertou'){
+      meta.ng=1;
+      try{if(sw)_scarAdd('crater',sw.x+W2,sw.y+W2);}catch(e){}
+      try{centerMsg(_qwL({pt:'O VALE VIROU \u2014 PARA SEMPRE',en:'THE VALE HAS TURNED \u2014 FOREVER',es:'EL VALLE GIR\u00d3 \u2014 PARA SIEMPRE',fr:'LE VAL A BASCUL\u00c9 \u2014 \u00c0 JAMAIS'}));}catch(e){}
+      addMessage(_qwL({pt:'\u26e7 A espada cedeu. A sombra respira \u2014 e Vharun, enfim, descansa. O c\u00e9u nunca mais ser\u00e1 o mesmo.',
+        en:'\u26e7 The sword gave way. The shadow breathes \u2014 and Vharun, at last, rests. The sky will never be the same.',
+        es:'\u26e7 La espada cedi\u00f3. La sombra respira \u2014 y Vharun, al fin, descansa. El cielo nunca ser\u00e1 el mismo.',
+        fr:'\u26e7 L\u2019\u00e9p\u00e9e a c\u00e9d\u00e9. L\u2019ombre respire \u2014 et Vharun, enfin, repose. Le ciel ne sera plus jamais le m\u00eame.'}),'sys');
+      try{_themePlay('reveal');sfxEl('shadow',1.6);buzz([60,90,120]);}catch(e){}
+    }else{
+      meta.ng=0;
+      try{centerMsg(_qwL({pt:'O SELO SEGURA',en:'THE SEAL HOLDS',es:'EL SELLO RESISTE',fr:'LE SCEAU TIENT'}));}catch(e){}
+      addMessage(_qwL({pt:'\u2756 Voc\u00ea ajoelhou ao lado dele. A Espada afundou na pedra \u2014 e o Vale nunca saber\u00e1 o que voc\u00ea impediu. A Marca do Guardi\u00e3o \u00e9 sua.',
+        en:'\u2756 You knelt beside him. The Sword sank into the stone \u2014 and the Vale will never know what you prevented. The Guardian\u2019s Mark is yours.',
+        es:'\u2756 Te arrodillaste a su lado. La Espada se hundi\u00f3 en la piedra \u2014 y el Valle nunca sabr\u00e1 lo que impediste. La Marca del Guardi\u00e1n es tuya.',
+        fr:'\u2756 Vous vous \u00eates agenouill\u00e9 \u00e0 ses c\u00f4t\u00e9s. L\u2019\u00c9p\u00e9e a sombr\u00e9 dans la pierre \u2014 et le Val ne saura jamais ce que vous avez emp\u00each\u00e9. La Marque du Gardien est v\u00f4tre.'}),'good');
+      try{fxLight(player.px,player.py,TILE*4,'#ffd76a',2.2);_themePlay('vila');sfxEl('holy',1.4);buzz([30,50,30]);}catch(e){}
+    }
+    try{_ngApply();_monApply();}catch(e){}
+    try{if(typeof saveGame==='function')saveGame();}catch(e){}
+  }catch(e){_blessOpen=false;}
+}
+function _cindraCheck(){
+  try{
+    if(meta.cindraChoice)return;
+    if(meta.myst10!==2)return;
+    var p=document.getElementById('cindraP');
+    if(p&&!p.classList.contains('hidden'))return;
+    var sw=LANDMARK_SPRITES.find(function(l){return l.k==='sword';}); if(!sw)return;
+    var W2=(typeof WOFF!=='undefined')?WOFF:0;
+    if(Math.max(Math.abs(player.tx-(sw.x+W2)),Math.abs(player.ty-(sw.y+W2)))>2)return;
+    _cindraPanel();
+  }catch(e){}
+}
+function _guardMark(ox,oy){
+  try{
+    if(!meta||meta.cindraChoice!=='selou')return;
+    if((typeof DungeonLayer!=='undefined')&&DungeonLayer.active)return;
+    var sx=player.px-ox, sy=player.py-oy+TILE*0.42;
+    var pu=0.30+0.08*Math.sin((typeof gameTime!=='undefined'?gameTime:0)*2.1);
+    B.save(); B.globalAlpha=pu; B.strokeStyle='#ffd76a'; B.lineWidth=1.4;
+    B.beginPath();B.ellipse(sx,sy,TILE*0.58,TILE*0.30,0,0,7);B.stroke();
+    B.globalAlpha=pu*0.7;
+    for(var k=0;k<4;k++){var a=k*1.5708+0.785;
+      B.beginPath();
+      B.moveTo(sx+Math.cos(a)*TILE*0.50,sy+Math.sin(a)*TILE*0.26);
+      B.lineTo(sx+Math.cos(a)*TILE*0.70,sy+Math.sin(a)*TILE*0.36);B.stroke();}
+    B.restore();
+  }catch(e){}
 }
 /* ============ TOP100 #13 — OS SINOS DE KARGHAST ============ */
 /* 1x/dia, junto a catedral em ruinas: o sino toca (sintese WebAudio, 2 badaladas),
@@ -13481,12 +13779,13 @@ function renderCodex(){
 function _ngEliteMul(){return (meta&&meta.ng)?2:1;}
 function _ngApply(){
   try{
+    if(meta&&meta.cindraChoice){meta.ng=(meta.cindraChoice==='libertou')?1:0;}
     var on=!!(meta&&meta.ng);
     document.body.classList.toggle('ngWorld',on);
     var row=document.getElementById('rowNg');
     if(row)row.style.display=(meta&&meta.ngUnlocked)?'':'none';
     var tg=document.getElementById('togNg');
-    if(tg){tg.classList.toggle('on',on);tg.classList.toggle('act',on);}
+    if(tg){tg.classList.toggle('on',on);tg.classList.toggle('act',on);} if(tg)tg.classList.toggle('lock',!!(meta&&meta.cindraChoice));
   }catch(e){}
 }
 function _ngKillCheck(m){
@@ -13521,6 +13820,7 @@ function _ngKillCheck(m){
         +'<div class="stog" id="togNg"><i></i></div>';
       q.parentNode.insertBefore(r,q);
       document.getElementById('togNg').onclick=function(){
+        if(meta&&meta.cindraChoice){try{addMessage(_qwL({pt:'\u25c8 A escolha foi selada. N\u00e3o h\u00e1 volta.',en:'\u25c8 The choice is sealed. There is no way back.',es:'\u25c8 La elecci\u00f3n fue sellada. No hay vuelta.',fr:'\u25c8 Le choix est scell\u00e9. Pas de retour.'}),'sys');}catch(e){} return;}
         meta.ng=meta.ng?0:1; _ngApply();
         try{sfxEl(meta.ng?'shadow':'holy',1.1);}catch(e){}
         try{if(typeof saveGame==='function')saveGame();}catch(e){}
@@ -13892,7 +14192,7 @@ window._acWorldTick=function(){
         if(map[_idx]!==T.brazier)map[_idx]=T.brazier;
       }
     }catch(e){}
-    try{_espadaCheck();_fundCheck();_mystCheck();MUS.update();_graveCheck();_bloodTick();_bellCheck();}catch(e){}
+    try{_espadaCheck();_fundCheck();_mystCheck();MUS.update();_graveCheck();_bloodTick();_bellCheck();_cindraCheck();}catch(e){}
     /* ---- Auditoria #9: cartao de chefe ---- */
     for(const m of monsters){
       if(m.dead||!m.d||!m.d.boss||m._carded)continue;
