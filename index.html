@@ -4212,7 +4212,7 @@ function recompute(){
   const sh=(meta&&meta.shrine)?meta.shrine:{};                       /* bônus PERMANENTES de santuário */
   player.atk+=4*(sh.forca||0);player.maxhp+=30*(sh.vida||0);
   player.critC+=0.03*(sh.crit||0);player.goldMul+=0.15*(sh.ouro||0);
-  player.mdur=Math.round(155*(1-Math.min(0.28,0.06*(bl.passo||0))));
+  player.mdur=Math.round(155*(1-Math.min(0.32,0.04*(bl.r_agil||0)))); /* perk: Pes Leves (+4%/nv, teto 32%) — antes ligado por engano ao 'passo' */
   /* conjuntos: bônus de 2 e 3 peças */
   player.activeSet=null;player.setTier=0;player.setBonus3=null;
   {const eq=[w,o,a],cnt={};for(const it of eq)if(it&&it.set)cnt[it.set]=(cnt[it.set]||0)+1;
@@ -4411,7 +4411,7 @@ function strikeMonster(m,mult=1){
      }
    }
   var _execB=0; if(player.wfx==='exec'&&!m.d.boss&&m.hp<=m.maxhp*0.30){total=Math.round(total*1.7);_execB=1;}  /* carrasco */
-  m.hp-=total;m.hurtFlash=1;
+  m.hp-=total; if(!isFinite(m.hp))m.hp=0; m.hurtFlash=1;
   {const fdx=Math.sign(m.px-player.px)||0.5,fdy=Math.sign(m.py-player.py);
     /* COMBAT FEEL: a reacao ao golpe conta o PESO do bicho (visual puro — a posicao
        real nao muda, so o deslocamento de desenho flinchX/Y que ja existia):
@@ -4596,8 +4596,9 @@ function applyPlayerDamage(dmg,src){
      Math.round e OBRIGATORIO: dmgRed e float (0.04*3 = 0.12000000000000001 em JS), entao
      10*(1-0.12000000000000001) = 8.799999999999999 e o numero flutuante aparecia inteiro na tela.
      Math.max(1,...) preserva a regra antiga de que todo golpe que acerta tira ao menos 1. */
+  if(!isFinite(dmg)){try{console.warn('[dano] nao-finito ignorado:',dmg,src&&src.d&&src.d.id);}catch(e){} return;}
   dmg=Math.max(1,Math.round(dmg*(1-(player.dmgRed||0))));
-  player.hp-=dmg;player.hurtFlash=1;player.invuln=Math.max(player.invuln||0,player.invT||0.15);
+  player.hp-=dmg; if(!isFinite(player.hp))player.hp=1; /* cura NaN historico no impacto */player.hurtFlash=1;player.invuln=Math.max(player.invuln||0,player.invT||0.15);
   addFloater(player.px,player.py-TILE*0.6,'-'+dmg,'#ff7a6a');SFX.hurt();buzz(24);
   if(player.rng<=1)shake(Math.min(8,3+dmg*0.12));  // ranged não treme a câmera (não atrapalha a mira)
   if(dmg>player.maxhp*0.15&&player.rng<=1)hitStop=Math.min(0.09,Math.max(hitStop,0.04));
@@ -5341,7 +5342,7 @@ function update(dt){if(_blessOpen)return;
         player.hp-=pd;addFloater(player.px,player.py-TILE*0.6,'-'+pd,'#8fe08a');
         if(player.hp<=0){player.hp=0;die('O veneno');}}}
     player.regenT+=dt;
-    if(player.regenT>=1.4){player.regenT=0;
+    if(!isFinite(player.maxhp))player.maxhp=150; if(!isFinite(player.hp)){player.hp=Math.min(player.maxhp,Math.max(1,Math.round(player.maxhp*0.5)));try{console.warn('[vida] NaN corrigido para 50%');}catch(e){}} if(player.regenT>=1.4){player.regenT=0;
       const inC=monsters.some(m=>cheby(m.tx,m.ty,player.tx,player.ty)<=4);
       if(player.poison<=0)player.hp=Math.min(player.maxhp,player.hp+Math.ceil(player.maxhp*(inC?0.01:0.03)));}
   }
@@ -8541,8 +8542,9 @@ function applyPotion(it){
     player.poison=0;addFloater(player.px,player.py-TILE*0.6,t('fl_purified'),'#8fe08a');
     addMessage(t('msg_cure_purge'),'good');qProg('cure');}
   else{if(player.hp>=player.maxhp){addMessage(t('msg_hp_full'),'sys');return;}
-    player.hp=Math.min(player.maxhp,player.hp+it.amt);
-    addFloater(player.px,player.py-TILE*0.6,'+'+it.amt,'#a9e6a0');}
+    var _amA=Math.round(it.amt*(player.potMul||1)); /* perk: Alquimia / Elixir Puro */
+    player.hp=Math.min(player.maxhp,player.hp+_amA);
+    addFloater(player.px,player.py-TILE*0.6,'+'+_amA,'#a9e6a0');}
   takeBag(it.id,1);SFX.pickup();renderInv();renderHUD();}
 function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
   if(k==='weapon'){stats=`${t('tip_attack')} <b>${it.atk}</b><br>${t('tip_atkspd')} ${it.spd.toFixed(2)}x<br>${t('pip_range')} ${it.rng} ${it.rng>1?t('tip_tiles'):t('tip_tile')}<br>${t('tip_defense')} +${it.def}`;
@@ -8966,8 +8968,8 @@ function resize(){
   worldCv=mkC(Math.max(2,Math.ceil(W/PIX)),Math.max(2,Math.ceil(H/PIX)));
   B=worldCv.getContext('2d');B.imageSmoothingEnabled=false;
   bakeVignettes();}
-function loop(ts){requestAnimationFrame(loop);try{window.running=running;if(document.body){if(running){document.body.classList.add('playing');}else{document.body.classList.remove('playing');}}}catch(e){}if(!running)return;
-  if(!lastT)lastT=ts;let dt=(ts-lastT)/1000;lastT=ts;dt=Math.min(dt,0.05); if(window._slowT>0){window._slowT-=dt; dt*=0.35;} /* coda de chefe: 1,4s de camera lenta */
+function loop(ts){window.__rafId=requestAnimationFrame(loop);try{window.running=running;if(document.body){if(running){document.body.classList.add('playing');}else{document.body.classList.remove('playing');}}}catch(e){}if(!running)return;
+  if(!lastT)lastT=ts;let dt=(ts-lastT)/1000;lastT=ts;dt=Math.min(dt,0.05); if(!isFinite(dt)||dt<0)dt=0.016; if(window._slowT>0){window._slowT-=dt; dt*=0.35;} /* coda de chefe: 1,4s de camera lenta */
   if(hitStop>0){hitStop-=dt;
     // congela a LÓGICA, mas mantém câmera e movimento fluindo p/ evitar transições truncadas
     if(!_blessOpen){updateEntityMove(player,dt,1);updateCamera(dt);
@@ -11628,7 +11630,8 @@ try{(function(){
         if(typeof running!=='undefined'&&running&&typeof loop==='function'){
           // re-kicka o requestAnimationFrame (a cadeia pode ter morrido com a aba em background)
           if(typeof lastT!=='undefined')lastT=0;   // evita salto de dt gigante
-          requestAnimationFrame(loop);
+          try{cancelAnimationFrame(window.__rafId);}catch(e){} /* single-flight: nunca empilha cadeias */
+          window.__rafId=requestAnimationFrame(loop);
         }
       }catch(e){}
     }
@@ -12493,8 +12496,9 @@ try{(function(){
 
         var it=itemById(list[0].id);
         takeBag(it.id,1); if(typeof cd!=='undefined')cd.pot=1.0;
-        if(kind==='hp'){ player.hp=Math.min(player.maxhp,player.hp+it.amt);
-          if(typeof addFloater==='function')addFloater(player.px,player.py-16,'+'+it.amt,'#a9e6a0');
+        if(kind==='hp'){ var _amB=Math.round(it.amt*(player.potMul||1)); /* perk: Alquimia / Elixir Puro */
+          player.hp=Math.min(player.maxhp,player.hp+_amB);
+          if(typeof addFloater==='function')addFloater(player.px,player.py-16,'+'+_amB,'#a9e6a0');
           if(typeof SFX!=='undefined'&&SFX.heal)SFX.heal();
         } else {
           player.poison=0;
