@@ -10161,6 +10161,30 @@ try{(function(){
           });
         }catch(err){ try{ console.warn('[login] excecao:', err); }catch(_){} }
       }
+      function _loginFb(){
+        try{
+          var p=new firebase.auth.FacebookAuthProvider();
+          p.setCustomParameters({display:'popup'});
+          _auth.signInWithPopup(p).then(function(res){
+            if(res&&res.user){ _fuser=res.user; window._acFbUser=res.user; _lastUid='__force__'; _renderBtn();
+              try{ _toast('Bem-vindo, '+(res.user.displayName||'her\u00f3i')+'!'); }catch(_){}
+            } else { try{ _toast('Login bloqueado pelo navegador (cookies).'); }catch(_){} }
+          }).catch(function(e){
+            var code=(e&&e.code)||'';
+            if(code==='auth/popup-blocked'||code==='auth/cancelled-popup-request'||code==='auth/operation-not-supported-in-this-environment'){
+              try{ _auth.signInWithRedirect(p); }catch(_){}
+            } else if(code==='auth/popup-closed-by-user'){
+            } else if(code==='auth/account-exists-with-different-credential'){
+              try{ _toast('Este e-mail j\u00e1 entrou com Google. Use "Entrar com Google".'); }catch(_){}
+            } else if(code==='auth/operation-not-allowed'){
+              try{ _toast('Facebook ainda n\u00e3o habilitado no console do Firebase.'); }catch(_){}
+            } else {
+              try{ _toast('Login falhou: '+(code||'erro')); }catch(_){}
+              try{ console.warn('[loginFb] erro:', code, e&&e.message); }catch(_){}
+            }
+          });
+        }catch(err){ try{ console.warn('[loginFb] excecao:', err); }catch(_){} }
+      }
       function _logout(){ try{ _active=false; _auth.signOut(); }catch(e){} }
 
       /* ---- reivindica ao COMECAR a jogar; libera ao voltar ao menu ---- */
@@ -10201,6 +10225,22 @@ try{(function(){
             +'<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>'
             +'Entrar com Google</button>';
           var i=document.getElementById('fbIn'); if(i)i.onclick=_login;
+          try{
+            var bG=document.getElementById('fbIn');
+            if(bG&&!document.getElementById('fbInFb')){
+              var bF=document.createElement('button');
+              bF.id='fbInFb';
+              try{bF.className=bG.className;}catch(_){}
+              try{bF.style.cssText=bG.style.cssText;}catch(_){}
+              bF.style.marginTop='6px'; bF.style.display=bG.style.display||'flex';
+              bF.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:8px;flex:0 0 auto">'
+                +'<circle cx="12" cy="12" r="12" fill="#1877F2"/>'
+                +'<path d="M15.6 12.2H13.3V19h-2.8v-6.8H9V9.7h1.5V8.3c0-1.9 1.1-3.2 3.2-3.2h1.9v2.4h-1.3c-.7 0-1 .3-1 1v1.2h2.4l-.1 2.5z" fill="#fff"/></svg>'
+                +'Entrar com Facebook';
+              bG.parentNode.insertBefore(bF,bG.nextSibling);
+              bF.onclick=function(ev){try{ev.preventDefault();ev.stopPropagation();}catch(_){}; _loginFb();};
+            }
+          }catch(_){}
         }
       }
       _renderBtn();
@@ -13526,6 +13566,97 @@ function _statueDraw(ox,oy){
   }catch(e){return false;}
 }
 
+
+/* ============ PRE-AAB: EXPORTAR/IMPORTAR PROGRESSO ============ */
+/* "Seu progresso e seu" vira verdade portavel: todo o localStorage num codigo AS1. */
+function _saveExportCode(){
+  try{
+    var d={}; for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i); d[k]=localStorage.getItem(k);}
+    return 'AS1.'+btoa(unescape(encodeURIComponent(JSON.stringify({v:1,t:Date.now(),d:d}))));
+  }catch(e){return '';}
+}
+function _saveImportApply(code){
+  try{
+    code=String(code||'').trim();
+    if(code.indexOf('AS1.')!==0)return {ok:false,n:0};
+    var obj=JSON.parse(decodeURIComponent(escape(atob(code.slice(4)))));
+    if(!obj||obj.v!==1||typeof obj.d!=='object')return {ok:false,n:0};
+    var ks=Object.keys(obj.d);
+    localStorage.clear();
+    ks.forEach(function(k){try{localStorage.setItem(k,obj.d[k]);}catch(e){}});
+    if(!window.__noReload){try{location.reload();}catch(e){}}
+    return {ok:true,n:ks.length};
+  }catch(e){return {ok:false,n:0};}
+}
+(function(){
+  function wire(){
+    try{
+      if(document.getElementById('rowExp'))return;
+      var q=document.getElementById('rowQual'); if(!q||!q.parentNode)return;
+      function row(id,ic,tit,sub){
+        var r=document.createElement('div'); r.className='srow'; r.id=id;
+        r.innerHTML='<div class="sic">'+ic+'</div><div class="stx"><b>'+tit+'</b><span>'+sub+'</span></div>'
+          +'<div class="stog" style="opacity:.55"><i></i></div>';
+        q.parentNode.insertBefore(r,q); return r;
+      }
+      var TE=_qwL({pt:['Exportar progresso','Gera um c\u00f3digo p/ copiar e guardar'],
+                   en:['Export progress','Creates a code to copy and keep'],
+                   es:['Exportar progreso','Genera un c\u00f3digo para copiar y guardar'],
+                   fr:['Exporter la progression','G\u00e9n\u00e8re un code \u00e0 copier et garder']});
+      var TI=_qwL({pt:['Importar progresso','Cole um c\u00f3digo AS1 \u2014 substitui TUDO'],
+                   en:['Import progress','Paste an AS1 code \u2014 replaces EVERYTHING'],
+                   es:['Importar progreso','Pega un c\u00f3digo AS1 \u2014 reemplaza TODO'],
+                   fr:['Importer la progression','Collez un code AS1 \u2014 remplace TOUT']});
+      var re_=row('rowExp','\u2b06',TE[0],TE[1]);
+      var ri_=row('rowImp','\u2b07',TI[0],TI[1]);
+      var p=document.createElement('div'); p.id='savePx'; p.className='overlay hidden';
+      p.innerHTML='<div class="card panel" style="max-width:360px;text-align:center">'
+        +'<h1 id="spxT" style="font-size:17px;color:#e8c15a"></h1>'
+        +'<textarea id="spxA" style="width:100%;height:120px;background:#0d0f16;color:#cfd3dc;'
+        +'border:1px solid #2c313e;border-radius:8px;font:11px monospace;padding:8px;margin:10px 0"></textarea>'
+        +'<div id="spxW" style="color:#ff9a8a;font:600 11px system-ui;margin-bottom:8px"></div>'
+        +'<button class="btn wide" id="spxB1" style="display:block;width:100%"></button>'
+        +'<button class="btn wide" id="spxB2" style="display:block;width:100%;margin-top:8px;opacity:.75"></button></div>';
+      document.body.appendChild(p);
+      var B1=document.getElementById('spxB1'),B2=document.getElementById('spxB2'),
+          A=document.getElementById('spxA'),T=document.getElementById('spxT'),Wm=document.getElementById('spxW');
+      function fecha(){p.classList.add('hidden');_blessOpen=false;}
+      B2.onclick=fecha;
+      re_.onclick=function(){
+        T.textContent=TE[0]; Wm.textContent='';
+        A.value=_saveExportCode(); A.readOnly=true;
+        B1.textContent=_qwL({pt:'Copiar c\u00f3digo',en:'Copy code',es:'Copiar c\u00f3digo',fr:'Copier le code'});
+        B2.textContent=_qwL({pt:'Fechar',en:'Close',es:'Cerrar',fr:'Fermer'});
+        B1.onclick=function(){
+          A.select(); A.setSelectionRange(0,999999);
+          var ok=false;
+          try{ok=document.execCommand('copy');}catch(e){}
+          try{if(navigator.clipboard)navigator.clipboard.writeText(A.value);ok=true;}catch(e){}
+          B1.textContent=ok?_qwL({pt:'\u2713 Copiado!',en:'\u2713 Copied!',es:'\u2713 \u00a1Copiado!',fr:'\u2713 Copi\u00e9 !'})
+                           :_qwL({pt:'Selecione e copie manualmente',en:'Select and copy manually',es:'Selecciona y copia manualmente',fr:'S\u00e9lectionnez et copiez'});
+        };
+        p.classList.remove('hidden'); _blessOpen=true;
+      };
+      ri_.onclick=function(){
+        T.textContent=TI[0];
+        Wm.textContent=_qwL({pt:'\u26a0 Substitui TODO o progresso deste aparelho.',en:'\u26a0 Replaces ALL progress on this device.',es:'\u26a0 Reemplaza TODO el progreso de este dispositivo.',fr:'\u26a0 Remplace TOUTE la progression de cet appareil.'});
+        A.value=''; A.readOnly=false; A.placeholder='AS1.....';
+        var armed=false;
+        B1.textContent=_qwL({pt:'Importar',en:'Import',es:'Importar',fr:'Importer'});
+        B2.textContent=_qwL({pt:'Cancelar',en:'Cancel',es:'Cancelar',fr:'Annuler'});
+        B1.onclick=function(){
+          if(!armed){armed=true;B1.textContent=_qwL({pt:'CONFIRMAR: substituir tudo',en:'CONFIRM: replace everything',es:'CONFIRMAR: reemplazar todo',fr:'CONFIRMER : tout remplacer'});return;}
+          var r=_saveImportApply(A.value);
+          if(!r.ok){armed=false;
+            B1.textContent=_qwL({pt:'C\u00f3digo inv\u00e1lido \u2014 tentar de novo',en:'Invalid code \u2014 try again',es:'C\u00f3digo inv\u00e1lido \u2014 reintentar',fr:'Code invalide \u2014 r\u00e9essayer'});}
+        };
+        p.classList.remove('hidden'); _blessOpen=true;
+      };
+    }catch(e){}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1000);});
+  else setTimeout(wire,1000);
+})();
 /* ============ INESQUECIVEL #5 — A ESCOLHA IRREVERSIVEL ============ */
 /* Com a Revelacao vivida (myst10===2), voltar a Espada abre a decisao:
    LIBERTAR (o Vale Vira para sempre; a terra racha onde a espada cedeu) ou
@@ -13984,7 +14115,7 @@ function _bloodState(dn){
   var r=((dn%21)+21)%21;
   return r===7?2:(r===6?1:0);
 }
-function _bloodEliteMul(){return _bloodState()===2?2:1;}
+function _bloodEliteMul(){if(typeof player!=='undefined'&&player&&(player.lvl||1)<4)return 1; /* misericordia: recem-chegados */ return _bloodState()===2?2:1;}
 function _bloodVeil(on){
   try{
     var v=document.getElementById('bloodVeil');
