@@ -7,7 +7,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Aço &amp; Sombras</title>
+<title>Cindra: Aço &amp; Sombras</title>
 <style>
 /*
  * Aco & Sombras - estilos principais.
@@ -555,6 +555,12 @@ body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-inde
 .cinCard .cinB{border-color:#7a6a30;color:#ffd76a}
 .cinCard .cinC{opacity:.7}
 .stog.lock{opacity:.45;pointer-events:auto}
+
+/* rebrand: CINDRA como marca, nome localizado como subtítulo */
+.tcard .tlBrand{font-size:27px;letter-spacing:.22em;text-indent:.22em}
+.tcard .tl2{display:flex;align-items:center;justify-content:center;gap:8px}
+.tcard .tlsub{font-size:16px;letter-spacing:.18em;color:#cfd3dc;font-weight:700}
+.tcard .tlOrn{opacity:.8}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -623,9 +629,8 @@ window.FIREBASE_CONFIG = {
         <button class="langb" data-lang="fr">FR</button>
       </div>
       <div class="tlogo">
-        <div class="tl1">A&Ccedil;O</div>
-        <div class="tl2">&#10038; &amp; &#10038;</div>
-        <div class="tl3">SOMBRAS</div>
+        <div class="tl1 tlBrand">CINDRA</div>
+        <div class="tl2"><span class="tlOrn">&#10038;</span> <span class="tlsub">A&Ccedil;O &amp; SOMBRAS</span> <span class="tlOrn">&#10038;</span></div>
         <div class="ttag" data-i18n="game_sub">um RPG de bolso no Vale de Cindra</div>
  <div class="ttag2" data-i18n="game_motto">O Vale lembra.</div>
  <div class="embers" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -1099,7 +1104,10 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{el.innerHTML=t(el.getAttribute('data-i18n-html'));});
   document.querySelectorAll('.langb').forEach(x=>{x.classList.toggle('on',x.dataset.lang===LANG); try{window._acRelabel&&window._acRelabel();}catch(e){}});
 }
-function setLang(l){LANG=l;lsSet(LANG_KEY,l);applyI18n();
+function setLang(l){LANG=l;lsSet(LANG_KEY,l);applyI18n(); try{var _nm={pt:'A\u00c7O & SOMBRAS',en:'STEEL & SHADOWS',es:'ACERO Y SOMBRAS',fr:'ACIER & OMBRES'};
+   var _tt={pt:'Cindra: A\u00e7o & Sombras',en:'Cindra: Steel & Shadows',es:'Cindra: Acero y Sombras',fr:'Cindra : Acier & Ombres'};
+   var _e=document.querySelector('.tlsub'); if(_e)_e.textContent=_nm[l]||_nm.pt;
+   document.title=_tt[l]||_tt.pt; }catch(e){}
   try{if(typeof refreshTitle==='function')refreshTitle();
     if(typeof showCreate==='function'&&$('createWrap')&&$('title')&&!$('title').classList.contains('hidden'))showCreate();
     if(typeof syncSettings==='function')syncSettings();
