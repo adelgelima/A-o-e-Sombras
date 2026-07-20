@@ -4321,6 +4321,19 @@ function dropLoot(m){const b={gold:0,items:[]};
   (function(){
     if(m.d.boss){
       const Wp=WEAPONS[player.cls],AR=ARMORS.filter(a=>a.id[0]==='a');
+      /* funil de topo: todo chefe tenta soltar uma arma de topo adequada ao nivel.
+         mira a maior arma com req<=nivel; 18% base (25% sob Lua/NG). Nao empilha inflacao:
+         some so quando o jogador ja teria req, e uma unica tentativa. */
+      (function(){try{
+        var lv=player.lvl||1, top=-1;
+        for(var i=Wp.length-1;i>=11;i--){ if((Wp[i].req||1)<=lv){top=i;break;} }
+        if(top>=0){
+          var pc=0.18*(1+(player.luck||0));
+          if(typeof _bloodState==='function'&&_bloodState()===2)pc=Math.max(pc,0.25);
+          if(meta&&meta.ng)pc=Math.max(pc,0.25);
+          if(chance(Math.min(0.5,pc))) b.items.push(Wp[top].id);
+        }
+      }catch(e){}})();
       if(m.type==='dragon'){                                                    /* Vorrak: lendário de FOGO + couraça de cinzas + tesouro */
         b.items.push(Wp[16].id);b.items.push(AR[9].id);b.items.push('hp_l');b.gold+=ri(350,600);}
       else if(m.type==='vharun'){                                               /* Vharun: lendário SAGRADO + a melhor armadura */
@@ -8594,13 +8607,27 @@ function showTip(e,it){const tp=$('tooltip');const k=itemKind(it);let stats='';
 function hideTip(){$('tooltip').style.display='none';}
 let shopKind='shop';
 let trackerOpen=true; var _tSig='';   /* rastreador visivel por padrao; reabre sozinho quando as missoes mudam */  /* rastreador colapsado por padrão (ícone) */
+/* funil de topo: as armas superiores (w13..w17) existem mas nenhuma loja fixa as vendia.
+   _wTier devolve os ids das armas da classe com req<=nivel, no maximo os N mais altos,
+   respeitando um piso de indice p/ nao repetir o que a loja base ja mostra. */
+function _wTier(minIdx,maxCount){
+  try{
+    var w=WEAPONS[player.cls], lv=player.lvl||1;
+    /* maior indice liberado por nivel */
+    var hi=minIdx-1; for(var i=minIdx;i<w.length;i++){ if((w[i].req||1)<=lv)hi=i; }
+    if(hi<minIdx)return [];
+    var lo=Math.max(minIdx,hi-maxCount+1), out=[];
+    for(var j=lo;j<=hi;j++)out.push(w[j].id);   /* faixa contigua, sem buracos */
+    return out;
+  }catch(e){return [];}
+}
 function shopItems(kind){const w=WEAPONS[player.cls],o=OFFHANDS[player.cls];
   const gid=(slot,rar)=>{const g=GEAR.find(x=>x.cls===player.cls&&x.slot===slot&&x.rar===rar);return g?g.id:null;};
   let list;
   if(kind==='smith')list=[w[4].id,w[5].id,w[6].id,w[7].id,o[1].id,o[2].id,'a2','a3',gid('head','common'),gid('legs','common'),gid('head','uncommon'),gid('legs','uncommon')];
-  else if(kind==='psmith')list=[w[8].id,w[9].id,w[10].id,o[4].id,'a5','a6','a7',gid('head','rare'),gid('legs','rare')];
+  else if(kind==='psmith')list=[w[8].id,w[9].id,w[10].id].concat(_wTier(11,3)).concat([o[4].id,'a5','a6','a7',gid('head','rare'),gid('legs','rare')]);
   else if(kind==='alch')list=['hp_s','hp_m','hp_l','cure'];
-  else if(kind==='wander'){const feat=[w[8].id,w[9].id,w[10].id,w[11].id][(meta.wanderVisit||0)%4];list=[feat,w[12].id,o[4].id,'a7','hp_l',gid('head','epic'),gid('legs','epic')];}
+  else if(kind==='wander'){const _top=_wTier(11,4); const feat=_top.length?_top[(meta.wanderVisit||0)%_top.length]:w[11].id; list=[feat].concat(_wTier(13,2)).concat([w[12].id,o[4].id,'a7','hp_l',gid('head','epic'),gid('legs','epic')]);}
   else list=['hp_s','hp_m','cure',w[1].id,w[2].id,w[3].id,o[0].id,'a0','a1',gid('head','common'),gid('legs','common')];
   return list.filter(Boolean);}
 function openShop(kind='shop'){closeAllPanels();shopKind=kind;
