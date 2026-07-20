@@ -4164,7 +4164,7 @@ function fxRarity(it){ /* Auditoria #8+#21+#52: o prêmio merece cerimônia */
              en:'Tip: items like this grow stronger at the village FORGE.',
              es:'Consejo: objetos as\u00ed se fortalecen en la FORJA de la aldea.',
              fr:'Astuce : ces objets se renforcent \u00e0 la FORGE du village.'};
-      addMessage(F[(typeof Lg!=='undefined'&&F[Lg])?Lg:'pt'],'sys');
+      addMessage(F[(typeof LANG!=='undefined'&&F[LANG])?LANG:'pt'],'sys');
     }
   }catch(e){}
 }
@@ -4406,7 +4406,7 @@ function strikeMonster(m,mult=1){
        _elFlT[_ek]=_en;
        const _et={pt:['vulner\u00e1vel!','resistente\u2026'],en:['vulnerable!','resistant\u2026'],
                   es:['\u00a1vulnerable!','resistente\u2026'],fr:['vuln\u00e9rable !','r\u00e9sistant\u2026']};
-       const _ea=(_et[(typeof Lg!=='undefined'&&_et[Lg])?Lg:'pt'])[eb>0?0:1];
+       const _ea=(_et[(typeof LANG!=='undefined'&&_et[LANG])?LANG:'pt'])[eb>0?0:1];
        try{addFloater(m.px,m.py-TILE*0.95,_ea,eb>0?'#a8e060':'#8a90a0');}catch(e){}
      }
    }
@@ -4491,7 +4491,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
     try{meta.bossEcho=mName(m);}catch(e){meta.bossEcho=m.d.name;} try{_vengOnKill(m);}catch(e){}
     try{_bossRelic(m);}catch(e){}
     try{_ngKillCheck(m);}catch(e){}
-    try{centerMsg((typeof Lg!=='undefined'&&{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg])?mName(m)+{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[Lg]:mName(m)+' caiu.');}catch(e){}
+    try{centerMsg((typeof LANG!=='undefined'&&{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[LANG])?mName(m)+{en:' has fallen.',es:' ha ca\u00eddo.',fr:' est tomb\u00e9.'}[LANG]:mName(m)+' caiu.');}catch(e){}
   }
   try{ /* morte com identidade de porte (o df por familia continua; isto SOMA) */
     const _pt=monPorte(m);
@@ -4555,7 +4555,7 @@ function giveXp(x){x=Math.round(x*(player.xpMul||1)*(_wkAct(1)?1.2:1));player.xp
       SPELL_ORDER.filter(function(id){return SPELLS[id].cls===player.cls&&SPELLS[id].lv===player.lvl;})
         .forEach(function(id){
           var P={pt:'\u2726 Nova habilidade: ',en:'\u2726 New skill: ',es:'\u2726 Nueva habilidad: ',fr:'\u2726 Nouvelle comp\u00e9tence : '};
-          addMessage((P[(typeof Lg!=='undefined'&&P[Lg])?Lg:'pt'])+SPELLS[id].name+'!','good');
+          addMessage((P[(typeof LANG!=='undefined'&&P[LANG])?LANG:'pt'])+SPELLS[id].name+'!','good');
           try{fxLight(player.px,player.py,TILE*2.4,'#e8c15a',1.0);}catch(e){}
         });
     }catch(e){}
@@ -4615,7 +4615,7 @@ function die(src){player.dead=true;buzz([60,60,120]); try{_themePlay('death');}c
   if(rb){rb.textContent=tf('revive_btn',{g:cost});const poor=player.gold<cost;rb.style.opacity=poor?'0.45':'1';rb.style.pointerEvents=poor?'none':'auto';}
   try{var _dm=document.getElementById('deathMsg');
     if(_dm){
-      var _lg=(typeof Lg!=='undefined')?Lg:'pt', _kn=null;
+      var _lg=(typeof LANG!=='undefined')?LANG:'pt', _kn=null;
       try{
         if(meta&&meta._lk){_kn=_codexName(meta._lk);}
         else if(src){_kn=src.d?(function(){try{return mName(src);}catch(e){return src.d.name;}})():String(src);}
@@ -9102,7 +9102,7 @@ const DungeonLayer={
           meta.bestFloor=_nd; try{if(_nd>=10)_myst10();}catch(e){}
           var RB={pt:'\u2605 NOVO RECORDE \u2014 Andar ',en:'\u2605 NEW RECORD \u2014 Floor ',
                   es:'\u2605 NUEVO R\u00c9CORD \u2014 Piso ',fr:'\u2605 NOUVEAU RECORD \u2014 \u00c9tage '};
-          addMessage((RB[(typeof Lg!=='undefined'&&RB[Lg])?Lg:'pt'])+_nd+'!','good');
+          addMessage((RB[(typeof LANG!=='undefined'&&RB[LANG])?LANG:'pt'])+_nd+'!','good');
           try{addFloater(player.px,player.py-TILE*0.9,'\u2605 '+_nd,'#ffd76a');SFX.gold();}catch(e){}
         }else if(_nd>meta.bestFloor){meta.bestFloor=_nd;}
       }catch(e){}
@@ -11795,13 +11795,13 @@ try{(function(){
               fr:['Changer de h\u00e9ros','Sauvegarde et retourne \u00e0 la s\u00e9lection du personnage']};
     window._acRelabel=function(){
       try{
-        var Lg=(typeof LANG!=='undefined'&&LANG)||'pt';
+        var _lgR=(typeof LANG!=='undefined'&&LANG)||'pt';
         var sw=document.getElementById('rowSwitchHero');
-        if(sw){var b=sw.querySelector('.stx b'),s=sw.querySelector('.stx span'),T=_SWL[Lg]||_SWL.pt;
+        if(sw){var b=sw.querySelector('.stx b'),s=sw.querySelector('.stx span'),T=_SWL[_lgR]||_SWL.pt;
           if(b)b.textContent=T[0]; if(s)s.textContent=T[1];}
         if(typeof _VL!=='undefined'){
           var hs=document.getElementById('rowSkinVar');
-          if(hs){var V=_VL[Lg]||_VL.pt;
+          if(hs){var V=_VL[_lgR]||_VL.pt;
             var b2=hs.querySelector('.stx b'),s2=hs.querySelector('.stx span');
             if(b2)b2.textContent=V[0]; if(s2)s2.textContent=V[1];}
         }
@@ -11813,7 +11813,7 @@ try{(function(){
         try{
           var _SGT={pt:['Jogo','Her\u00f3i','Ajuda','Progresso'],en:['Game','Hero','Help','Progress'],
                     es:['Juego','H\u00e9roe','Ayuda','Progreso'],fr:['Jeu','H\u00e9ros','Aide','Progression']};
-          var G=_SGT[Lg]||_SGT.pt;
+          var G=_SGT[LANG]||_SGT.pt;
           [['rowSound',0],['rowSwitchHero',1],['rowHelp',2],['rowSaveNow',3]].forEach(function(p){
             var a=document.getElementById(p[0]); if(!a||!a.parentNode)return;
             var g=document.getElementById('sgrp'+p[1]);
@@ -12863,7 +12863,7 @@ var _WPI={
       dun:'Le donjon vous retient \u2014 voyagez depuis la surface.',poor:'Or insuffisant pour voyager.',
       hint:'On dit qu\u2019un Arbre colossal, au nord-est, offre un don \u00e0 qui le trouve.'}
 };
-function _wpL(){try{return _WPI[Lg]?Lg:'pt';}catch(e){return 'pt';}}
+function _wpL(){try{return _WPI[LANG]?LANG:'pt';}catch(e){return 'pt';}}
 function _wpEnsure(){if(!meta.wp)meta.wp={};if(!meta.wp.vila)meta.wp.vila=1;}
 function wpCost(w){const d=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y));
   return Math.round((30+d*1.2)*(1+player.lvl*0.03));}
@@ -12921,7 +12921,7 @@ function _wkAnnounce(){
            fr:['OR DES PROFONDEURS \u2014 +25% d\u2019or','SAGESSE DES PIERRES \u2014 +20% d\u2019XP',
                'SEMAINE DES \u00c9LITES \u2014 \u00e9lites \u00d71,6','MAINS AVIDES \u2014 +20% de butin']};
     var P={pt:'\u2726 Regra da semana: ',en:'\u2726 Rule of the week: ',es:'\u2726 Regla de la semana: ',fr:'\u2726 R\u00e8gle de la semaine : '};
-    var lg=(typeof Lg!=='undefined'&&N[Lg])?Lg:'pt';
+    var lg=(typeof LANG!=='undefined'&&N[LANG])?LANG:'pt';
     addMessage(P[lg]+N[lg][_wkIdx()],'good');
   }catch(e){}
 }
@@ -12946,7 +12946,7 @@ var _MONI={
   fr:{tt:['Donateur','Patron','Bienfaiteur','Gardien','L\u00e9gende du Val'],
       name:'Monument du Val',don:'Donner',lvl:'Palier',
       up:'\u2756 Le Monument grandit \u2014 vous \u00eates d\u00e9sormais ',full:'Le Val se souvient de votre nom.'}};
-function _monL(){try{return _MONI[Lg]?Lg:'pt';}catch(e){return 'pt';}}
+function _monL(){try{return _MONI[LANG]?LANG:'pt';}catch(e){return 'pt';}}
 function _monApply(){
   try{
     var n=meta.mon||0, pn=document.getElementById('pname'); if(!pn)return;
@@ -13001,7 +13001,7 @@ function _cmpBlock(it){
     var cid=player.equip[kk]; if(!cid||cid===it.id)return '';
     var cur=itemById(cid); if(!cur)return '';
     var H={pt:'vs equipado',en:'vs equipped',es:'vs equipado',fr:'vs \u00e9quip\u00e9'};
-    var lg=(typeof Lg!=='undefined'&&H[Lg])?Lg:'pt';
+    var lg=(typeof LANG!=='undefined'&&H[LANG])?LANG:'pt';
     var rows='', F=[['atk','ATQ'],['spd','VEL'],['def','DEF'],['arm','ARM'],['hp','VIDA']];
     for(var i=0;i<F.length;i++){
       var f=F[i][0], a=+(it[f]||0), b=+(cur[f]||0);
@@ -13075,7 +13075,7 @@ function _miniCompass(){
 }
 
 /* ============ QUICK WINS DO RELATORIO 10/10 — "O Vale lembra" ============ */
-function _qwL(d){var _lg=(typeof LANG!=='undefined'&&LANG)||(typeof Lg!=='undefined'&&Lg)||'pt';return (d&&d[_lg])?d[_lg]:d.pt;}
+function _qwL(d){var _lg=(typeof LANG!=='undefined'&&LANG)||'pt';return (d&&d[_lg])?d[_lg]:d.pt;}
 /* ---- QW#7: Mira, a primeira personagem (1 fala com memoria por dia) ---- */
 function _miraLine(){
   try{
@@ -13205,7 +13205,7 @@ function _fundCheck(){
              fr:['\u25c8 Pierre de Fondation : \u201cPedravau est n\u00e9e o\u00f9 le Titan tomba \u00e0 genoux.\u201d',
                  '\u25c8 \u201cNous avons b\u00e2ti le village de son acier \u2014 et de la peur de ce qui l\u2019abattit.\u201d',
                  '\u25c8 \u201cSi les ombres reviennent, que le Val se souvienne de qui a combattu.\u201d']};
-    var lg=(typeof Lg!=='undefined'&&LNS[Lg])?Lg:'pt';
+    var lg=(typeof LANG!=='undefined'&&LNS[LANG])?LANG:'pt';
     LNS[lg].forEach(function(t,i){setTimeout(function(){try{addMessage(t,'sys');}catch(e){}},i*900);});
     try{SFX.level();fxLight(player.px,player.py,TILE*2.4,'#e8c15a',1.2);}catch(e){}
     try{if(typeof saveGame==='function')saveGame();}catch(e){}
@@ -13259,7 +13259,7 @@ function _mystReveal(full){
          en:'\u25c8 Something down here knows a name you have not yet read. Five stones keep it \u2014 one at each landmark of the Vale.',
          es:'\u25c8 Algo aqu\u00ed abajo conoce un nombre que a\u00fan no has le\u00eddo. Cinco piedras lo guardan \u2014 una en cada marca del Valle.',
          fr:'\u25c8 Quelque chose ici-bas conna\u00eet un nom que vous n\u2019avez pas encore lu. Cinq pierres le gardent \u2014 une \u00e0 chaque monument du Val.'};
-  var lg=(typeof Lg!=='undefined'&&R[Lg])?Lg:'pt';
+  var lg=(typeof LANG!=='undefined'&&R[LANG])?LANG:'pt';
   if(!full){
     setTimeout(function(){try{addMessage(P[lg],'sys');}catch(e){}},400);
     try{sfxEl('shadow',1.2);}catch(e){}
@@ -13331,7 +13331,7 @@ function _mystCheck(){
       if(Math.max(Math.abs(player.tx-(L2.x+W2)),Math.abs(player.ty-(L2.y+W2)))>3)continue;
       meta.myst[L2.k]=1;
       var d=MYST[L2.k]; if(!d)return;
-      var lg=(typeof Lg!=='undefined'&&d.l[Lg])?Lg:'pt';
+      var lg=(typeof LANG!=='undefined'&&d.l[LANG])?LANG:'pt';
       var n=_mystCount();
       var HD={pt:'\u25c8 Inscri\u00e7\u00e3o '+n+'/5 \u2014 ',en:'\u25c8 Inscription '+n+'/5 \u2014 ',es:'\u25c8 Inscripci\u00f3n '+n+'/5 \u2014 ',fr:'\u25c8 Inscription '+n+'/5 \u2014 '};
       addMessage(HD[lg]+d.n[lg],'good');
@@ -13387,7 +13387,7 @@ function _bossRelic(m){
                en:['Relic of ','choose ONE','\u2694 Lair Gold','\u2764 Lair Vigor (+10 max HP)','\u29c9 Lair Reserves (potions)'],
                es:['Reliquia de ','elige UNA','\u2694 Oro de la Guarida','\u2764 Vigor de la Guarida (+10 vida m\u00e1x.)','\u29c9 Reservas de la Guarida (pociones)'],
                fr:['Relique de ','choisissez-en UNE','\u2694 Or de l\u2019Antre','\u2764 Vigueur de l\u2019Antre (+10 PV max)','\u29c9 R\u00e9serves de l\u2019Antre (potions)']};
-        var t=T[(typeof Lg!=='undefined'&&T[Lg])?Lg:'pt'];
+        var t=T[(typeof LANG!=='undefined'&&T[LANG])?LANG:'pt'];
         p.innerHTML='<div class="card panel" style="text-align:center;max-width:340px">'
           +'<h1 style="font-size:19px;color:#e8c15a">\u2756 '+t[0]+nm+'</h1>'
           +'<p style="color:#8a90a0;font-size:12px;margin:2px 0 12px">'+t[1]+'</p>'
@@ -13536,7 +13536,7 @@ function _cindraPanel(){
   var p=document.getElementById('cindraP');
   if(!p){p=document.createElement('div');p.id='cindraP';p.className='overlay hidden';
     document.body.appendChild(p);}
-  var lg=(typeof Lg!=='undefined')?Lg:'pt';
+  var lg=(typeof LANG!=='undefined')?LANG:'pt';
   var T={pt:['A ESPADA ESPERA','Vharun ainda ajoelha, segurando o cabo. O que voc\u00ea fizer aqui, o Vale carrega para sempre.','\u26e7 Libertar o que ela prende','\u2756 Selar \u2014 e ajoelhar com ele','Ainda n\u00e3o','CONFIRMAR: SEM VOLTA'],
          en:['THE SWORD WAITS','Vharun still kneels, holding the hilt. What you do here, the Vale carries forever.','\u26e7 Free what it pins','\u2756 Seal \u2014 and kneel with him','Not yet','CONFIRM: NO WAY BACK'],
          es:['LA ESPADA ESPERA','Vharun a\u00fan se arrodilla, sujetando la empu\u00f1adura. Lo que hagas aqu\u00ed, el Valle lo carga para siempre.','\u26e7 Liberar lo que sujeta','\u2756 Sellar \u2014 y arrodillarte con \u00e9l','A\u00fan no','CONFIRMAR: SIN VUELTA'],
@@ -13829,7 +13829,7 @@ function _bellCheck(){
 /* A lore sai dos bastidores: criaturas conhecidas, marcos, inscricoes, reliquias, titulos. */
 function _codexName(id){
   try{
-    if(typeof Lg!=='undefined'&&Lg!=='pt'&&typeof MNAMES!=='undefined'&&MNAMES[id]&&MNAMES[id][Lg])return MNAMES[id][Lg];
+    if(typeof LANG!=='undefined'&&LANG!=='pt'&&typeof MNAMES!=='undefined'&&MNAMES[id]&&MNAMES[id][LANG])return MNAMES[id][LANG];
     return (MTYPES[id]&&MTYPES[id].name)||id;
   }catch(e){return id;}
 }
@@ -13852,7 +13852,7 @@ var _LMWP={tree:'arvore',spire:'mosteiro',tower:'castelo',sword:'espada',ruin:'k
 function renderCodex(){
   try{
     var p=document.getElementById('codex'); if(!p)return;
-    var lg=(typeof Lg!=='undefined')?Lg:'pt';
+    var lg=(typeof LANG!=='undefined')?LANG:'pt';
     var L=function(d){return d[lg]||d.pt;};
     meta.codex=meta.codex||{}; meta.myst=meta.myst||{}; meta.wp=meta.wp||{}; meta.relic=meta.relic||{};
     var todas=Object.keys(MTYPES), sab=todas.filter(function(k){return meta.codex[k];});
@@ -14259,9 +14259,9 @@ function _bossCard(m){
     let el=document.getElementById('bossCard');
     if(!el){el=document.createElement('div');el.id='bossCard';document.body.appendChild(el);}
     const S={pt:'CHEFE',en:'BOSS',es:'JEFE',fr:'BOSS'};
-    const sub=S[(typeof Lg!=='undefined'&&S[Lg])?Lg:'pt'];
+    const sub=S[(typeof LANG!=='undefined'&&S[LANG])?LANG:'pt'];
     let nm=m.d.name; try{nm=mName(m);}catch(e){}
-    var _ep=EPIT[m.d.id]; var _epT=_ep?((typeof Lg!=='undefined'&&_ep[Lg])?_ep[Lg]:_ep.pt):'';el.innerHTML='<small>\u2620 '+sub+' \u2620</small><b>'+nm+'</b>'+(_epT?'<i>'+_epT+'</i>':'');try{var vg=document.getElementById('bossVig');if(!vg){vg=document.createElement('div');vg.id='bossVig';document.body.appendChild(vg);}vg.classList.remove('on');void vg.offsetWidth;vg.classList.add('on');}catch(e){}
+    var _ep=EPIT[m.d.id]; var _epT=_ep?((typeof LANG!=='undefined'&&_ep[LANG])?_ep[LANG]:_ep.pt):'';el.innerHTML='<small>\u2620 '+sub+' \u2620</small><b>'+nm+'</b>'+(_epT?'<i>'+_epT+'</i>':'');try{var vg=document.getElementById('bossVig');if(!vg){vg=document.createElement('div');vg.id='bossVig';document.body.appendChild(vg);}vg.classList.remove('on');void vg.offsetWidth;vg.classList.add('on');}catch(e){}
     el.classList.add('show');
     try{sfxEl('earth',1.6);shake(3);buzz(30);}catch(e){}
     try{fxLight(m.px,m.py,TILE*3,'#c8362a',1.2);}catch(e){}
@@ -14377,7 +14377,7 @@ setInterval(window._acWorldTick,1200);
              en:['Reduce screen shake','Turns off camera shake (impacts remain)'],
              es:['Reducir vibraci\u00f3n de pantalla','Apaga el temblor de c\u00e1mara (los impactos siguen)'],
              fr:['R\u00e9duire les secousses','Coupe le tremblement de cam\u00e9ra (les impacts restent)']};
-      var lg=(typeof Lg!=='undefined'&&L[Lg])?Lg:'pt';
+      var lg=(typeof LANG!=='undefined'&&L[LANG])?LANG:'pt';
       var r=document.createElement('div'); r.className='srow'; r.id='rowShake';
       r.innerHTML='<div class="sic">\ud83d\udcf3</div><div class="stx"><b>'+L[lg][0]+'</b><span>'+L[lg][1]+'</span></div>'+
                   '<div class="stog'+(window._acNoShake?' on':'')+'" id="togShake"><i></i></div>';
@@ -14400,7 +14400,7 @@ setInterval(window._acWorldTick,1200);
       if(!card||document.getElementById('bagSortBtn'))return;
       var b=document.createElement('button'); b.id='bagSortBtn'; b.innerHTML='\u21c5';
       var T={pt:'Ordenar mochila',en:'Sort bag',es:'Ordenar mochila',fr:'Trier le sac'};
-      b.title=T[(typeof Lg!=='undefined'&&T[Lg])?Lg:'pt'];
+      b.title=T[(typeof LANG!=='undefined'&&T[LANG])?LANG:'pt'];
       b.onclick=sortBag;
       card.appendChild(b);
     }catch(e){}
