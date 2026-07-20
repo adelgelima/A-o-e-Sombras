@@ -561,6 +561,11 @@ body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-inde
 .tcard .tl2{display:flex;align-items:center;justify-content:center;gap:8px}
 .tcard .tlsub{font-size:16px;letter-spacing:.18em;color:#cfd3dc;font-weight:700}
 .tcard .tlOrn{opacity:.8}
+
+/* menu dock: fluxo do card, nunca sobrepõe */
+#menuDock{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px auto 2px;min-height:0}
+#menuDock:empty{display:none}
+#menuDock #fbLoginBtn,#menuDock #lbBtn{position:static !important;display:flex;justify-content:center}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -10269,7 +10274,7 @@ try{(function(){
               bF.id='fbInFb';
               try{bF.className=bG.className;}catch(_){}
               try{bF.style.cssText=bG.style.cssText;}catch(_){}
-              bF.style.marginTop='6px'; bF.style.display=bG.style.display||'flex';
+              bF.style.display=bG.style.display||'flex';
               bF.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:8px;flex:0 0 auto">'
                 +'<circle cx="12" cy="12" r="12" fill="#1877F2"/>'
                 +'<path d="M15.6 12.2H13.3V19h-2.8v-6.8H9V9.7h1.5V8.3c0-1.9 1.1-3.2 3.2-3.2h1.9v2.4h-1.3c-.7 0-1 .3-1 1v1.2h2.4l-.1 2.5z" fill="#fff"/></svg>'
@@ -13606,6 +13611,30 @@ function _statueDraw(ox,oy){
 }
 
 
+
+/* ============ MENU DOCK: login/placar dentro do card (fim do fixed no celular) ============ */
+/* Os botoes de login (Google/Facebook) e do placar eram position:fixed no viewport e
+   sobrepunham o card no celular. Agora vivem NO FLUXO do card da tela-titulo, abaixo do
+   logo — e somem junto com o #title durante o jogo, sem CSS de estado. */
+function _menuDockRelocate(){
+  try{
+    var logo=document.querySelector('#title .tcard .tlogo'); if(!logo||!logo.parentNode)return;
+    var dock=document.getElementById('menuDock');
+    if(!dock){dock=document.createElement('div');dock.id='menuDock';
+      logo.parentNode.insertBefore(dock,logo.nextSibling);}
+    ['fbLoginBtn','lbBtn'].forEach(function(id){
+      var el=document.getElementById(id); if(!el||el.parentNode===dock)return;
+      dock.appendChild(el);
+      el.style.position='static'; el.style.top='auto'; el.style.left='auto';
+      el.style.right='auto'; el.style.zIndex='auto';
+    });
+  }catch(e){}
+}
+(function(){
+  function wire(){ _menuDockRelocate(); setTimeout(_menuDockRelocate,1800); setTimeout(_menuDockRelocate,4000); }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(wire,1100);});
+  else setTimeout(wire,1100);
+})();
 /* ============ PRE-AAB: EXPORTAR/IMPORTAR PROGRESSO ============ */
 /* "Seu progresso e seu" vira verdade portavel: todo o localStorage num codigo AS1. */
 function _saveExportCode(){
