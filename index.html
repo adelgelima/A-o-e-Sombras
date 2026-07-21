@@ -566,6 +566,26 @@ body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-inde
 #menuDock{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px auto 2px;min-height:0}
 #menuDock:empty{display:none}
 #menuDock #fbLoginBtn,#menuDock #lbBtn{position:static !important;display:flex;justify-content:center}
+
+/* login minimalista no tema Cindra — pílulas idênticas, borda dourada sutil */
+#menuDock .cLoginBtn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  width:210px;max-width:78vw;box-sizing:border-box;
+  background:rgba(12,13,20,0.72);color:#cdb87a;
+  border:1px solid rgba(201,162,74,0.42);border-radius:11px;
+  padding:9px 14px;cursor:pointer;
+  font:600 12.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.02em;box-shadow:none;
+  transition:border-color .15s,background .15s,color .15s;
+}
+#menuDock .cLoginBtn:hover{border-color:rgba(232,193,90,0.85);color:#e8c15a;background:rgba(18,20,30,0.85);}
+#menuDock .cLoginBtn:active{transform:translateY(1px);}
+#menuDock .cLoginBtn svg{opacity:.9}
+/* placar segue a mesma largura/altura para o dock ficar coeso */
+#menuDock #lbBtn{width:210px !important;max-width:78vw;box-sizing:border-box !important;justify-content:center !important;
+  background:rgba(12,13,20,0.72) !important;border:1px solid rgba(201,162,74,0.30) !important;border-radius:11px !important;
+  color:#b8bcc8 !important;font:600 12.5px/1 sans-serif !important;padding:9px 14px !important;}
+#menuDock #lbBtn:hover{border-color:rgba(232,193,90,0.6);color:#cdb87a;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -4284,7 +4304,8 @@ function spawnMonster(sp){const d=MTYPES[sp.type];if(sp&&typeof isSafeZone==='fu
     if(a.k==='iron')m.armB=6;
     if(a.k==='giant'){m.szMul=1.35;m.maxhp=Math.round(m.maxhp*1.4);m.hp=m.maxhp;}}
   if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active){                 /* M3: escala por profundidade + mini-chefe guardiao da descida */
-    const dp=DungeonLayer.depth||1, sc=1+(dp-1)*0.12;
+    var dp=DungeonLayer.depth||1; var sc=1+(dp-1)*0.12;
+    if(dp>10){ var over=dp-10; sc+=over*0.14; sc*=1+Math.min(0.9,(player.lvl||1)*0.006); } /* fundos: mais ingreme + acompanha o heroi */
     m.maxhp=Math.round(m.maxhp*sc);m.hp=m.maxhp;m.dmgMul=(m.dmgMul||1)*sc;
     if(sp&&sp.room==='boss'&&!m.elite&&!m.d.boss){m.elite={n:'Guardi\u00e3o',c:'#ffcf5a',k:'brute',g:'fire'};m.dmgMul*=1.3;m.szMul=(m.szMul||1)*1.4;m.maxhp=Math.round(m.maxhp*2.4);m.hp=m.maxhp;m.mini=true;}
   }
@@ -4420,10 +4441,20 @@ function monPorte(m){const s=(m&&m.d&&m.d.size)||1;
   return s<0.9?'leve':(s>=1.2?'pesado':'medio');}
 function strikeMonster(m,mult=1){
   if(!m||m.dead)return null;
-  let{dmg,crit}=playerDamage();dmg=Math.round(dmg*mult);
+  let{dmg,crit}=playerDamage();var _sm=isFinite(mult)?mult:1;dmg=Math.round((isFinite(dmg)?dmg:1)*_sm);if(!isFinite(dmg))dmg=1;
   const el=player.el;
-  const eb=el!=='none'?Math.round(dmg*(elemMult(el,m.d.type)-1)):0;
-  let total=Math.max(1,Math.round(dmg+eb-(m.d.def*rnd(1,.4))-(m.d.arm+(m.armB||0))*0.5));
+  const _emult=elemMult(el,m.d.type); const _emf=isFinite(_emult)?_emult:1;
+  const eb=(el!=='none'&&isFinite(dmg))?Math.round(dmg*(_emf-1)):0;
+  /* guarda anti-NaN: blinda cada termo do dano. Todas as criaturas do andar 10+ mostravam
+     'NaN verde' ao serem atacadas; a causa raiz nao reproduziu em ambiente, entao blindamos
+     na origem (mesma estrategia da vida do heroi) para que o NaN nunca apareca. */
+    var _sd=isFinite(dmg)?dmg:1;
+    var _se=isFinite(eb)?eb:0;
+    var _sdef=isFinite(m.d.def)?m.d.def:0;
+    var _sarm=isFinite(m.d.arm)?m.d.arm:0;
+    var _sab=isFinite(m.armB)?m.armB:0;
+    let total=Math.max(1,Math.round(_sd+_se-(_sdef*rnd(1,.4))-(_sarm+_sab)*0.5));
+    if(!isFinite(total))total=1; /* rede final: nunca NaN na tela */
    /* Auditoria #5: revelar o sistema elemental — 1 aviso por tipo+sinal a cada 4s */
    if(eb!==0){
      window._elFlT=window._elFlT||{};
@@ -9083,9 +9114,14 @@ const DUNGEON_MOBS={
   7:{normal:['golem','obsidiangolem','sentinel','minotaur','naga'],boss:['reaper','magmademon'],treasure:['irontitan']},
   8:{normal:['reaper','magmademon','runegolem','wendigo','volcyclops'],boss:['irontitan','eldragon'],treasure:['reaper']},
   9:{normal:['reaper','magmademon','irontitan','runegolem','eldragon'],boss:['spiderqueen','irontitan'],treasure:['magmademon']},
-  10:{normal:['reaper','irontitan','eldragon','runegolem','magmademon'],boss:['dragon','vharun','spiderqueen'],treasure:['eldragon']}
+  10:{normal:['reaper','irontitan','eldragon','runegolem','magmademon'],boss:['dragon','vharun','spiderqueen'],treasure:['eldragon']},
+  11:{normal:['reaper','magmademon','sentinel','obsidiangolem','irontitan'],boss:['eldragon','irontitan'],treasure:['runegolem']},
+  15:{normal:['irontitan','eldragon','magmademon','runegolem','reaper'],boss:['spiderqueen','dragon'],treasure:['eldragon']},
+  20:{normal:['runegolem','eldragon','irontitan','magmademon','sentinel'],boss:['vharun','dragon'],treasure:['runegolem']},
+  30:{normal:['runegolem','eldragon','irontitan','magmademon','obsidiangolem'],boss:['vharun','spiderqueen'],treasure:['eldragon']},
+  40:{normal:['runegolem','eldragon','irontitan','vharun','magmademon'],boss:['dragon','vharun'],treasure:['runegolem']}
 };
-function dmobFor(depth,room){const d=DUNGEON_MOBS[Math.max(1,Math.min(10,depth))];const pool=(d&&d[room])||(d&&d.normal)||['skeleton'];return pool[Math.floor(Math.random()*pool.length)];}
+function dmobFor(depth,room){var band=1;for(var key in DUNGEON_MOBS){var kd=+key;if(kd<=depth&&kd>band)band=kd;}const d=DUNGEON_MOBS[band];const pool=(d&&d[room])||(d&&d.normal)||['skeleton'];return pool[Math.floor(Math.random()*pool.length)];}
 
 const DungeonLayer={
   active:false,_surf:null,_poi:null,depth:0,off:{x:2,y:2},up:null,down:null,upReady:false,downReady:true,
@@ -10263,9 +10299,9 @@ try{(function(){
             +'<button id="fbOut" style="background:#3a3a48;color:#e8e8f0;border:none;border-radius:12px;padding:3px 8px;cursor:pointer;font:12px sans-serif;">Sair</button></div>';
           var o=document.getElementById('fbOut'); if(o)o.onclick=_logout;
         } else {
-          _btn.innerHTML='<button id="fbIn" style="display:flex;align-items:center;gap:8px;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:20px;padding:6px 14px;cursor:pointer;font:500 13px sans-serif;box-shadow:0 1px 3px rgba(0,0,0,0.3);">'
-            +'<svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>'
-            +'Entrar com Google</button>';
+          _btn.innerHTML='<button id="fbIn" class="cLoginBtn">'
+            +'<svg width="15" height="15" viewBox="0 0 48 48" style="flex:0 0 auto"><path fill="currentColor" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65zM24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48zM10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78zM24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/></svg>'
+            +'<span data-i18n="login_google">Entrar com Google</span></button>';
           var i=document.getElementById('fbIn'); if(i)i.onclick=_login;
           try{
             var bG=document.getElementById('fbIn');
@@ -10273,12 +10309,11 @@ try{(function(){
               var bF=document.createElement('button');
               bF.id='fbInFb';
               try{bF.className=bG.className;}catch(_){}
-              try{bF.style.cssText=bG.style.cssText;}catch(_){}
+              /* estilo unificado via classe .cLoginBtn */
               bF.style.display=bG.style.display||'flex';
-              bF.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:8px;flex:0 0 auto">'
-                +'<circle cx="12" cy="12" r="12" fill="#1877F2"/>'
-                +'<path d="M15.6 12.2H13.3V19h-2.8v-6.8H9V9.7h1.5V8.3c0-1.9 1.1-3.2 3.2-3.2h1.9v2.4h-1.3c-.7 0-1 .3-1 1v1.2h2.4l-.1 2.5z" fill="#fff"/></svg>'
-                +'Entrar com Facebook';
+              bF.className='cLoginBtn';
+              bF.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" style="flex:0 0 auto"><path fill="currentColor" d="M15.6 12.2H13.3V22h-2.8v-9.8H8.6V9.5h1.9V7.8c0-2.4 1.4-3.8 3.6-3.8h2.3v2.7h-1.6c-.9 0-1.3.4-1.3 1.3v1.5h2.9l-.4 2.7z"/></svg>'
+                +'<span data-i18n="login_facebook">Entrar com Facebook</span>';
               bG.parentNode.insertBefore(bF,bG.nextSibling);
               bF.onclick=function(ev){try{ev.preventDefault();ev.stopPropagation();}catch(_){}; _loginFb();};
             }
@@ -13627,6 +13662,10 @@ function _menuDockRelocate(){
       dock.appendChild(el);
       el.style.position='static'; el.style.top='auto'; el.style.left='auto';
       el.style.right='auto'; el.style.zIndex='auto';
+      /* zera os estilos inline visuais (o placar vinha com border/background proprios)
+         para o CSS unificado do dock assumir e todos ficarem coesos */
+      if(id==='lbBtn'){ el.style.background=''; el.style.border=''; el.style.borderRadius='';
+        el.style.padding=''; el.style.color=''; el.style.font=''; el.style.boxShadow=''; }
     });
   }catch(e){}
 }
