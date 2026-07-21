@@ -4541,6 +4541,7 @@ function deathFx(m){const df=DEATH_THEME[DEATH_FAM[m.type]];const sz=0.75+m.d.si
     addRing(m.px,m.py,df.ring,TILE*(0.85+m.d.size*0.35),0.42);return true;}
   return false;}
 function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,m.py-TILE*0.4,10,{col:m.d.col,spd:70,life:0.5,size:2.4,grav:60});return;}
+  if(m._rewardGiven)return; m._rewardGiven=true; /* idempotente: recompensa/floater 1x so (fix do '+ouro' repetindo com inventario aberto) */
   m.dead=true;SFX.die();
   hitStop=Math.min(0.09,Math.max(hitStop,m.d.size>=1.25?0.07:0.045));
   try{_widowMourn(m);}catch(e){} if(m.d.boss){ try{_scarAdd('crater',m.tx,m.ty);}catch(e){} /* QW#11: o climax ganha coda — camera lenta + a vila comenta amanha */
