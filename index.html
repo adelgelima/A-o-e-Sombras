@@ -384,7 +384,16 @@
 .btn,.langb,.tbtn,.stog,.stog *,.gbtn,button,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:manipulation}
 .slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:manipulation}
 
-#shopRows input[type=number]::-webkit-inner-spin-button,#shopRows input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}#title{overflow-y:auto;-webkit-overflow-scrolling:touch;align-items:flex-start !important;}#title .tcard{max-height:none;margin:auto;}#slotList{max-height:46vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#createWrap{max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}#c{touch-action:none}
+#shopRows input[type=number]::-webkit-inner-spin-button,#shopRows input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}/* SCROLL da tela-titulo/criacao: o OVERLAY inteiro rola, alinhado ao topo.
+   Antes o card centralizado (align-items:center) transbordava sem rolagem, travando
+   as opcoes inferiores da criacao no celular em paisagem. */
+#title{overflow-y:auto !important;-webkit-overflow-scrolling:touch;align-items:flex-start !important;padding:16px 0 40px !important;}
+#title .tcard{max-height:none !important;margin:0 auto !important;}
+/* os sub-paineis NAO limitam mais a propria altura — quem rola e o overlay #title */
+#createWrap{max-height:none !important;overflow:visible !important;}
+#slotList{max-height:none !important;overflow:visible !important;}
+/* espaco extra no fim para o ultimo botao nunca ficar colado na borda */
+#createWrap::after{content:'';display:block;height:24px;}#skillbar.acShieldOff,.acShieldOff #skillbar,body.acShield #skillbar,body.acShield #attackBtn{pointer-events:none !important;}#c{touch-action:none}
 /* ===== UX PASS BRUMAL (fundamentado nos videos de 16/jul) =====
    Problemas vistos: paineis pop sem transicao; botoes sem estado de toque;
    barras de progresso invisiveis; loot em texto solto sumindo no chao claro;
@@ -563,28 +572,36 @@ body.ngWorld::after{content:'';position:fixed;inset:0;pointer-events:none;z-inde
 .tcard .tlOrn{opacity:.8}
 
 /* menu dock: fluxo do card, nunca sobrepõe */
-#menuDock{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px auto 2px;min-height:0}
+#menuDock{display:flex;flex-direction:row;align-items:stretch;justify-content:center;
+  gap:8px;margin:12px 0 4px;width:100%;box-sizing:border-box;min-height:0;}
+#menuDock:empty{display:none;}
+body.playing #menuDock{display:none !important;}
 #menuDock:empty{display:none}
 #menuDock #fbLoginBtn,#menuDock #lbBtn{position:static !important;display:flex;justify-content:center}
 
 /* login minimalista no tema Cindra — pílulas idênticas, borda dourada sutil */
 #menuDock .cLoginBtn{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:210px;max-width:78vw;box-sizing:border-box;
-  background:rgba(12,13,20,0.72);color:#cdb87a;
-  border:1px solid rgba(201,162,74,0.42);border-radius:11px;
-  padding:9px 14px;cursor:pointer;
-  font:600 12.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  letter-spacing:.02em;box-shadow:none;
-  transition:border-color .15s,background .15s,color .15s;
+  flex:1 1 0;min-width:0;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  height:40px;box-sizing:border-box;padding:0 8px;
+  background:rgba(10,11,17,0.82);color:#cdb87a;
+  border:1px solid rgba(201,162,74,0.38);border-radius:10px;
+  cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.3);
+  font:600 11.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  transition:border-color .15s,background .15s,color .15s,transform .1s;
 }
-#menuDock .cLoginBtn:hover{border-color:rgba(232,193,90,0.85);color:#e8c15a;background:rgba(18,20,30,0.85);}
+/* texto compacto: mostra so a palavra-chave (Google/Facebook/Placar) para caber lado a lado */
+#menuDock .cLoginBtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#menuDock .cLoginBtn svg{width:15px;height:15px;opacity:.95;flex:0 0 auto;}
+#menuDock .cLoginBtn:hover{border-color:rgba(232,193,90,0.95);color:#e8c15a;background:rgba(18,20,30,0.92);transform:scale(1.06);}
 #menuDock .cLoginBtn:active{transform:translateY(1px);}
 #menuDock .cLoginBtn svg{opacity:.9}
 /* placar segue a mesma largura/altura para o dock ficar coeso */
-#menuDock #lbBtn{width:210px !important;max-width:78vw;box-sizing:border-box !important;justify-content:center !important;
-  background:rgba(12,13,20,0.72) !important;border:1px solid rgba(201,162,74,0.30) !important;border-radius:11px !important;
-  color:#b8bcc8 !important;font:600 12.5px/1 sans-serif !important;padding:9px 14px !important;}
+#menuDock #lbBtn{flex:1 1 0 !important;min-width:0 !important;height:40px !important;box-sizing:border-box !important;padding:0 8px !important;
+  display:flex !important;align-items:center !important;justify-content:center !important;gap:6px !important;
+  background:rgba(10,11,17,0.82) !important;border:1px solid rgba(201,162,74,0.30) !important;border-radius:10px !important;
+  color:#cdb87a !important;font:600 11.5px/1 sans-serif !important;box-shadow:0 2px 6px rgba(0,0,0,0.3) !important;}
+/* o innerHTML do placar já traz o troféu 🏆 + texto localizado */
 #menuDock #lbBtn:hover{border-color:rgba(232,193,90,0.6);color:#cdb87a;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
@@ -10300,9 +10317,9 @@ try{(function(){
             +'<button id="fbOut" style="background:#3a3a48;color:#e8e8f0;border:none;border-radius:12px;padding:3px 8px;cursor:pointer;font:12px sans-serif;">Sair</button></div>';
           var o=document.getElementById('fbOut'); if(o)o.onclick=_logout;
         } else {
-          _btn.innerHTML='<button id="fbIn" class="cLoginBtn">'
+          _btn.innerHTML='<button id="fbIn" class="cLoginBtn" title="Entrar com Google" aria-label="Entrar com Google">'
             +'<svg width="15" height="15" viewBox="0 0 48 48" style="flex:0 0 auto"><path fill="currentColor" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65zM24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48zM10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78zM24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/></svg>'
-            +'<span data-i18n="login_google">Entrar com Google</span></button>';
+            +'<span>Google</span></button>';
           var i=document.getElementById('fbIn'); if(i)i.onclick=_login;
           try{
             var bG=document.getElementById('fbIn');
@@ -10312,9 +10329,9 @@ try{(function(){
               try{bF.className=bG.className;}catch(_){}
               /* estilo unificado via classe .cLoginBtn */
               bF.style.display=bG.style.display||'flex';
-              bF.className='cLoginBtn';
+              bF.className='cLoginBtn'; bF.setAttribute('title','Entrar com Facebook'); bF.setAttribute('aria-label','Entrar com Facebook');
               bF.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" style="flex:0 0 auto"><path fill="currentColor" d="M15.6 12.2H13.3V22h-2.8v-9.8H8.6V9.5h1.9V7.8c0-2.4 1.4-3.8 3.6-3.8h2.3v2.7h-1.6c-.9 0-1.3.4-1.3 1.3v1.5h2.9l-.4 2.7z"/></svg>'
-                +'<span data-i18n="login_facebook">Entrar com Facebook</span>';
+                +'<span>Facebook</span>';
               bG.parentNode.insertBefore(bF,bG.nextSibling);
               bF.onclick=function(ev){try{ev.preventDefault();ev.stopPropagation();}catch(_){}; _loginFb();};
             }
@@ -12109,7 +12126,7 @@ try{(function(){
     /* botão do placar na tela inicial (ao lado do login) */
     function _mkBtn(){
       if(document.getElementById('lbBtn'))return;
-      var b=document.createElement('div'); b.id='lbBtn';
+      var b=document.createElement('div'); b.id='lbBtn'; b.setAttribute('title','Placar'); b.setAttribute('aria-label','Ver placar');
       b.style.cssText='position:fixed;top:8px;right:8px;z-index:99998;background:rgba(20,20,28,.9);border:1px solid #3a3a48;border-radius:20px;padding:7px 14px;color:#e8c15a;font:600 13px sans-serif;cursor:pointer;display:none;';
       b.innerHTML='\uD83C\uDFC6 '+_L().t;
       b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();_showBoard();});
@@ -13654,19 +13671,19 @@ function _statueDraw(ox,oy){
    logo — e somem junto com o #title durante o jogo, sem CSS de estado. */
 function _menuDockRelocate(){
   try{
-    var logo=document.querySelector('#title .tcard .tlogo'); if(!logo||!logo.parentNode)return;
+    /* dock DENTRO do card (fluxo vertical), logo apos o logo CINDRA (.tlogo).
+       CRITICO: filho do .tcard, NAO irmao — senao o flex do #title poe lado a lado. */
+    var logo=document.querySelector('#title .tcard .tlogo');
+    if(!logo||!logo.parentNode)return;  /* parentNode = o .tcard */
     var dock=document.getElementById('menuDock');
     if(!dock){dock=document.createElement('div');dock.id='menuDock';
       logo.parentNode.insertBefore(dock,logo.nextSibling);}
     ['fbLoginBtn','lbBtn'].forEach(function(id){
       var el=document.getElementById(id); if(!el||el.parentNode===dock)return;
       dock.appendChild(el);
-      el.style.position='static'; el.style.top='auto'; el.style.left='auto';
-      el.style.right='auto'; el.style.zIndex='auto';
-      /* zera os estilos inline visuais (o placar vinha com border/background proprios)
-         para o CSS unificado do dock assumir e todos ficarem coesos */
-      if(id==='lbBtn'){ el.style.background=''; el.style.border=''; el.style.borderRadius='';
-        el.style.padding=''; el.style.color=''; el.style.font=''; el.style.boxShadow=''; }
+      /* zera TODO o posicionamento e visual inline — o CSS do dock assume 100% */
+      el.style.cssText=''; el.style.position='static';
+      if(id==='lbBtn'){ el.classList.add('cLoginBtn'); }
     });
   }catch(e){}
 }
