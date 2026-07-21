@@ -603,6 +603,37 @@ body.playing #menuDock{display:none !important;}
   color:#cdb87a !important;font:600 11.5px/1 sans-serif !important;box-shadow:0 2px 6px rgba(0,0,0,0.3) !important;}
 /* o innerHTML do placar já traz o troféu 🏆 + texto localizado */
 #menuDock #lbBtn:hover{border-color:rgba(232,193,90,0.6);color:#cdb87a;}
+
+/* PROPORÇÃO: os 3 botões do dock têm largura MATEMATICAMENTE igual (flex:1 1 0),
+   independente do texto interno. Antes o 'Placar' (texto mais largo) esticava.
+   !important cirúrgico só na base flex resolve o conflito de especificidade ID vs classe. */
+#menuDock > .cLoginBtn,
+#menuDock > #lbBtn{
+  flex-grow:1 !important;
+  flex-shrink:1 !important;
+  flex-basis:0 !important;
+  width:0 !important;            /* base 0 + grow igual = larguras idênticas */
+  min-width:0 !important;
+  max-width:none !important;
+  height:42px !important;
+  box-sizing:border-box !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  padding:0 6px !important;
+  border-radius:10px !important;
+  font:600 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif !important;
+  overflow:hidden !important;
+}
+/* o texto dentro dos botões nunca empurra a largura: trunca com reticências se preciso */
+#menuDock > .cLoginBtn > span,
+#menuDock > #lbBtn{
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+#menuDock svg{flex:0 0 auto !important;width:15px !important;height:15px !important;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
