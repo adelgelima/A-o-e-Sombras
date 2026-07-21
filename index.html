@@ -634,6 +634,9 @@ body.playing #menuDock{display:none !important;}
   white-space:nowrap !important;
 }
 #menuDock svg{flex:0 0 auto !important;width:15px !important;height:15px !important;}
+
+/* ocultar o log de mensagens (toggle nas Configuracoes) */
+body.noLog #log{display:none !important;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -805,6 +808,11 @@ window.FIREBASE_CONFIG = {
         <div class="stx"><b data-i18n="sound">Som</b><span>Efeitos e vibra&ccedil;&atilde;o</span></div>
         <div class="stog" id="togSound"><i></i></div>
       </div>
+      <div class="srow" id="rowLog">
+        <div class="sic">&#128172;</div>
+        <div class="stx"><b data-i18n="log_msgs">Mensagens</b><span data-i18n="log_msgs_desc">Textos no canto inferior</span></div>
+        <div class="stog on" id="togLog"><i></i></div>
+      </div>
       <div class="srow" id="rowQual">
         <div class="sic">&#10022;</div>
         <div class="stx"><b data-i18n="quality">Qualidade gr&aacute;fica</b><span id="qualDesc">Alta &mdash; mais detalhes e efeitos</span></div>
@@ -965,7 +973,7 @@ const I18N={
   howto_pot:'po\u00e7\u00e3o de vida \u00b7 ant\u00eddoto',
   howto_panels:'mapa do Vale \u00b7 mochila \u00b7 miss\u00f5es',
   offline_note:'sem an\u00fancios \u00b7 sem espera \u00b7 funciona offline \u00b7 seu progresso \u00e9 seu', game_motto:'O Vale lembra.',
-  sound:'Som', sound_sub:'Efeitos e trilha', quality:'Qualidade gr\u00e1fica',
+  sound:'Som', log_msgs:'Mensagens', log_msgs_desc:'Textos no canto inferior', sound_sub:'Efeitos e trilha', quality:'Qualidade gr\u00e1fica',
   quality_hi:'Alta \u2014 mais detalhes e efeitos', quality_lo:'Desempenho \u2014 mais fluido em aparelhos simples',
   afk_mode:'Modo AFK', afk_sub:'Ca\u00e7a sozinho ao redor do ponto onde foi ativado',
   settings:'Configura\u00e7\u00f5es', help_link:'Ajuda \u00b7 como jogar', quests_link:'Miss\u00f5es e conquistas',
@@ -1014,7 +1022,7 @@ const I18N={
   howto_pot:'health potion \u00b7 antidote',
   howto_panels:'Vale map \u00b7 backpack \u00b7 quests',
   offline_note:'no ads \u00b7 no waiting \u00b7 works offline \u00b7 your progress is yours', game_motto:'The Vale remembers.',
-  sound:'Sound', sound_sub:'Effects and music', quality:'Graphics quality',
+  sound:'Sound', log_msgs:'Messages', log_msgs_desc:'Text in the bottom corner', sound_sub:'Effects and music', quality:'Graphics quality',
   quality_hi:'High \u2014 more detail and effects', quality_lo:'Performance \u2014 smoother on simple devices',
   afk_mode:'AFK mode', afk_sub:'Hunts on its own around the spot where it was enabled',
   settings:'Settings', help_link:'Help \u00b7 how to play', quests_link:'Quests and achievements',
@@ -1063,7 +1071,7 @@ const I18N={
   howto_pot:'poci\u00f3n de vida \u00b7 ant\u00eddoto',
   howto_panels:'mapa del Valle \u00b7 mochila \u00b7 misiones',
   offline_note:'sin anuncios \u00b7 sin esperas \u00b7 funciona offline \u00b7 tu progreso es tuyo', game_motto:'El Valle recuerda.',
-  sound:'Sonido', sound_sub:'Efectos y m\u00fasica', quality:'Calidad gr\u00e1fica',
+  sound:'Sonido', log_msgs:'Mensajes', log_msgs_desc:'Textos en la esquina inferior', sound_sub:'Efectos y m\u00fasica', quality:'Calidad gr\u00e1fica',
   quality_hi:'Alta \u2014 m\u00e1s detalles y efectos', quality_lo:'Rendimiento \u2014 m\u00e1s fluido en equipos sencillos',
   afk_mode:'Modo AFK', afk_sub:'Caza solo alrededor del punto donde se activ\u00f3',
   settings:'Ajustes', help_link:'Ayuda \u00b7 c\u00f3mo jugar', quests_link:'Misiones y logros',
@@ -1112,7 +1120,7 @@ const I18N={
   howto_pot:'potion de vie \u00b7 antidote',
   howto_panels:'carte de la Vall\u00e9e \u00b7 sac \u00b7 qu\u00eates',
   offline_note:'sans pub \u00b7 sans attente \u00b7 hors ligne \u00b7 votre progression vous appartient', game_motto:'Le Val se souvient.',
-  sound:'Son', sound_sub:'Effets et musique', quality:'Qualit\u00e9 graphique',
+  sound:'Son', log_msgs:'Messages', log_msgs_desc:'Textes dans le coin inférieur', sound_sub:'Effets et musique', quality:'Qualit\u00e9 graphique',
   quality_hi:'\u00c9lev\u00e9e \u2014 plus de d\u00e9tails et d\u2019effets', quality_lo:'Performance \u2014 plus fluide sur appareils simples',
   afk_mode:'Mode AFK', afk_sub:'Chasse seul autour du point o\u00f9 il a \u00e9t\u00e9 activ\u00e9',
   settings:'R\u00e9glages', help_link:'Aide \u00b7 comment jouer', quests_link:'Qu\u00eates et succ\u00e8s',
@@ -5225,7 +5233,7 @@ function joyVec(){if(!joy.active||joy.mag<0.3)return null;
   const a=Math.atan2(joy.dy,joy.dx);const i=((Math.round(a/(Math.PI/4))%8)+8)%8;return JOYD[i];}
 let leftyMode=false;
 let afkMode=false,afkAnchor=null,_afkT=0,_afkW=0;
-function joyZone(x,y){if(!isTouch||y<=120)return false;return leftyMode?(x>W*0.52):(x<W*0.48);}
+function joyZone(x,y){if(!isTouch||y<=120)return false;return true;} /* tela cheia: arrastar em qualquer lugar move (o tap ainda ataca via handleTap) */
 function showJoy(){const j=document.getElementById('joy');j.style.display='block';
   j.style.left=joy.bx+'px';j.style.top=joy.by+'px';moveJoyStick();}
 function moveJoyStick(){document.getElementById('joyStick').style.transform=`translate(${joy.dx}px,${joy.dy}px)`;}
@@ -9145,6 +9153,20 @@ function genDungeon(opts){
       const doorX=wx+dx,doorY=wy+dy,n1x=doorX+dx,n1y=doorY+dy,n2x=doorX+dx*2,n2y=doorY+dy*2;
       if(n2x<1||n2y<1||n2x>=w-1||n2y>=h-1)continue;
       if(at(doorX,doorY)!==WALL||at(n1x,n1y)!==WALL||at(n2x,n2y)!==WALL)continue;
+      /* CRITICO: o nicho (n1) e o bau (n2) devem estar CERCADOS de parede, exceto pela
+         direcao da porta. Sem isso, o bau podia encostar em outra sala e ficar acessivel
+         SEM quebrar a rachadura (bug: "baus em locais sem parede"). */
+      var _sealed=true;
+      /* vizinhos de n1 e n2 em TODAS as direcoes que nao sejam o eixo porta->bau */
+      var _perp=(dx!==0)?[[0,-1],[0,1]]:[[-1,0],[1,0]]; /* as 2 direcoes perpendiculares */
+      for(var _p=0;_p<_perp.length&&_sealed;_p++){
+        var _px=_perp[_p][0],_py=_perp[_p][1];
+        if(at(n1x+_px,n1y+_py)!==WALL) _sealed=false;   /* lado do nicho */
+        if(at(n2x+_px,n2y+_py)!==WALL) _sealed=false;   /* lado do bau */
+      }
+      /* a casa ALEM do bau (continuando o eixo) tambem precisa ser parede: bau e o fundo */
+      if(at(n2x+dx,n2y+dy)!==WALL) _sealed=false;
+      if(!_sealed)continue; /* este candidato vaza; tenta outra direcao/sala */
       st(n1x,n1y,FLOOR);st(n2x,n2y,FLOOR);
       secret={door:{x:doorX,y:doorY},chest:{x:n2x,y:n2y}};break;
     }
@@ -9731,7 +9753,12 @@ function init(){
   (function(){const ta=$('togAfk');if(ta)ta.onclick=toggleAfk;
     const ra=$('rowAfk');if(ra)ra.onclick=e=>{if(e&&e.target&&e.target.closest&&e.target.closest('.stog'))return;toggleAfk();};
     const ac=$('afkChip');if(ac)ac.onclick=()=>afkStop('Modo AFK desligado.');})();
-  (function(){const chk=$('leftyChk');if(chk){chk.checked=leftyMode;
+  (function(){(function(){var LOG_KEY='ac_hidelog'; var hidden=lsGet(LOG_KEY)==='1';
+  function applyLog(){document.body.classList.toggle('noLog',hidden); var t=document.getElementById('togLog'); if(t)t.classList.toggle('on',!hidden);}
+  applyLog();
+  var tl=document.getElementById('togLog'); if(tl){tl.addEventListener('click',function(){hidden=!hidden;lsSet(LOG_KEY,hidden?'1':'0');applyLog();});}
+})();
+const chk=$('leftyChk');if(chk){chk.checked=leftyMode;
     chk.onchange=()=>{leftyMode=chk.checked;lsSet(LEFTY_KEY,leftyMode?'1':'0');applyLefty();
       if($('btnLefty'))$('btnLefty').classList.toggle('act',leftyMode);};}})();
   $('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')startGame();});
