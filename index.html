@@ -4407,7 +4407,8 @@ function dropLoot(m){const b={gold:0,items:[]};
     else b.items.push(e.id);}
   if(m.d.pois&&chance(0.4))b.items.push('cure');
   if(m.d.slam)b.gold+=ri(Math.round((m.d.xp||10)*0.2),Math.round((m.d.xp||10)*0.45));
-  /* rolo global de equipamento — o ritual do corpo (à la Tibia) */
+  /* rolo global de equipamento — o ritual do corpo (à la Tibia).
+     Em masmorra a chance sobe: progressao por DROP, nao por compra. */
   (function(){
     if(m.d.boss){
       const Wp=WEAPONS[player.cls],AR=ARMORS.filter(a=>a.id[0]==='a');
@@ -4434,8 +4435,10 @@ function dropLoot(m){const b={gold:0,items:[]};
       return;}
     const isB=m.d.boss, isT=m.type==='thief';
     const _st=1+Math.min(1,(m.d.xp||10)/400);
-    const ch=isB?1:isT?0.3:((m.elite?0.20:0.075)*_st);   /* taxa de drop maior */
-    if(!chance(ch))return;
+    var _inDng=(typeof DungeonLayer!=='undefined'&&DungeonLayer.active);
+    const _base=m.elite?0.35:(_inDng?0.30:0.15); /* masmorra dropa MUITO mais equipamento */
+    const ch=isB?1:isT?0.3:(_base*_st);
+    if(!chance(ch*(1+(player.luck||0)*0.4)))return;
     const x=m.d.xp, _dg=(typeof dangerAt==='function'?(dangerAt(m.tx,m.ty)||0):0);
     let lo,hi;
     if(x<25){lo=0;hi=1;}else if(x<60){lo=1;hi=2;}else if(x<150){lo=2;hi=4;}
@@ -4444,11 +4447,11 @@ function dropLoot(m){const b={gold:0,items:[]};
     if(m.elite){lo+=2;hi=Math.min(17,hi+2);}
     if(isB){lo=14;hi=17;}
     const r=Math.random();
-    let wT=0.45,oT=0.65;
-    if(m.d.slam){wT=0.24;oT=0.42;}else if(m.d.beh==='charge'){wT=0.62;oT=0.75;}
+    let wT=0.38,oT=0.60;
+    if(m.d.slam){wT=0.22;oT=0.40;}else if(m.d.beh==='charge'){wT=0.55;oT=0.72;}
     if(r<wT){const dc=_dropCls();const t=ri(lo,hi);b.items.push(WEAPONS[dc][Math.min(t,WEAPONS[dc].length-1)].id);}
     else if(r<oT){const dc=_dropCls();const oi=lo>=14?6:lo>=11?5:lo>=8?4:Math.min(3,Math.floor(lo/3));b.items.push(OFFHANDS[dc][isB?6:oi].id);}
-    else{const ai=Math.min(10,Math.floor((lo+hi)/3));b.items.push(ARMORS.filter(a=>a.id[0]==='a')[isB?ri(8,10):ai].id);}
+    else{ var _AR=ARMORS.filter(a=>a.id[0]==='a'); var _lv=player.lvl||1; var _hiA=0; for(var _i=0;_i<_AR.length;_i++){ if((_AR[_i].req||1)<=_lv)_hiA=_i; } var _ai=isB?_hiA:Math.max(0,_hiA-ri(0,2)); b.items.push(_AR[Math.min(_AR.length-1,_ai)].id); }
   })();
   if(b.gold>0||b.items.length)loots.push({id:uid++,tx:m.tx,ty:m.ty,px:m.px,py:m.py,gold:b.gold,items:b.items,t:0,dead:false});
   return b;}
@@ -8726,9 +8729,9 @@ function shopItems(kind){const w=WEAPONS[player.cls],o=OFFHANDS[player.cls];
   const gid=(slot,rar)=>{const g=GEAR.find(x=>x.cls===player.cls&&x.slot===slot&&x.rar===rar);return g?g.id:null;};
   let list;
   if(kind==='smith')list=[w[4].id,w[5].id,w[6].id,w[7].id,o[1].id,o[2].id,'a2','a3',gid('head','common'),gid('legs','common'),gid('head','uncommon'),gid('legs','uncommon')];
-  else if(kind==='psmith')list=[w[8].id,w[9].id,w[10].id].concat(_wTier(11,3)).concat([o[4].id,'a5','a6','a7',gid('head','rare'),gid('legs','rare')]);
+  else if(kind==='psmith')list=[w[8].id,w[9].id,w[10].id].concat(_wTier(11,3)).concat([o[4].id,'a6',gid('head','rare'),gid('legs','rare')]);
   else if(kind==='alch')list=['hp_s','hp_m','hp_l','cure'];
-  else if(kind==='wander'){const _top=_wTier(11,4); const feat=_top.length?_top[(meta.wanderVisit||0)%_top.length]:w[11].id; list=[feat].concat(_wTier(13,2)).concat([w[12].id,o[4].id,'a7','hp_l',gid('head','epic'),gid('legs','epic')]);}
+  else if(kind==='wander'){const _top=_wTier(11,4); const feat=_top.length?_top[(meta.wanderVisit||0)%_top.length]:w[11].id; list=[feat].concat(_wTier(13,2)).concat([w[12].id,o[4].id,'hp_l',gid('head','rare'),gid('legs','rare')]);}
   else list=['hp_s','hp_m','cure',w[1].id,w[2].id,w[3].id,o[0].id,'a0','a1',gid('head','common'),gid('legs','common')];
   return list.filter(Boolean);}
 function openShop(kind='shop'){closeAllPanels();shopKind=kind;
@@ -9232,6 +9235,12 @@ const DungeonLayer={
   },
   enter(poi){
     if(this.active)return;
+    /* registra esta caverna como destino de viagem rapida (descoberta ao entrar) */
+    try{ if(poi&&(poi.type==='cave'||poi.type==='cache')){ meta.wpCaves=meta.wpCaves||{};
+      var _cid='cave_'+poi.x+'_'+poi.y;
+      if(!meta.wpCaves[_cid]){ meta.wpCaves[_cid]={id:_cid,x:poi.x,y:poi.y,type:poi.type};
+        try{addMessage(_WPI[_wpL()].caveDisc||'Caverna registrada para viagem rapida.','good');}catch(e){} }
+    } }catch(e){}
     this._poi=poi;
     this._surf={map:map,zoneA:zoneA,elevA:elevA,shadeA:shadeA,monsters:monsters,spawns:spawns,npcs:npcs,loots:loots,px:poi?poi.x:player.tx,py:poi?poi.y:player.ty};
     meta.dungeons=meta.dungeons||{};
@@ -13049,7 +13058,7 @@ var _WPI={
       dun:'A masmorra o prende \u2014 viaje da superf\u00edcie.',poor:'Ouro insuficiente para a viagem.',
       hint:'Dizem na vila que uma \u00c1rvore colossal, a nordeste, concede um dom a quem a encontra.'},
   en:{disc:'Landmark discovered: {n}! Fast travel unlocked on the map.',bar:'Fast travel',
-      dun:'The dungeon holds you \u2014 travel from the surface.',poor:'Not enough gold to travel.',
+      caveDisc:'Cave saved for fast travel.', dun:'The dungeon holds you \u2014 travel from the surface.',poor:'Not enough gold to travel.',
       hint:'Villagers say a colossal Tree to the northeast grants a gift to those who find it.'},
   es:{disc:'\u00a1Hito descubierto: {n}! Viaje r\u00e1pido desbloqueado en el mapa.',bar:'Viaje r\u00e1pido',
       dun:'La mazmorra te retiene \u2014 viaja desde la superficie.',poor:'Oro insuficiente para viajar.',
@@ -13059,7 +13068,16 @@ var _WPI={
       hint:'On dit qu\u2019un Arbre colossal, au nord-est, offre un don \u00e0 qui le trouve.'}
 };
 function _wpL(){try{return _WPI[LANG]?LANG:'pt';}catch(e){return 'pt';}}
-function _wpEnsure(){if(!meta.wp)meta.wp={};if(!meta.wp.vila)meta.wp.vila=1;}
+function _wpEnsure(){if(!meta.wp)meta.wp={};if(!meta.wp.vila)meta.wp.vila=1;if(!meta.wpCaves)meta.wpCaves={};}
+/* lista combinada: os 7 marcos fixos (descobertos) + cavernas visitadas */
+function _allWaypoints(){ _wpEnsure(); var out=[];
+  for(var i=0;i<WAYPOINTS.length;i++){ if(meta.wp[WAYPOINTS[i].id]) out.push(WAYPOINTS[i]); }
+  var L=(typeof _wpL==='function')?_wpL():'pt';
+  var caveName={pt:'Caverna',en:'Cave',es:'Cueva',fr:'Grotte'}[L]||'Caverna';
+  for(var k in meta.wpCaves){ var c=meta.wpCaves[k];
+    out.push({id:c.id, n:caveName+' ('+c.x+','+c.y+')', x:c.x, y:c.y, cave:true}); }
+  return out;
+}
 function wpCost(w){const d=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y));
   return Math.round((30+d*1.2)*(1+player.lvl*0.03));}
 function _wpDiscover(w){
@@ -13075,7 +13093,7 @@ function _wpDiscover(w){
 }
 function wpTravel(id){
   _wpEnsure();
-  const w=WAYPOINTS.find(v=>v.id===id); if(!w||!meta.wp[w.id])return false;
+  const w=_allWaypoints().find(v=>v.id===id); if(!w)return false;
   if(typeof DungeonLayer!=='undefined'&&DungeonLayer.active){try{addMessage(_WPI[_wpL()].dun,'sys');}catch(e){} return false;}
   const c=wpCost(w);
   if(player.gold<c){try{addMessage(_WPI[_wpL()].poor,'sys');}catch(e){} return false;}
@@ -14589,8 +14607,7 @@ function _wpRenderBar(){
   if(!bar){bar=document.createElement('div');bar.id='wpBar';cv.parentNode.appendChild(bar);}
   const L=_wpL();
   let html='<div class="wpTitle">\u26a1 '+_WPI[L].bar+'</div><div class="wpRow">';
-  for(const w of WAYPOINTS){
-    if(!meta.wp[w.id])continue;
+  for(const w of _allWaypoints()){
     const here=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y))<=8;
     html+='<button class="wpBtn'+(here?' here':'')+'" data-wp="'+w.id+'"'+(here?' disabled':'')+'>'+
           w.n+'<span>'+wpCost(w)+' \u25c8</span></button>';
