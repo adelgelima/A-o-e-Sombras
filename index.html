@@ -4450,7 +4450,14 @@ function dropLoot(m){const b={gold:0,items:[]};
     let wT=0.38,oT=0.60;
     if(m.d.slam){wT=0.22;oT=0.40;}else if(m.d.beh==='charge'){wT=0.55;oT=0.72;}
     if(r<wT){const dc=_dropCls();const t=ri(lo,hi);b.items.push(WEAPONS[dc][Math.min(t,WEAPONS[dc].length-1)].id);}
-    else if(r<oT){const dc=_dropCls();const oi=lo>=14?6:lo>=11?5:lo>=8?4:Math.min(3,Math.floor(lo/3));b.items.push(OFFHANDS[dc][isB?6:oi].id);}
+    else if(r<oT){
+        /* ESCUDO: mira o melhor escudo com req<=nivel (inclui os xok de alto nivel, antes
+           inacessiveis porque o indice travava em 6 = so os base ko0-ko6). */
+        var _dc=_dropCls(); var _OH=OFFHANDS[_dc]||[]; var _lvS=player.lvl||1;
+        var _hiO=0; for(var _k=0;_k<_OH.length;_k++){ var _o=_OH[_k]; if(_o&&_o.id&&(_o.req||1)<=_lvS)_hiO=_k; }
+        var _oi=isB||m.elite?_hiO:Math.max(0,_hiO-ri(0,1));
+        if(_OH[_oi]&&_OH[_oi].id)b.items.push(_OH[_oi].id);
+      }
     else{
         var _lv=player.lvl||1; var _gr=Math.random();
         if(_gr<0.45){
@@ -8600,6 +8607,9 @@ function _renderIcon(g,it){
 }
 function drawItemIcon(cnv,item){const g=cnv.getContext('2d');const sz=cnv.width;
   g.clearRect(0,0,sz,sz);g.imageSmoothingEnabled=false;
+  /* agenda a carga do PNG sob demanda (itens estendidos xok/xhk... tem PNG em LAZYPNG,
+     mas so carregam quando pedidos — sem isso a loja mostrava a arte procedural). */
+  try{ if(item&&item.id&&typeof _itemPngEnsure==='function')_itemPngEnsure(item.id); }catch(e){}
   const png=(typeof itemPng!=='undefined')&&item&&itemPng[item.id];
   if(png&&png.ready){const pw=png.img.naturalWidth||1,ph=png.img.naturalHeight||1;
     const s=Math.min(sz/pw,sz/ph);const dw=Math.round(pw*s),dh=Math.round(ph*s);
@@ -9063,6 +9073,35 @@ function updateLoadoutUI(){
     const ky=g.querySelector('.key');if(ky)ky.textContent='4';}
 }
 let _sbSel=0;
+
+/* descricoes curtas das magias (para o tooltip do livro ao segurar) */
+var SPELL_DESC={
+  k_heal:{pt:'Recupera vida instantaneamente.',en:'Instantly restores health.',es:'Recupera vida al instante.',fr:'Restaure la vie instantanement.'},
+  k_swirl:{pt:'Golpe giratorio que atinge todos ao redor.',en:'Spinning strike hitting all around.',es:'Golpe giratorio que alcanza a todos.',fr:'Coup tournant touchant tout autour.'},
+  k_slam:{pt:'Pancada no chao que atordoa perto.',en:'Ground slam that stuns nearby.',es:'Golpe al suelo que aturde cerca.',fr:'Frappe au sol qui etourdit.'},
+  k_fury:{pt:'Aumenta muito o dano por um tempo.',en:'Greatly boosts damage for a while.',es:'Aumenta mucho el dano un tiempo.',fr:'Augmente les degats un moment.'},
+  k_charge:{pt:'Avanca numa linha, empurrando inimigos.',en:'Charge in a line, knocking enemies.',es:'Embiste en linea, empujando.',fr:'Charge en ligne, repousse.'},
+  k_bulwark:{pt:'Reduz muito o dano recebido.',en:'Greatly reduces damage taken.',es:'Reduce mucho el dano recibido.',fr:'Reduit les degats subis.'},
+  k_quake:{pt:'Terremoto que fere toda a area.',en:'Quake damaging the whole area.',es:'Terremoto que dana el area.',fr:'Seisme sur toute la zone.'},
+  k_execute:{pt:'Dano alto; executa alvos feridos.',en:'High damage; executes hurt foes.',es:'Dano alto; ejecuta heridos.',fr:'Degats eleves; execute les blesses.'},
+  r_triple:{pt:'Dispara tres flechas de uma vez.',en:'Fires three arrows at once.',es:'Dispara tres flechas.',fr:'Tire trois fleches.'},
+  r_dash:{pt:'Salta rapido para longe do perigo.',en:'Dashes quickly out of danger.',es:'Salta rapido del peligro.',fr:'Bond hors du danger.'},
+  r_poison:{pt:'Flechas que envenenam ao longo do tempo.',en:'Arrows that poison over time.',es:'Flechas que envenenan.',fr:'Fleches empoisonnees.'},
+  r_volley:{pt:'Salva de flechas num arco amplo.',en:'Volley across a wide arc.',es:'Descarga en arco amplio.',fr:'Volee en arc large.'},
+  r_aimed:{pt:'Tiro preciso de dano elevado.',en:'Precise, high-damage shot.',es:'Disparo preciso y potente.',fr:'Tir precis et puissant.'},
+  r_trap:{pt:'Arma uma armadilha que prende inimigos.',en:'Sets a trap that snares foes.',es:'Coloca una trampa.',fr:'Pose un piege.'},
+  r_rain:{pt:'Chuva de flechas numa area.',en:'Rains arrows over an area.',es:'Lluvia de flechas en area.',fr:'Pluie de fleches.'},
+  r_shadow:{pt:'Rajada sombria que atravessa alvos.',en:'Shadow burst piercing foes.',es:'Rafaga sombria perforante.',fr:'Rafale d\u2019ombre percante.'},
+  m_fire:{pt:'Bola de fogo que explode no impacto.',en:'Fireball exploding on impact.',es:'Bola de fuego explosiva.',fr:'Boule de feu explosive.'},
+  m_nova:{pt:'Onda de energia ao redor de voce.',en:'Energy nova around you.',es:'Nova de energia alrededor.',fr:'Nova d\u2019energie autour.'},
+  m_chain:{pt:'Raio que salta entre inimigos.',en:'Lightning arcing between foes.',es:'Rayo que salta entre enemigos.',fr:'Eclair qui rebondit.'},
+  m_storm:{pt:'Tempestade que fere continuamente.',en:'Storm dealing ongoing damage.',es:'Tormenta de dano continuo.',fr:'Tempete a degats continus.'},
+  m_meteor:{pt:'Meteoro que cai causando dano em area.',en:'Meteor crashing for area damage.',es:'Meteoro con dano en area.',fr:'Meteore a degats de zone.'},
+  m_icelance:{pt:'Lanca de gelo que perfura e lentifica.',en:'Ice lance that pierces and slows.',es:'Lanza de hielo que ralentiza.',fr:'Lance de glace ralentissante.'},
+  m_arcane:{pt:'Explosao arcana de dano intenso.',en:'Arcane blast of intense damage.',es:'Explosion arcana intensa.',fr:'Explosion arcanique intense.'},
+  m_inferno:{pt:'Inferno que queima uma area por tempo.',en:'Inferno burning an area over time.',es:'Infierno que quema el area.',fr:'Enfer qui brule la zone.'}
+};
+function _spellDescOf(id){ try{ var d=SPELL_DESC[id]; if(!d)return ''; var L=(typeof LANG!=='undefined'&&d[LANG])?LANG:'pt'; return d[L]||d.pt||''; }catch(e){return '';} }
 function renderSpellbook(){
   if(typeof ensureLoadout==='function')ensureLoadout();
   const slotsEl=document.getElementById('sbSlots'),listEl=document.getElementById('sbList');
@@ -9080,6 +9119,34 @@ function renderSpellbook(){
     it.innerHTML='<span class="sb-ic">'+sp.ic+'</span><span class="sb-nm">'+sp.name+'</span>'+
       (unlocked?(inLoad>=0?'<span class="sb-slotn">'+(inLoad+1)+'</span>':''):'<span class="sb-lk">Nv '+sp.lv+'</span>');
     if(unlocked)it.onclick=(function(sid){return function(){assignSpell(sid);};})(id);
+    /* segurar (long-press) ou hover mostra as informacoes da magia */
+    (function(sp2,el){
+      var _tt=null;
+      function _mk(){ var box=document.getElementById('spellTip');
+        if(!box){box=document.createElement('div');box.id='spellTip';
+          box.style.cssText='position:fixed;z-index:99999;max-width:240px;background:rgba(10,11,17,0.97);border:1px solid rgba(201,162,74,0.5);border-radius:10px;padding:10px 12px;color:#e8e2d0;font:13px system-ui;box-shadow:0 8px 30px rgba(0,0,0,0.6);pointer-events:none;display:none';
+          document.body.appendChild(box);}
+        return box; }
+      function _show(ev){ var box=_mk(); var cdT={pt:'Recarga',en:'Cooldown',es:'Recarga',fr:'Recharge'};
+        var L=(typeof LANG!=='undefined'&&cdT[LANG])?LANG:'pt';
+        box.innerHTML='<div style="font-weight:700;color:#e8c15a;margin-bottom:3px">'+sp2.ic+' '+sp2.name+'</div>'
+          +'<div style="font-size:12px;color:#b8bcc8;margin-bottom:5px">'+_spellDescOf(sp2._id)+'</div>'
+          +'<div style="font-size:11px;color:#8a90a0">'+cdT[L]+': '+sp2.cd+'s \u00b7 Nv '+sp2.lv+'</div>';
+        box.style.display='block';
+        var px=(ev&&ev.clientX!=null)?ev.clientX:window.innerWidth/2;
+        var py=(ev&&ev.clientY!=null)?ev.clientY:window.innerHeight/2;
+        var r=box.getBoundingClientRect();
+        box.style.left=Math.max(6,Math.min(window.innerWidth-r.width-6,px-r.width/2))+'px';
+        box.style.top=Math.max(6,py-r.height-12)+'px';
+      }
+      function _hide(){ var box=document.getElementById('spellTip'); if(box)box.style.display='none'; }
+      el.addEventListener('pointerenter',function(e){ if(!isTouch)_show(e); });
+      el.addEventListener('pointerleave',function(){ if(!isTouch)_hide(); });
+      el.addEventListener('pointerdown',function(e){ _tt=setTimeout(function(){_tt=null;_show(e);},300); });
+      function _clr(){ if(_tt){clearTimeout(_tt);_tt=null;} }
+      el.addEventListener('pointerup',function(){ _clr(); if(isTouch)setTimeout(_hide,1400); });
+      el.addEventListener('pointercancel',function(){ _clr(); _hide(); });
+    })(Object.assign({_id:id},sp),it);
     listEl.appendChild(it);}
 }
 function assignSpell(id){
@@ -10726,7 +10793,21 @@ try{(function(){
         if(typeof bakePlayers==='function')bakePlayers();
         if(typeof buildMinimapBase==='function')buildMinimapBase();
       }catch(e){}
+    
+  /* re-aplica os icones dos botoes: ao voltar ao navegador o botao de ALVO perdia a arte
+     (bakeIcons/setBtnIcon nao rodavam no rebake). */
+  try{
+    if(typeof bakeIcons==='function')bakeIcons();
+    if(typeof setBtnIcon==='function'){
+      var _ab=document.getElementById('attackBtn'); if(_ab)setBtnIcon(_ab,'atk','\uD83C\uDFAF');
+      if(document.getElementById('sk3'))setBtnIcon(document.getElementById('sk3'),'hpp','\uD83E\uDDEA');
+      if(document.getElementById('sk4'))setBtnIcon(document.getElementById('sk4'),'cure','\uD83C\uDF3F');
+      if(document.getElementById('sk5'))setBtnIcon(document.getElementById('sk5'),'bag','\uD83C\uDF92');
     }
+    /* re-aplica os icones das 3 magias equipadas */
+    if(typeof _syncSkillIcons==='function')_syncSkillIcons();
+  }catch(e){}
+}
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) _rebakeWorld(); });
     window.addEventListener('pageshow', function(){ _rebakeWorld(); });
     window.addEventListener('focus', function(){ _rebakeWorld(); });
