@@ -10542,7 +10542,25 @@ try{(function(){
         if(u){ _pull(); _listen(); }
         else { _active=false; _locked=false; _hideLock(); }
       });
+      function _nativeAuth(){ try{ return !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform() && Capacitor.Plugins && Capacitor.Plugins.FirebaseAuthentication); }catch(e){ return false; } }
       function _login(){
+        if(_nativeAuth()){
+          try{
+            var _FA=Capacitor.Plugins.FirebaseAuthentication;
+            _FA.signInWithGoogle().then(function(res){
+              var _c=firebase.auth.GoogleAuthProvider.credential(res&&res.credential&&res.credential.idToken);
+              return _auth.signInWithCredential(_c);
+            }).then(function(r){
+              if(r&&r.user){ _fuser=r.user; window._acFbUser=r.user; _lastUid='__force__'; _renderBtn();
+                try{ _toast('Bem-vindo, '+(r.user.displayName||'her\u00f3i')+'!'); }catch(_){}
+              }
+            }).catch(function(e){
+              try{ _toast('Login Google falhou: '+((e&&e.message)||(e&&e.code)||'erro')); }catch(_){}
+              try{ console.warn('[Login Google nativo] erro:', e); }catch(_){}
+            });
+          }catch(err){ try{ console.warn('[Login Google nativo] excecao:', err); }catch(_){} }
+          return;
+        }
         try{
           var p=new firebase.auth.GoogleAuthProvider();
           p.setCustomParameters({prompt:'select_account'});
@@ -10570,6 +10588,23 @@ try{(function(){
         }catch(err){ try{ console.warn('[login] excecao:', err); }catch(_){} }
       }
       function _loginFb(){
+        if(_nativeAuth()){
+          try{
+            var _FA=Capacitor.Plugins.FirebaseAuthentication;
+            _FA.signInWithFacebook().then(function(res){
+              var _c=firebase.auth.FacebookAuthProvider.credential(res&&res.credential&&res.credential.accessToken);
+              return _auth.signInWithCredential(_c);
+            }).then(function(r){
+              if(r&&r.user){ _fuser=r.user; window._acFbUser=r.user; _lastUid='__force__'; _renderBtn();
+                try{ _toast('Bem-vindo, '+(r.user.displayName||'her\u00f3i')+'!'); }catch(_){}
+              }
+            }).catch(function(e){
+              try{ _toast('Login Facebook falhou: '+((e&&e.message)||(e&&e.code)||'erro')); }catch(_){}
+              try{ console.warn('[Login Facebook nativo] erro:', e); }catch(_){}
+            });
+          }catch(err){ try{ console.warn('[Login Facebook nativo] excecao:', err); }catch(_){} }
+          return;
+        }
         try{
           var p=new firebase.auth.FacebookAuthProvider();
           p.setCustomParameters({display:'popup'});
