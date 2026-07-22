@@ -637,6 +637,21 @@ body.playing #menuDock{display:none !important;}
 
 /* ocultar o log de mensagens (toggle nas Configuracoes) */
 body.noLog #log{display:none !important;}
+
+/* ===== bestiario ===== */
+.bestRow{display:flex;align-items:center;gap:10px;background:#171a22;border:1px solid #2a2e3a;border-radius:10px;padding:8px 10px}
+.bestRow .bIcon{width:34px;height:34px;flex:0 0 auto;border-radius:7px;background:#0d0f16;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bestRow .bIcon canvas{width:30px;height:30px;image-rendering:pixelated}
+.bestRow .bMid{flex:1;min-width:0}
+.bestRow .bName{font:700 13px system-ui;color:#e8e2d0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bestRow .bCount{font:600 11px system-ui;color:#9aa0b0;margin-top:1px}
+.bestRow .bProg{height:5px;background:#0d0f16;border-radius:3px;margin-top:5px;overflow:hidden}
+.bestRow .bProg>i{display:block;height:100%;background:linear-gradient(90deg,#c9a24a,#e8c15a);border-radius:3px}
+.bestRow .bNext{font:600 10px system-ui;color:#8a90a0;flex:0 0 auto;text-align:right;white-space:nowrap}
+.bestRow.maxed{border-color:rgba(201,162,74,0.5)}
+.bestRow.maxed .bNext{color:#e8c15a}
+.bestRow.unseen{opacity:.5}
+.bestRow.unseen .bName{color:#6a7080}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script><script>/* ===== SINCRONIZACAO COM GOOGLE (OPCIONAL) =====
    Para ativar o login com Google e o save na nuvem, crie um projeto gratis em
@@ -669,6 +684,7 @@ window.FIREBASE_CONFIG = {
       <div id="afkChip" class="hidden">&#9679; AFK</div>
       <div id="tools">
         <div class="tbtn" id="btnQuests" title="Missões" style="position:relative">&#128220;<span id="qBadge"></span></div>
+        <div class="tbtn" id="btnBestiary" title="Bestiário" data-i18n-title="bestiary">&#128214;</div>
         <div class="tbtn" id="btnGear" title="Configurações">&#9881;</div>
         <div class="tbtn" id="btnChase" title="Perseguir alvo">&#127939;</div>
         <div style="display:none">
@@ -760,7 +776,17 @@ window.FIREBASE_CONFIG = {
     </div>
   </div>
 
-  <div id="spellbook" class="overlay hidden">
+  <div id="bestiary" class="overlay hidden">
+      <div class="card panel" style="max-width:520px;max-height:82vh;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <h1 style="font-size:20px;margin:0" data-i18n="bestiary">Bestiário</h1>
+          <button class="sx" id="bestClose" aria-label="Fechar">&#10005;</button>
+        </div>
+        <p style="text-align:center;color:var(--ink-dim);font-size:12px;margin:4px 0 8px" data-i18n="bestiary_sub">Cada abate conta. Alcance marcos para ganhar ouro e XP.</p>
+        <div id="bestList" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px;padding-right:4px"></div>
+      </div>
+    </div>
+    <div id="spellbook" class="overlay hidden">
     <div class="card panel">
       <h1 style="font-size:20px">Magias</h1>
       <p style="text-align:center;color:var(--ink-dim);font-size:12px;margin:4px 0 0">Toque num slot, depois numa magia para equipá-la.</p>
@@ -910,7 +936,7 @@ window.FIREBASE_CONFIG = {
         <button class="btn" id="bmClose" data-i18n="close">Fechar</button></div>
       <div id="bmView" style="overflow:hidden;border-radius:8px;border:1px solid #2a2e3a;position:relative;touch-action:none">
         <canvas id="bmCanvas" style="width:100%;image-rendering:pixelated;transform-origin:0 0;display:block"></canvas>
-        <div id="bmZBtns" style="position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:5">
+        <div id="bmZBtns" style="position:absolute;right:8px;top:8px;display:flex;gap:6px;z-index:5">
         <button id="bmZOut" style="width:40px;height:40px;font-size:20px;line-height:1;padding:0;border:1px solid rgba(201,162,74,0.4);border-radius:8px;background:rgba(10,11,17,0.9);color:#e8c15a;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">&minus;</button>
         <button id="bmZIn" style="width:40px;height:40px;font-size:20px;line-height:1;padding:0;border:1px solid rgba(201,162,74,0.4);border-radius:8px;background:rgba(10,11,17,0.9);color:#e8c15a;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">+</button>
       </div>
@@ -973,7 +999,7 @@ const I18N={
   howto_pot:'po\u00e7\u00e3o de vida \u00b7 ant\u00eddoto',
   howto_panels:'mapa do Vale \u00b7 mochila \u00b7 miss\u00f5es',
   offline_note:'sem an\u00fancios \u00b7 sem espera \u00b7 funciona offline \u00b7 seu progresso \u00e9 seu', game_motto:'O Vale lembra.',
-  sound:'Som', log_msgs:'Mensagens', log_msgs_desc:'Textos no canto inferior', sound_sub:'Efeitos e trilha', quality:'Qualidade gr\u00e1fica',
+  bestiary:'Bestiário', bestiary_sub:'Cada abate conta. Alcance marcos para ganhar ouro e XP.', sound:'Som', log_msgs:'Mensagens', log_msgs_desc:'Textos no canto inferior', sound_sub:'Efeitos e trilha', quality:'Qualidade gr\u00e1fica',
   quality_hi:'Alta \u2014 mais detalhes e efeitos', quality_lo:'Desempenho \u2014 mais fluido em aparelhos simples',
   afk_mode:'Modo AFK', afk_sub:'Ca\u00e7a sozinho ao redor do ponto onde foi ativado',
   settings:'Configura\u00e7\u00f5es', help_link:'Ajuda \u00b7 como jogar', quests_link:'Miss\u00f5es e conquistas',
@@ -1022,7 +1048,7 @@ const I18N={
   howto_pot:'health potion \u00b7 antidote',
   howto_panels:'Vale map \u00b7 backpack \u00b7 quests',
   offline_note:'no ads \u00b7 no waiting \u00b7 works offline \u00b7 your progress is yours', game_motto:'The Vale remembers.',
-  sound:'Sound', log_msgs:'Messages', log_msgs_desc:'Text in the bottom corner', sound_sub:'Effects and music', quality:'Graphics quality',
+  bestiary:'Bestiary', bestiary_sub:'Every kill counts. Reach milestones to earn gold and XP.', sound:'Sound', log_msgs:'Messages', log_msgs_desc:'Text in the bottom corner', sound_sub:'Effects and music', quality:'Graphics quality',
   quality_hi:'High \u2014 more detail and effects', quality_lo:'Performance \u2014 smoother on simple devices',
   afk_mode:'AFK mode', afk_sub:'Hunts on its own around the spot where it was enabled',
   settings:'Settings', help_link:'Help \u00b7 how to play', quests_link:'Quests and achievements',
@@ -1071,7 +1097,7 @@ const I18N={
   howto_pot:'poci\u00f3n de vida \u00b7 ant\u00eddoto',
   howto_panels:'mapa del Valle \u00b7 mochila \u00b7 misiones',
   offline_note:'sin anuncios \u00b7 sin esperas \u00b7 funciona offline \u00b7 tu progreso es tuyo', game_motto:'El Valle recuerda.',
-  sound:'Sonido', log_msgs:'Mensajes', log_msgs_desc:'Textos en la esquina inferior', sound_sub:'Efectos y m\u00fasica', quality:'Calidad gr\u00e1fica',
+  bestiary:'Bestiario', bestiary_sub:'Cada muerte cuenta. Alcanza hitos para ganar oro y XP.', sound:'Sonido', log_msgs:'Mensajes', log_msgs_desc:'Textos en la esquina inferior', sound_sub:'Efectos y m\u00fasica', quality:'Calidad gr\u00e1fica',
   quality_hi:'Alta \u2014 m\u00e1s detalles y efectos', quality_lo:'Rendimiento \u2014 m\u00e1s fluido en equipos sencillos',
   afk_mode:'Modo AFK', afk_sub:'Caza solo alrededor del punto donde se activ\u00f3',
   settings:'Ajustes', help_link:'Ayuda \u00b7 c\u00f3mo jugar', quests_link:'Misiones y logros',
@@ -1120,7 +1146,7 @@ const I18N={
   howto_pot:'potion de vie \u00b7 antidote',
   howto_panels:'carte de la Vall\u00e9e \u00b7 sac \u00b7 qu\u00eates',
   offline_note:'sans pub \u00b7 sans attente \u00b7 hors ligne \u00b7 votre progression vous appartient', game_motto:'Le Val se souvient.',
-  sound:'Son', log_msgs:'Messages', log_msgs_desc:'Textes dans le coin inférieur', sound_sub:'Effets et musique', quality:'Qualit\u00e9 graphique',
+  bestiary:'Bestiaire', bestiary_sub:'Chaque abattage compte. Atteignez des jalons pour de l\u2019or et XP.', sound:'Son', log_msgs:'Messages', log_msgs_desc:'Textes dans le coin inférieur', sound_sub:'Effets et musique', quality:'Qualit\u00e9 graphique',
   quality_hi:'\u00c9lev\u00e9e \u2014 plus de d\u00e9tails et d\u2019effets', quality_lo:'Performance \u2014 plus fluide sur appareils simples',
   afk_mode:'Mode AFK', afk_sub:'Chasse seul autour du point o\u00f9 il a \u00e9t\u00e9 activ\u00e9',
   settings:'R\u00e9glages', help_link:'Aide \u00b7 comment jouer', quests_link:'Qu\u00eates et succ\u00e8s',
@@ -4624,6 +4650,102 @@ function deathFx(m){const df=DEATH_THEME[DEATH_FAM[m.type]];const sz=0.75+m.d.si
     addParticles(m.px,m.py,Math.round(df.n*0.55*sz),{col:df.c2,spd:72,life:0.6,size:df.size*0.7,grav:df.grav*0.85,up:df.up*0.6});
     addRing(m.px,m.py,df.ring,TILE*(0.85+m.d.size*0.35),0.42);return true;}
   return false;}
+/* ===== BESTIARIO: contador universal de abates + marcos com recompensa crescente =====
+   Automatico: cada abate conta, sem precisar aceitar missao. */
+var BEST_TIERS=[100,1000,10000,100000,1000000];
+function _bestReward(tier,mdef){
+  /* recompensa cresce com o marco e com o valor (xp) da criatura */
+  var base=(mdef&&mdef.xp)?mdef.xp:20;
+  var mult=[6,40,300,2500,20000][tier]||6; /* ouro por marco */
+  var xpMult=[3,20,150,1200,9000][tier]||3;
+  return { gold:Math.round(base*mult), xp:Math.round(base*xpMult) };
+}
+function _bestName(type){ try{ var d=MTYPES[type]; return d?d.name:type; }catch(e){ return type; } }
+function bestiaryKill(type){
+  try{
+    if(!type)return;
+    meta.bestiary=meta.bestiary||{}; meta.bestClaimed=meta.bestClaimed||{};
+    var n=(meta.bestiary[type]||0)+1; meta.bestiary[type]=n;
+    /* atingiu um novo marco? */
+    var claimed=meta.bestClaimed[type]||0; /* quantos marcos ja recompensados */
+    for(var ti=claimed; ti<BEST_TIERS.length; ti++){
+      if(n>=BEST_TIERS[ti]){
+        meta.bestClaimed[type]=ti+1;
+        var rw=_bestReward(ti, MTYPES[type]);
+        player.gold+=rw.gold; if(typeof giveXp==='function')giveXp(rw.xp);
+        var nm=_bestName(type);
+        try{
+          var L=(typeof _wpL==='function')?_wpL():'pt';
+          var msg={pt:'Bestiario: '+BEST_TIERS[ti]+' '+nm+'! +'+rw.gold+' ouro, +'+rw.xp+' XP',
+                   en:'Bestiary: '+BEST_TIERS[ti]+' '+nm+'! +'+rw.gold+' gold, +'+rw.xp+' XP',
+                   es:'Bestiario: '+BEST_TIERS[ti]+' '+nm+'! +'+rw.gold+' oro, +'+rw.xp+' XP',
+                   fr:'Bestiaire : '+BEST_TIERS[ti]+' '+nm+'! +'+rw.gold+' or, +'+rw.xp+' XP'};
+          if(typeof addMessage==='function')addMessage(msg[L]||msg.pt,'good');
+          if(typeof centerMsg==='function')centerMsg((L==='pt'?'Marco do Bestiario!':L==='en'?'Bestiary milestone!':L==='es'?'Hito del Bestiario!':'Jalon du Bestiaire!'));
+          if(typeof SFX!=='undefined'&&SFX.level)SFX.level();
+        }catch(e){}
+      } else break; /* marcos sao crescentes; para no primeiro nao atingido */
+    }
+  }catch(e){}
+}
+/* desenha o icone da criatura (PNG > sprite bake) num canvas pequeno para o bestiario */
+function _bestIcon(type){
+  var c=document.createElement('canvas'); c.width=30; c.height=30;
+  var g=c.getContext('2d'); g.imageSmoothingEnabled=false;
+  try{
+    var png=(typeof monPng!=='undefined')&&monPng[type];
+    if(png&&png.ready&&png.img){ var pw=png.img.naturalWidth||30,ph=png.img.naturalHeight||30;
+      var s=Math.min(30/pw,30/ph); var dw=Math.round(pw*s),dh=Math.round(ph*s);
+      g.drawImage(png.img,Math.round((30-dw)/2),Math.round((30-dh)/2),dw,dh); return c; }
+    /* fallback: sprite bake procedural */
+    var set=(typeof monSpr!=='undefined')&&monSpr[type];
+    if(set&&set.a){ var im=set.a; var iw=im.width||30,ih=im.height||30;
+      var s2=Math.min(30/iw,30/ih); g.drawImage(im,Math.round((30-iw*s2)/2),Math.round((30-ih*s2)/2),iw*s2,ih*s2); return c; }
+  }catch(e){}
+  /* ultimo fallback: bolinha com a cor da criatura */
+  try{ var d=MTYPES[type]; g.fillStyle=(d&&d.col)||'#888'; g.beginPath(); g.arc(15,15,10,0,7); g.fill(); }catch(e){}
+  return c;
+}
+function _bestOrder(){
+  /* ordena: criaturas ja vistas primeiro (por contagem desc), depois as nao vistas */
+  var types=[]; for(var k in MTYPES){ if(MTYPES[k]&&MTYPES[k].name)types.push(k); }
+  meta.bestiary=meta.bestiary||{};
+  types.sort(function(a,b){ var na=meta.bestiary[a]||0, nb=meta.bestiary[b]||0;
+    if(na!==nb)return nb-na; return (_bestName(a)||'').localeCompare(_bestName(b)||''); });
+  return types;
+}
+function renderBestiary(){
+  var list=document.getElementById('bestList'); if(!list)return;
+  list.innerHTML=''; meta.bestiary=meta.bestiary||{};
+  var L=(typeof _wpL==='function')?_wpL():'pt';
+  var LB={pt:{kills:'abates',next:'proximo',max:'MAXIMO',unseen:'nao encontrada'},
+          en:{kills:'kills',next:'next',max:'MAX',unseen:'not found'},
+          es:{kills:'muertes',next:'proximo',max:'MAX',unseen:'no encontrada'},
+          fr:{kills:'abattus',next:'prochain',max:'MAX',unseen:'introuvable'}}[L]||{kills:'abates',next:'proximo',max:'MAXIMO',unseen:'nao encontrada'};
+  var types=_bestOrder();
+  for(var i=0;i<types.length;i++){
+    var type=types[i]; var n=meta.bestiary[type]||0; var d=MTYPES[type];
+    var row=document.createElement('div'); row.className='bestRow'+(n===0?' unseen':'');
+    /* proximo marco */
+    var next=null; for(var t=0;t<BEST_TIERS.length;t++){ if(n<BEST_TIERS[t]){next=BEST_TIERS[t];break;} }
+    var prev=0; for(var t2=0;t2<BEST_TIERS.length;t2++){ if(BEST_TIERS[t2]<=n)prev=BEST_TIERS[t2]; }
+    var pct = next ? Math.max(0,Math.min(100, ((n-prev)/(next-prev))*100 )) : 100;
+    if(!next)row.className+=' maxed';
+    var ic=_bestIcon(type);
+    var mid=document.createElement('div'); mid.className='bMid';
+    var nameHtml = n===0 ? ('<span style="opacity:.6">? ? ?</span>') : _bestName(type);
+    mid.innerHTML='<div class="bName">'+nameHtml+'</div>'
+      +'<div class="bCount">'+n.toLocaleString()+' '+LB.kills+'</div>'
+      +'<div class="bProg"><i style="width:'+pct+'%"></i></div>';
+    var icWrap=document.createElement('div'); icWrap.className='bIcon'; icWrap.appendChild(ic);
+    var nextEl=document.createElement('div'); nextEl.className='bNext';
+    nextEl.textContent = next ? (LB.next+': '+next.toLocaleString()) : LB.max;
+    row.appendChild(icWrap); row.appendChild(mid); row.appendChild(nextEl);
+    list.appendChild(row);
+  }
+}
+function showBestiary(){ if(window._acPanelShield&&Date.now()<window._acPanelShield)return;
+  renderBestiary(); var el=document.getElementById('bestiary'); if(el)el.classList.remove('hidden'); }
 function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,m.py-TILE*0.4,10,{col:m.d.col,spd:70,life:0.5,size:2.4,grav:60});return;}
   if(m._rewardGiven)return; m._rewardGiven=true; /* idempotente: recompensa/floater 1x so (fix do '+ouro' repetindo com inventario aberto) */
   m.dead=true;SFX.die();
@@ -4648,7 +4770,7 @@ function killMonster(m){if(m._summoned){m.dead=true;SFX.die();addParticles(m.px,
   let rm=1;if(meta.rested>0){meta.rested--;rm=1.3;}
   const gx=Math.round(m.d.xp*(m.elite?3:1)*smul*rm*(meta.ng?1.5:1));
   if(killStreak>=3)addFloater(m.px,m.py-TILE*0.95,tf('fl_combo',{n:killStreak}),'#ffd76a',killStreak>=6);
-  meta.stats.kills++;qProg('kill');taskProg(m.type); try{if(m.elite){_bloodOnElite(m);_scarAdd('mark',m.tx,m.ty,(m.elite&&m.elite.c)||'#c8a060');}}catch(e){} try{_codexReg(m);}catch(e){}
+  meta.stats.kills++;qProg('kill');taskProg(m.type);try{bestiaryKill(m.type);}catch(e){} try{if(m.elite){_bloodOnElite(m);_scarAdd('mark',m.tx,m.ty,(m.elite&&m.elite.c)||'#c8a060');}}catch(e){} try{_codexReg(m);}catch(e){}
   if(m._invader&&invasion){invasion.killed++;const bg=Math.round((m.d.xp||10)*0.6);player.gold+=bg;addFloater(m.px,m.py-TILE*1.0,'+'+bg+'\u29bf','#ffd76a');}
   const _kz=zoneAt(m.tx,m.ty);
   if(_kz==='Picos Uivantes')qProg('snow');
@@ -8932,7 +9054,7 @@ function sellPrice(it){return Math.max(1,Math.round((it.val||10)*0.4));}
 function sellBagItem(it){const e=player.bag.find(b=>b.id===it.id);if(!e)return;
   const g=sellPrice(it);takeBag(it.id,1);player.gold+=g;SFX.gold();buzz(8);
   addMessage(tf('msg_sold',{name:itemName(it),g:g}),'good');renderShop();renderHUD();if(invOpen)renderInv();}
-function closeAllPanels(){window._acPanelShield=Date.now()+450;invOpen=false;$('inv').classList.add('hidden');$('shop').classList.add('hidden');$('help').classList.add('hidden');$('bigmap').classList.add('hidden');$('quests').classList.add('hidden');$('settings').classList.add('hidden');hideTip();}
+function closeAllPanels(){window._acPanelShield=Date.now()+450;invOpen=false;$('inv').classList.add('hidden');$('shop').classList.add('hidden');$('help').classList.add('hidden');$('bigmap').classList.add('hidden');$('quests').classList.add('hidden');$('settings').classList.add('hidden');$('bestiary').classList.add('hidden');hideTip();}
 let _zoneTO=null;
 function showZone(nm){const el=$('zonetoast');
   const _d=DANGER[nm]||0;
@@ -9453,7 +9575,7 @@ function todayStr(off=0){const d=new Date(Date.now()+off*864e5);
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 const LEFTY_KEY='acoSombras.lefty';
 function applyLefty(){document.body.classList.toggle('lefty',leftyMode);}
-function freshMeta(){return{streak:0,lastDaily:'',quests:{date:'',list:[]},ach:{},tasks:{active:[],prog:{},tier:{},done:{}},
+function freshMeta(){return{streak:0,lastDaily:'',quests:{date:'',list:[]},bestiary:{},bestClaimed:{},ach:{},tasks:{active:[],prog:{},tier:{},done:{}},
   stats:{kills:0,elites:0,vorrak:0,thief:0,legend:0,zones:[]},bless:{},rested:0};}
 let meta=freshMeta(),_saveT=0,hasSave=false,killStreak=0,lastKillAt=-99;
 function saveGame(){if(!running)return;
@@ -9880,7 +10002,7 @@ const chk=$('leftyChk');if(chk){chk.checked=leftyMode;
   $('mmIn').onclick=e=>{e.stopPropagation();miniZoom=Math.min(12,miniZoom+2);renderMinimap();try{_miniCompass();}catch(e){}};
   $('mmOut').onclick=e=>{e.stopPropagation();miniZoom=Math.max(3,miniZoom-2);renderMinimap();};
   $('mmBig').onclick=e=>{e.stopPropagation();openBigMap();};
-  $('btnQuests').onclick=openQuests;$('qClose').onclick=closeAllPanels;$('dailyBtn').onclick=claimDaily;$('tracker').onclick=(e)=>{ if(e.target&&e.target.closest&&e.target.closest('.tHead')){trackerOpen=false;renderTracker();} else openQuests(); };
+  $('btnQuests').onclick=openQuests;$('qClose').onclick=closeAllPanels;var _bb=$('btnBestiary');if(_bb)_bb.onclick=showBestiary;var _bc=$('bestClose');if(_bc)_bc.onclick=closeAllPanels;$('dailyBtn').onclick=claimDaily;$('tracker').onclick=(e)=>{ if(e.target&&e.target.closest&&e.target.closest('.tHead')){trackerOpen=false;renderTracker();} else openQuests(); };
   $('btnGear').onclick=openSettings;
   {const bc=$('btnChase');if(bc){
     try{const cs=localStorage.getItem('aco_chase');if(cs!==null)chaseOn=(cs==='1');}catch(e){}
@@ -13172,13 +13294,37 @@ var _WPI={
 };
 function _wpL(){try{return _WPI[LANG]?LANG:'pt';}catch(e){return 'pt';}}
 function _wpEnsure(){if(!meta.wp)meta.wp={};if(!meta.wp.vila)meta.wp.vila=1;if(!meta.wpCaves)meta.wpCaves={};}
+function _caveName(cx,cy){
+  try{
+    var L=(typeof _wpL==='function')?_wpL():'pt';
+    var MW=(typeof MAPW!=='undefined')?MAPW:640, MH=(typeof MAPH!=='undefined')?MAPH:640;
+    var ns = cy < MH*0.38 ? 0 : (cy > MH*0.62 ? 2 : 1);
+    var tipo='rocha';
+    try{ if(typeof tileAt==='function'){ var t=tileAt(cx,cy); var Tt=(typeof T!=='undefined')?T:{};
+      if(t===Tt.snow) tipo='gelo'; else if(t===Tt.sand) tipo='areia';
+      else if(t===Tt.lava||t===Tt.mud) tipo='brasa'; else if(t===Tt.grass||t===Tt.forest) tipo='mata'; }
+    }catch(e){}
+    var D={
+      pt:{ base:['Caverna','Gruta','Toca','Furna','Caverna'], gelo:'do Gelo', areia:'das Areias', brasa:'da Brasa', mata:'da Mata', rocha:'da Pedra', norte:'do Norte', sul:'do Sul', centro:'do Vale' },
+      en:{ base:['Cave','Grotto','Den','Hollow','Cavern'], gelo:'of Ice', areia:'of Sands', brasa:'of Embers', mata:'of Woods', rocha:'of Stone', norte:'North', sul:'South', centro:'of the Vale' },
+      es:{ base:['Cueva','Gruta','Guarida','Caverna','Cueva'], gelo:'del Hielo', areia:'de Arenas', brasa:'de Brasas', mata:'del Bosque', rocha:'de Piedra', norte:'del Norte', sul:'del Sur', centro:'del Valle' },
+      fr:{ base:['Grotte','Caverne','Antre','Cavite','Grotte'], gelo:'de Glace', areia:'des Sables', brasa:'de Braises', mata:'des Bois', rocha:'de Pierre', norte:'du Nord', sul:'du Sud', centro:'du Val' }
+    };
+    var d=D[L]||D.pt;
+    var seed=((cx*73856093)^(cy*19349663))>>>0;
+    var base=d.base[seed % d.base.length];
+    var card=[d.norte,d.centro,d.sul][ns];
+    var bioma=d[tipo]||d.rocha;
+    var usaBioma=((seed>>3)&1)===0;
+    return base+' '+(usaBioma?bioma:card);
+  }catch(e){ return 'Caverna'; }
+}
 /* lista combinada: os 7 marcos fixos (descobertos) + cavernas visitadas */
 function _allWaypoints(){ _wpEnsure(); var out=[];
   for(var i=0;i<WAYPOINTS.length;i++){ if(meta.wp[WAYPOINTS[i].id]) out.push(WAYPOINTS[i]); }
   var L=(typeof _wpL==='function')?_wpL():'pt';
-  var caveName={pt:'Caverna',en:'Cave',es:'Cueva',fr:'Grotte'}[L]||'Caverna';
   for(var k in meta.wpCaves){ var c=meta.wpCaves[k];
-    out.push({id:c.id, n:caveName+' ('+c.x+','+c.y+')', x:c.x, y:c.y, cave:true}); }
+    out.push({id:c.id, n:_caveName(c.x,c.y), x:c.x, y:c.y, cave:true}); }
   return out;
 }
 function wpCost(w){const d=Math.max(Math.abs(player.tx-w.x),Math.abs(player.ty-w.y));
