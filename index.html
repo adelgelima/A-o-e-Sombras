@@ -910,10 +910,10 @@ window.FIREBASE_CONFIG = {
         <button class="btn" id="bmClose" data-i18n="close">Fechar</button></div>
       <div id="bmView" style="overflow:hidden;border-radius:8px;border:1px solid #2a2e3a;position:relative;touch-action:none">
         <canvas id="bmCanvas" style="width:100%;image-rendering:pixelated;transform-origin:0 0;display:block"></canvas>
-        <div id="bmZBtns" style="position:absolute;right:8px;bottom:8px;display:flex;gap:6px">
-          <button class="btn mini" id="bmZOut" style="width:38px;font-size:16px">&minus;</button>
-          <button class="btn mini" id="bmZIn" style="width:38px;font-size:16px">+</button>
-        </div>
+        <div id="bmZBtns" style="position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:5">
+        <button id="bmZOut" style="width:40px;height:40px;font-size:20px;line-height:1;padding:0;border:1px solid rgba(201,162,74,0.4);border-radius:8px;background:rgba(10,11,17,0.9);color:#e8c15a;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">&minus;</button>
+        <button id="bmZIn" style="width:40px;height:40px;font-size:20px;line-height:1;padding:0;border:1px solid rgba(201,162,74,0.4);border-radius:8px;background:rgba(10,11,17,0.9);color:#e8c15a;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center">+</button>
+      </div>
       </div>
       <div id="bmLegend" style="display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;margin-top:8px;color:#cfd3de"></div>
     </div>
@@ -4451,7 +4451,25 @@ function dropLoot(m){const b={gold:0,items:[]};
     if(m.d.slam){wT=0.22;oT=0.40;}else if(m.d.beh==='charge'){wT=0.55;oT=0.72;}
     if(r<wT){const dc=_dropCls();const t=ri(lo,hi);b.items.push(WEAPONS[dc][Math.min(t,WEAPONS[dc].length-1)].id);}
     else if(r<oT){const dc=_dropCls();const oi=lo>=14?6:lo>=11?5:lo>=8?4:Math.min(3,Math.floor(lo/3));b.items.push(OFFHANDS[dc][isB?6:oi].id);}
-    else{ var _AR=ARMORS.filter(a=>a.id[0]==='a'); var _lv=player.lvl||1; var _hiA=0; for(var _i=0;_i<_AR.length;_i++){ if((_AR[_i].req||1)<=_lv)_hiA=_i; } var _ai=isB?_hiA:Math.max(0,_hiA-ri(0,2)); b.items.push(_AR[Math.min(_AR.length-1,_ai)].id); }
+    else{
+        var _lv=player.lvl||1; var _gr=Math.random();
+        if(_gr<0.45){
+          /* GEAR: capacete ou calca da classe (antes so vinha de compra). Pega o melhor tier<=nivel. */
+          var _dc2=_dropCls(); var _slot=(Math.random()<0.5)?'head':'legs';
+          var _pool=(typeof GEAR!=='undefined')?GEAR.filter(function(g){return g.cls===_dc2&&g.slot===_slot&&(g.req||1)<=_lv;}):[];
+          if(_pool.length){ /* o mais alto liberado; chefe/elite garante o topo do pool */
+            var _gi=isB||m.elite?_pool.length-1:Math.max(0,_pool.length-1-ri(0,1));
+            b.items.push(_pool[_gi].id);
+          } else { /* sem gear elegivel: cai na armadura de tronco */
+            var _AR0=ARMORS.filter(a=>a.id[0]==='a'); var _h0=0; for(var _q=0;_q<_AR0.length;_q++){if((_AR0[_q].req||1)<=_lv)_h0=_q;}
+            b.items.push(_AR0[Math.min(_AR0.length-1,_h0)].id);
+          }
+        } else {
+          /* armadura de tronco (peitoral), escala com o nivel */
+          var _AR=ARMORS.filter(a=>a.id[0]==='a'); var _hiA=0; for(var _i=0;_i<_AR.length;_i++){ if((_AR[_i].req||1)<=_lv)_hiA=_i; }
+          var _ai=isB?_hiA:Math.max(0,_hiA-ri(0,2)); b.items.push(_AR[Math.min(_AR.length-1,_ai)].id);
+        }
+      }
   })();
   if(b.gold>0||b.items.length)loots.push({id:uid++,tx:m.tx,ty:m.ty,px:m.px,py:m.py,gold:b.gold,items:b.items,t:0,dead:false});
   return b;}
@@ -8733,7 +8751,11 @@ function shopItems(kind){const w=WEAPONS[player.cls],o=OFFHANDS[player.cls];
   else if(kind==='alch')list=['hp_s','hp_m','hp_l','cure'];
   else if(kind==='wander'){const _top=_wTier(11,4); const feat=_top.length?_top[(meta.wanderVisit||0)%_top.length]:w[11].id; list=[feat].concat(_wTier(13,2)).concat([w[12].id,o[4].id,'hp_l',gid('head','rare'),gid('legs','rare')]);}
   else list=['hp_s','hp_m','cure',w[1].id,w[2].id,w[3].id,o[0].id,'a0','a1',gid('head','common'),gid('legs','common')];
-  return list.filter(Boolean);}
+  /* remove duplicatas: o 'destaque' do mascate podia coincidir com a faixa de topo,
+     fazendo o mesmo item (ex: Espada Gelida Nv100) aparecer duas vezes. */
+  var _seen={}, _uniq=[];
+  list.filter(Boolean).forEach(function(id){ if(!_seen[id]){_seen[id]=1;_uniq.push(id);} });
+  return _uniq;}
 function openShop(kind='shop'){closeAllPanels();shopKind=kind;
   $('shopTitle').textContent=kind==='smith'?t('shop_smith'):kind==='psmith'?t('shop_psmith'):kind==='alch'?t('shop_alch'):kind==='wander'?t('shop_wander'):t('shop_merchant');
   $('shop').classList.remove('hidden');renderShop();}
@@ -9245,7 +9267,7 @@ const DungeonLayer={
     this._surf={map:map,zoneA:zoneA,elevA:elevA,shadeA:shadeA,monsters:monsters,spawns:spawns,npcs:npcs,loots:loots,px:poi?poi.x:player.tx,py:poi?poi.y:player.ty};
     meta.dungeons=meta.dungeons||{};
     const st=meta.dungeons[poi.id]=meta.dungeons[poi.id]||{deepest:1,opened:{},secrets:{}};
-    const depth=Math.min(10,st.deepest||1);   // andares 1-10; retoma no mais fundo alcançado
+    const _dmax=(typeof _DNG_MAX!=='undefined'?_DNG_MAX:40); const depth=Math.max(1,Math.min(_dmax,st.deepest||1));   // retoma no andar mais fundo alcançado (ate _DNG_MAX)
     this.active=true; try{_wkAnnounce();}catch(e){}this._build(depth);
     addMessage(t('dng_enter').replace('{d}',this.depth),'sys');shake(4);buzz(30);if(SFX.pickup)SFX.pickup();saveGame();
   },
@@ -13584,7 +13606,14 @@ function _relicPick(n){
       addMessage(_qwL({pt:'\u2756 Reservas do Covil: 3 po\u00e7\u00f5es grandes e 2 ant\u00eddotos.',en:'\u2756 Lair Reserves: 3 large potions and 2 antidotes.',es:'\u2756 Reservas de la Guarida: 3 pociones grandes y 2 ant\u00eddotos.',fr:'\u2756 R\u00e9serves de l\u2019Antre : 3 grandes potions et 2 antidotes.'}),'good');
       try{SFX.pickup();}catch(e){}}
     try{if(typeof saveGame==='function')saveGame();}catch(e){}
-  }catch(e){_blessOpen=false;}
+    /* FIX: se o level-up aconteceu junto com a morte do boss, os perks ficaram presos
+       na fila (_blessQ) porque a relicreward ocupava _blessOpen. Ao fechar a reliquia,
+       dispara os perks pendentes agora, em vez de so no proximo nivel. */
+    try{ if(typeof _blessQ!=='undefined' && _blessQ>0 && typeof openBless==='function'){
+      setTimeout(function(){ try{openBless();}catch(e){} }, 260); } }catch(e){}
+  }catch(e){_blessOpen=false;
+    try{ if(typeof _blessQ!=='undefined' && _blessQ>0){ setTimeout(function(){ try{openBless();}catch(e){} }, 260); } }catch(_e){}
+  }
 }
 function _bossRelic(m){
   try{
