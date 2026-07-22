@@ -2602,7 +2602,7 @@ const POIManager = {
       this.pois.push(p);
       this._byTile.set(x + ',' + y, p);
     }
-    this._pruneUnreachableCaves();       // remove cavernas inacessíveis a pé (bolsões isolados)
+    this._pruneUnreachableCaves(); this._pruneUnreachableCaves();       // remove cavernas inacessíveis a pé (bolsões isolados)
     return this.pois;
   },
 
@@ -4156,11 +4156,17 @@ const DETAILS={
 let heroCustom={skin:'clara',outfit:{knight:'rubi',ranger:'floresta',mage:'indigo'},detail:{knight:'aco',ranger:'branca',mage:'branca'}};
 function heroPal(cls,custom){const base=Object.assign({},PPAL[cls]);
   if(custom){
-    if(cls!=='knight'){const sk=SKINS.find(x=>x.id===custom.skin);
-      if(sk){base.s=sk.s;base.S=sk.S;}}
-    const of=(OUTFITS[cls]||[]).find(x=>x.id===custom.outfit);
+    /* FIX pele: aplica a todas as classes (o knight estava excluido, ignorando a cor de pele). */
+    const sk=SKINS.find(x=>x.id===custom.skin);
+    if(sk){base.s=sk.s;base.S=sk.S;}
+    /* FIX outfit/detail: custom.outfit e custom.detail sao objetos POR CLASSE ({knight:'rubi',...}).
+       antes comparava x.id com o objeto inteiro (nunca casava) -> customizacao nao aplicava e
+       o sprite ficava com paleta parcial ('bufado') ao trocar de estilo. */
+    const _ofId=custom.outfit && (typeof custom.outfit==='object'?custom.outfit[cls]:custom.outfit);
+    const of=(OUTFITS[cls]||[]).find(x=>x.id===_ofId);
     if(of)Object.assign(base,of.map);
-    const de=(DETAILS[cls]||[]).find(x=>x.id===custom.detail);
+    const _deId=custom.detail && (typeof custom.detail==='object'?custom.detail[cls]:custom.detail);
+    const de=(DETAILS[cls]||[]).find(x=>x.id===_deId);
     if(de)Object.assign(base,de.map);}
   return base;}
 function bakeHero(cls,custom){const out={};
@@ -9039,6 +9045,34 @@ function renderShop(){$('shopGold').textContent=player.gold;try{setTimeout(_monR
           onAct:(function(item){return function(e){e.stopPropagation();var n=row._getQty?row._getQty():1;
             if(typeof sellBagItemN==='function')sellBagItemN(item,n);else sellBagItem(item);};})(it)
         });
+        /* SEGURAR (long-press) vende TODAS as unidades deste item de uma vez */
+        (function(item,rowEl){
+          var _lpT=null, _fired=false;
+          var _sellAllOfType=function(){
+            _fired=true;
+            var e=player.bag.find(function(b){return b.id===item.id;});
+            var have=e?(e.count||1):0;
+            if(have<=0)return;
+            if(typeof _sellCore==='function')_sellCore(item,have);
+            else if(typeof sellBagItemN==='function')sellBagItemN(item,have);
+            else { for(var i=0;i<have;i++)sellBagItem(item); }
+            try{SFX.gold&&SFX.gold();buzz&&buzz(14);}catch(_){}
+            try{ var L=(typeof _wpL==='function')?_wpL():'pt';
+              var m={pt:'Vendeu todos ('+have+')',en:'Sold all ('+have+')',es:'Vendio todos ('+have+')',fr:'Tout vendu ('+have+')'};
+              if(typeof addMessage==='function')addMessage(m[L]||m.pt,'good'); }catch(_){}
+            if(typeof renderShop==='function')renderShop();
+            if(typeof renderHUD==='function')renderHUD();
+            if(typeof invOpen!=='undefined'&&invOpen&&typeof renderInv==='function')renderInv();
+          };
+          rowEl.addEventListener('pointerdown',function(ev){
+            _fired=false;
+            _lpT=setTimeout(function(){ _lpT=null; _sellAllOfType(); },550);
+          });
+          var _clr=function(){ if(_lpT){clearTimeout(_lpT);_lpT=null;} };
+          rowEl.addEventListener('pointerup',function(ev){ if(_fired){ev.stopPropagation();ev.preventDefault();} _clr(); });
+          rowEl.addEventListener('pointerleave',_clr);
+          rowEl.addEventListener('pointercancel',_clr);
+        })(it,row);
         rows.appendChild(row);
       }
     }
@@ -9163,7 +9197,7 @@ function buildClassCards(){const grid=$('clsGrid');grid.innerHTML='';
   for(const cid in CLASSES){const C=CLASSES[cid];
     const card=document.createElement('div');card.className='clsCard'+(cid===selectedCls?' sel':'');
     card.style.setProperty('--cc',C.col);card.dataset.cls=cid;
-    card.appendChild(makePortrait(cid,4,{skin:heroCustom.skin,outfit:heroCustom.outfit[cid]}));
+    card.appendChild(makePortrait(cid,4,{skin:heroCustom.skin,outfit:heroCustom.outfit,detail:heroCustom.detail}));
     const cn=document.createElement('div');cn.className='cn';cn.textContent=className(cid);card.appendChild(cn);
     const pips=document.createElement('div');pips.className='pips';
     for(const pn in C.pips){const pr=document.createElement('div');pr.className='pr';
@@ -9959,7 +9993,7 @@ function startGame(){if(running)return;initAudio();
 function init(){
   if(isTouch)document.body.classList.add('touch');
   LANG=detectLang();applyI18n();
-  genWorld();POIManager.generate();bakeTiles();bakeStatics();bakePlayers();buildMinimapBase();resize();buildClassCards();
+  genWorld();POIManager.generate();bakeTiles();bakeStatics();try{if(POIManager._pruneUnreachableCaves)POIManager._pruneUnreachableCaves();}catch(e){}bakePlayers();buildMinimapBase();resize();buildClassCards();
   window.addEventListener('resize',resize);
   placeAt(temple.x,temple.y+1);
   refreshTitle();
@@ -10852,9 +10886,9 @@ try{(function(){
 
     if(typeof POIManager!=='undefined' && POIManager.generate){
       var _origGenPOI = POIManager.generate.bind(POIManager);
-      POIManager.generate = function(){ var r=_origGenPOI(); window.__acExtrasDone=false; _placeExtras(this); return r; };
+      POIManager.generate = function(){ var r=_origGenPOI(); window.__acExtrasDone=false; _placeExtras(this); /* as cavernas extras entram DEPOIS do prune do generate original; podar de novo remove as que cairam em ilhas inacessiveis a pe. */ try{ if(typeof this._pruneUnreachableCaves==='function')this._pruneUnreachableCaves(); }catch(e){} return r; };
       /* init() ja rodou: coloca AGORA */
-      if(POIManager.pois && POIManager.pois.length){ _placeExtras(POIManager); }
+      if(POIManager.pois && POIManager.pois.length){ _placeExtras(POIManager); try{if(typeof POIManager._pruneUnreachableCaves==='function')POIManager._pruneUnreachableCaves();}catch(e){} }
     }
   }catch(e){ try{console.warn('mundo (cidade/vilarejos/cavernas) falhou',e);}catch(_){} }
 
@@ -13297,26 +13331,39 @@ function _wpEnsure(){if(!meta.wp)meta.wp={};if(!meta.wp.vila)meta.wp.vila=1;if(!
 function _caveName(cx,cy){
   try{
     var L=(typeof _wpL==='function')?_wpL():'pt';
-    var MW=(typeof MAPW!=='undefined')?MAPW:640, MH=(typeof MAPH!=='undefined')?MAPH:640;
-    var ns = cy < MH*0.38 ? 0 : (cy > MH*0.62 ? 2 : 1);
+    var MH=(typeof MAPH!=='undefined')?MAPH:640;
+    /* bioma aproximado pela posicao (para o descritor tematico) */
     var tipo='rocha';
     try{ if(typeof tileAt==='function'){ var t=tileAt(cx,cy); var Tt=(typeof T!=='undefined')?T:{};
       if(t===Tt.snow) tipo='gelo'; else if(t===Tt.sand) tipo='areia';
       else if(t===Tt.lava||t===Tt.mud) tipo='brasa'; else if(t===Tt.grass||t===Tt.forest) tipo='mata'; }
     }catch(e){}
     var D={
-      pt:{ base:['Caverna','Gruta','Toca','Furna','Caverna'], gelo:'do Gelo', areia:'das Areias', brasa:'da Brasa', mata:'da Mata', rocha:'da Pedra', norte:'do Norte', sul:'do Sul', centro:'do Vale' },
-      en:{ base:['Cave','Grotto','Den','Hollow','Cavern'], gelo:'of Ice', areia:'of Sands', brasa:'of Embers', mata:'of Woods', rocha:'of Stone', norte:'North', sul:'South', centro:'of the Vale' },
-      es:{ base:['Cueva','Gruta','Guarida','Caverna','Cueva'], gelo:'del Hielo', areia:'de Arenas', brasa:'de Brasas', mata:'del Bosque', rocha:'de Piedra', norte:'del Norte', sul:'del Sur', centro:'del Valle' },
-      fr:{ base:['Grotte','Caverne','Antre','Cavite','Grotte'], gelo:'de Glace', areia:'des Sables', brasa:'de Braises', mata:'des Bois', rocha:'de Pierre', norte:'du Nord', sul:'du Sud', centro:'du Val' }
+      pt:{ base:['Caverna','Gruta','Toca','Furna','Antro','Covil'],
+           gelo:'Gelada', areia:'das Areias', brasa:'em Brasa', mata:'na Mata', rocha:'de Pedra' },
+      en:{ base:['Cave','Grotto','Den','Hollow','Lair','Warren'],
+           gelo:'Frostcave', areia:'Sandhollow', brasa:'Emberden', mata:'Woodgrotto', rocha:'Stonelair' },
+      es:{ base:['Cueva','Gruta','Guarida','Caverna','Antro','Madriguera'],
+           gelo:'Helada', areia:'de Arenas', brasa:'en Brasas', mata:'del Bosque', rocha:'de Piedra' },
+      fr:{ base:['Grotte','Caverne','Antre','Cavite','Taniere','Terrier'],
+           gelo:'Glacee', areia:'des Sables', brasa:'de Braises', mata:'des Bois', rocha:'de Pierre' }
     };
-    var d=D[L]||D.pt;
+    /* pool de nomes proprios (evocativos) — grande o bastante p/ cada caverna ser unica */
+    var PROP={
+      pt:['de Vhardun','de Karn','de Moldepre','do Ermo','de Sinvael','das Sombras','de Torvic','do Lamento','de Grimhollow','de Ashkar','do Abismo','de Nerith','de Cindravel','do Ocaso','de Brael','de Umbrafel','de Korr','do Silencio','de Vael','de Thornic','de Mourn','de Draskar','do Veu','de Fenrix'],
+      en:['of Vhardun','of Karn','of Molepre','of the Waste','of Sinvael','of Shadows','of Torvic','of Lament','of Grimhollow','of Ashkar','of the Abyss','of Nerith','of Cindravel','of Dusk','of Brael','of Umbrafel','of Korr','of Silence','of Vael','of Thornic','of Mourn','of Draskar','of the Veil','of Fenrix'],
+      es:['de Vhardun','de Karn','de Molepre','del Yermo','de Sinvael','de las Sombras','de Torvic','del Lamento','de Grimhollow','de Ashkar','del Abismo','de Nerith','de Cindravel','del Ocaso','de Brael','de Umbrafel','de Korr','del Silencio','de Vael','de Thornic','de Mourn','de Draskar','del Velo','de Fenrix'],
+      fr:['de Vhardun','de Karn','de Molepre','du Desert','de Sinvael','des Ombres','de Torvic','du Lament','de Grimhollow','de Ashkar','de l\u2019Abime','de Nerith','de Cindravel','du Crepuscule','de Brael','d\u2019Umbrafel','de Korr','du Silence','de Vael','de Thornic','de Mourn','de Draskar','du Voile','de Fenrix']
+    };
+    var d=D[L]||D.pt; var props=PROP[L]||PROP.pt;
     var seed=((cx*73856093)^(cy*19349663))>>>0;
     var base=d.base[seed % d.base.length];
-    var card=[d.norte,d.centro,d.sul][ns];
+    /* nome proprio unico: indexa pelo seed. usa >>> (unsigned) para o indice nunca ser negativo. */
+    var prop=props[(seed>>>5) % props.length];
+    /* 50% usa nome proprio ("Gruta de Vhardun"), 50% usa "Gruta Gelada de Vhardun" — estavel pelo seed. */
+    var usaProp=((seed>>>3)&1)===0;
     var bioma=d[tipo]||d.rocha;
-    var usaBioma=((seed>>3)&1)===0;
-    return base+' '+(usaBioma?bioma:card);
+    return usaProp ? (base+' '+prop) : (base+' '+bioma+' '+prop);
   }catch(e){ return 'Caverna'; }
 }
 /* lista combinada: os 7 marcos fixos (descobertos) + cavernas visitadas */
