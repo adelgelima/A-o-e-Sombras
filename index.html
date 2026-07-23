@@ -383,12 +383,13 @@
 /* toque confiável no mobile: elementos clicaveis nao iniciam rolagem (impede clique engolido no Android) */
 .btn,.langb,.tbtn,.stog,.stog *,.gbtn,button,.skill,.skill *,.chip,.stg,.stg *,.si,.si *,.sav{touch-action:manipulation}
 .slotc,.slotc *,.clsCard,.clsCard *,.slot,.slot *,.sdel{touch-action:manipulation}
+.sw,#custWrap .sw,#varStrip>div{touch-action:manipulation}
 
 #shopRows input[type=number]::-webkit-inner-spin-button,#shopRows input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}#shopRows .row{gap:6px !important;padding:8px !important;}#shopRows .row .info{flex:1 1 auto;min-width:0;overflow:hidden;}#shopRows .row .price{flex:0 1 auto;min-width:0;white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis;}#shopRows .row canvas{flex:0 0 auto;}#shopRows .row .btn{flex:0 0 auto;min-width:78px;max-width:88px;padding-left:6px !important;padding-right:6px !important;font-size:13px;white-space:nowrap;}#fbLoginBtn,#lbBtn{transition:opacity .2s;} body.playing #fbLoginBtn,body.playing #lbBtn{display:none !important;opacity:0 !important;pointer-events:none !important;}/* SCROLL da tela-titulo/criacao: o OVERLAY inteiro rola, alinhado ao topo.
    Antes o card centralizado (align-items:center) transbordava sem rolagem, travando
    as opcoes inferiores da criacao no celular em paisagem. */
 #title{overflow-y:auto !important;-webkit-overflow-scrolling:touch;align-items:flex-start !important;padding:16px 0 40px !important;}
-#title .tcard{max-height:none !important;margin:0 auto !important;}
+#title .tcard{max-height:none !important;overflow:visible !important;margin:0 auto !important;}
 /* os sub-paineis NAO limitam mais a propria altura — quem rola e o overlay #title */
 #createWrap{max-height:none !important;overflow:visible !important;}
 #slotList{max-height:none !important;overflow:visible !important;}
@@ -660,7 +661,7 @@ body.noLog #log{display:none !important;}
    comecarem com COLE_ , o jogo roda 100% offline e o botao de login fica oculto. */
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyCISsw7M_NK5Dn8aMgBU_P198m-bLGFWEU",
-  authDomain: "aco-e-sombras.firebaseapp.com",
+  authDomain: "aco-e-sombras.web.app",
   projectId: "aco-e-sombras",
   storageBucket: "aco-e-sombras.firebasestorage.app",
   messagingSenderId: "457078596985",
@@ -10458,7 +10459,10 @@ try{(function(){
       /* persistencia LOCAL: mantem logado entre recarregamentos */
       try{ _auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){}
       /* captura o retorno do login por REDIRECT (mobile: popup falha, usa redirect) */
-      try{ _auth.getRedirectResult().then(function(r){ if(r&&r.user){ _fuser=r.user; window._acFbUser=r.user; _lastUid='__force__'; _renderBtn(); } }).catch(function(){}); }catch(e){}
+      try{ _auth.getRedirectResult().then(function(r){ if(r&&r.user){ _fuser=r.user; window._acFbUser=r.user; _lastUid='__force__'; _renderBtn();
+        try{ if(window._acDlog)window._acDlog('getRedirectResult: VOLTOU LOGADO uid='+r.user.uid); }catch(e){}
+      } else { try{ if(window._acDlog)window._acDlog('getRedirectResult: voltou VAZIO (sem usuario)'); }catch(e){} } })
+      .catch(function(err){ try{ if(window._acDlog)window._acDlog('getRedirectResult ERRO: '+((err&&err.code)||'')+' '+((err&&err.message)||'')); }catch(e){} }); }catch(e){}
       var _cwBusy=false,_cwPending=false,_cwTimer=null;
       /* ---- trava de dispositivo ---- */
       var _sessId = Math.random().toString(36).slice(2)+Date.now().toString(36);
@@ -10475,8 +10479,8 @@ try{(function(){
         if(!d._ts){ d._ts=Date.now(); try{lsSet(SLOTS_KEY,JSON.stringify(d));}catch(e){} }
         _cwBusy=true;
         _fdb.collection('saves').doc(_fuser.uid).set({blob:JSON.stringify(d),updatedAt:d._ts,name:_fuser.displayName||'',email:_fuser.email||''})
-          .then(function(){_cwBusy=false;if(_cwPending){_cwPending=false;_schedCloud();}})
-          .catch(function(){_cwBusy=false;});
+          .then(function(){_cwBusy=false;try{console.log('[fb] SUBIU save p/ nuvem (updatedAt='+d._ts+')');}catch(e){}if(_cwPending){_cwPending=false;_schedCloud();}})
+          .catch(function(err){_cwBusy=false;try{console.error('[fb] FALHA ao subir save:',(err&&err.code)||'',(err&&err.message)||err);}catch(e){}});
       }
       function _schedCloud(){ if(_cwTimer)clearTimeout(_cwTimer); _cwTimer=setTimeout(_cloudWrite,3500); }
 
@@ -10491,14 +10495,17 @@ try{(function(){
           var localTS=_sts();
           if(doc.exists){
             var data=doc.data(), cloudTS=data.updatedAt||0;
+            try{console.log('[fb] pull: nuvem EXISTE. cloudTS='+cloudTS+' localTS='+localTS);}catch(e){}
             if(cloudTS>localTS && data.blob){
               try{ lsSet(SLOTS_KEY, data.blob); }catch(e){}
+              try{console.log('[fb] pull -> nuvem MAIS NOVA: carregando e recarregando pagina.');}catch(e){}
               if(typeof running==='undefined' || !running){ _toast('Progresso da nuvem carregado.'); setTimeout(function(){try{location.reload();}catch(e){}},800); }
               else { _toast('Ha progresso mais novo na nuvem. Volte ao menu para carregar.'); }
               return;
-            } else if(localTS>cloudTS){ _schedCloud(); }
-          } else { _schedCloud(); }
-        }).catch(function(){});
+            } else if(localTS>cloudTS){ try{console.log('[fb] pull -> LOCAL mais novo: agendando subida (vai SOBRESCREVER a nuvem).');}catch(e){} _schedCloud(); }
+            else { try{console.log('[fb] pull -> empatado ou sem blob: nada a fazer.');}catch(e){} }
+          } else { try{console.log('[fb] pull: SEM save na nuvem (localTS='+localTS+'): agendando 1a subida.');}catch(e){} _schedCloud(); }
+        }).catch(function(err){ try{console.error('[fb] FALHA no pull (leitura):',(err&&err.code)||'',(err&&err.message)||err);}catch(e){} });
       }
 
       /* ---- reivindica a sessao (atomico). force=true ignora sessao ativa alheia (ao "Jogar aqui") ---- */
@@ -10538,6 +10545,8 @@ try{(function(){
 
       _auth.onAuthStateChanged(function(u){
         _fuser=u; window._acFbUser=u; try{window._acFbDb=_fdb;}catch(e){} _lastUid='__force__'; _renderBtn(); if(u&&window._acSubmitScore)setTimeout(window._acSubmitScore,2000);
+        try{ console.log('[fb] auth ->', u? ('uid='+u.uid+' '+(u.displayName||'')) : 'deslogado'); }catch(e){}
+        try{ if(window._acDlog)window._acDlog('onAuthStateChanged: '+(u?('LOGADO uid='+u.uid):'deslogado')); }catch(e){}
         if(_sessUnsub){try{_sessUnsub();}catch(e){}_sessUnsub=null;}
         if(u){ _pull(); _listen(); }
         else { _active=false; _locked=false; _hideLock(); }
@@ -10564,7 +10573,9 @@ try{(function(){
         try{
           var p=new firebase.auth.GoogleAuthProvider();
           p.setCustomParameters({prompt:'select_account'});
+          try{ if(window._acDlog)window._acDlog('login: tentando POPUP...'); }catch(e){}
           _auth.signInWithPopup(p).then(function(res){
+            try{ if(window._acDlog)window._acDlog('popup retornou: '+(res&&res.user?('LOGADO uid='+res.user.uid):'VAZIO (cookies bloqueados?)')); }catch(e){}
             /* popup funcionou: trata o usuario DIRETAMENTE */
             if(res&&res.user){ _fuser=res.user; window._acFbUser=res.user; _lastUid='__force__'; _renderBtn();
               try{ _toast('Bem-vindo, '+(res.user.displayName||'herói')+'!'); }catch(_){}
@@ -10574,8 +10585,10 @@ try{(function(){
             }
           }).catch(function(e){
             var code=(e&&e.code)||'';
+            try{ if(window._acDlog)window._acDlog('popup FALHOU: '+code+' | '+((e&&e.message)||'')); }catch(_){}
             /* popup bloqueado ou fechado: tenta redirect como ultimo recurso */
             if(code==='auth/popup-blocked'||code==='auth/cancelled-popup-request'||code==='auth/operation-not-supported-in-this-environment'){
+              try{ if(window._acDlog)window._acDlog('login: caindo para REDIRECT...'); }catch(_){}
               try{ _auth.signInWithRedirect(p); }catch(_){}
             } else if(code==='auth/popup-closed-by-user'){
               /* usuario fechou: nao faz nada */
@@ -12389,6 +12402,7 @@ try{(function(){
             b.addEventListener('pointerdown',function(e){e.stopPropagation();
               window._acPendingVariant=v;
               try{ if(window._acApplyVariant)window._acApplyVariant((typeof selectedCls!=='undefined'&&selectedCls)||'knight',v); }catch(err){}
+              try{ if(typeof refreshCreateVisuals==='function')refreshCreateVisuals(); _lastSel=null; }catch(err){}
             });
             strip.appendChild(b);
           });
@@ -12411,6 +12425,143 @@ try{(function(){
     }, 900);
     try{console.log('[variantes] UI de escolha ativa (criacao + configuracoes).');}catch(e){}
   }catch(e){ try{console.warn('variantes UI falhou',e);}catch(_){} }
+
+  /* ============ SYNC MANUAL: Enviar / Carregar da nuvem (contorna o atropelo de timestamp) ============ */
+  try{
+    function _acSyncToast(m){ try{ alert(m); }catch(e){} }
+    window._acForcePush=function(cb){
+      var u=window._acFbUser, db=window._acFbDb;
+      if(!u||!db){ if(cb)cb('noauth'); return; }
+      var raw=(typeof lsGet==='function')?lsGet('acoSombras.slots'):null;
+      if(!raw){ if(cb)cb('nolocal'); return; }
+      var d; try{ d=JSON.parse(raw); }catch(e){ if(cb)cb('parse'); return; }
+      d._ts=Date.now(); try{ lsSet('acoSombras.slots', JSON.stringify(d)); }catch(e){}
+      db.collection('saves').doc(u.uid).set({blob:JSON.stringify(d),updatedAt:d._ts,name:u.displayName||'',email:u.email||''})
+        .then(function(){ try{console.log('[sync] push manual OK (updatedAt='+d._ts+')');}catch(e){} if(cb)cb(null); })
+        .catch(function(err){ try{console.error('[sync] push manual FALHOU:',(err&&err.code)||'',(err&&err.message)||err);}catch(e){} if(cb)cb(err||'err'); });
+    };
+    window._acForcePull=function(cb){
+      var u=window._acFbUser, db=window._acFbDb;
+      if(!u||!db){ if(cb)cb('noauth'); return; }
+      db.collection('saves').doc(u.uid).get().then(function(doc){
+        if(!doc.exists){ if(cb)cb('nocloud'); return; }
+        var data=doc.data(); if(!data||!data.blob){ if(cb)cb('noblob'); return; }
+        try{ lsSet('acoSombras.slots', data.blob); }catch(e){ if(cb)cb('write'); return; }
+        try{console.log('[sync] pull manual OK (carregado da nuvem, ignora timestamp)');}catch(e){}
+        if(cb)cb(null);
+      }).catch(function(err){ try{console.error('[sync] pull manual FALHOU:',(err&&err.code)||'',(err&&err.message)||err);}catch(e){} if(cb)cb(err||'err'); });
+    };
+    var _SL={pt:['\u2601 Enviar para a nuvem','sobe este aparelho para a conta','\u2601 Carregar da nuvem','baixa a conta (sobrescreve este aparelho)'],
+             en:['\u2601 Upload to cloud','push this device to the account','\u2601 Download from cloud','pull the account (overwrites this device)'],
+             es:['\u2601 Enviar a la nube','sube este equipo a la cuenta','\u2601 Cargar de la nube','baja la cuenta (sobrescribe este equipo)'],
+             fr:['\u2601 Envoyer au cloud','pousser cet appareil vers le compte','\u2601 Charger du cloud','tirer le compte (\u00e9crase cet appareil)']};
+    function _sl(){ var l=(typeof LANG!=='undefined'&&_SL[LANG])?LANG:'pt'; return _SL[l]; }
+    function _mkRow(id,title,sub,onclick){
+      var d=document.createElement('div'); d.id=id; d.className='srow'; d.style.cursor='pointer';
+      var ic=document.createElement('div'); ic.className='sic'; ic.textContent='\u2601';
+      var tx=document.createElement('div'); tx.className='stx';
+      var b=document.createElement('b'); b.textContent=title;
+      var sp=document.createElement('span'); sp.textContent=sub;
+      tx.appendChild(b); tx.appendChild(sp); d.appendChild(ic); d.appendChild(tx);
+      d.addEventListener('click',onclick); return d;
+    }
+    function _injectSync(){
+      try{
+        var sw=document.querySelector('#settings .swin'); if(!sw) return;
+        if(document.getElementById('rowCloudPush')&&document.getElementById('rowCloudPull')) return;
+        var L=_sl();
+        if(!document.getElementById('rowCloudPush')){
+          var push=_mkRow('rowCloudPush', L[0], L[1], function(){
+            if(!window._acFbUser){ _acSyncToast('Entre com o Google primeiro (bot\u00e3o na tela inicial).'); return; }
+            window._acForcePush(function(err){
+              if(err==='nolocal'){ _acSyncToast('N\u00e3o h\u00e1 her\u00f3i neste aparelho para enviar.'); }
+              else if(err){ _acSyncToast('Falha ao enviar: '+((err&&err.code)||err)); }
+              else { _acSyncToast('Enviado para a nuvem com sucesso.'); }
+            });
+          });
+          sw.appendChild(push);
+        }
+        if(!document.getElementById('rowCloudPull')){
+          var pull=_mkRow('rowCloudPull', L[2], L[3], function(){
+            if(!window._acFbUser){ _acSyncToast('Entre com o Google primeiro (bot\u00e3o na tela inicial).'); return; }
+            if(!confirm('Baixar o save da nuvem e SOBRESCREVER o deste aparelho?')) return;
+            window._acForcePull(function(err){
+              if(err==='nocloud'||err==='noblob'){ _acSyncToast('N\u00e3o h\u00e1 save na nuvem nesta conta.'); }
+              else if(err){ _acSyncToast('Falha ao baixar: '+((err&&err.code)||err)); }
+              else { _acSyncToast('Baixado! Recarregando...'); setTimeout(function(){ try{location.reload();}catch(e){} }, 700); }
+            });
+          });
+          sw.appendChild(pull);
+        }
+      }catch(e){}
+    }
+    setInterval(_injectSync, 900);
+    try{console.log('[sync] botoes Enviar/Carregar da nuvem ativos.');}catch(e){}
+  }catch(e){ try{console.warn('sync manual falhou',e);}catch(_){} }
+
+  /* ============ PAINEL DE DIAGNOSTICO MOBILE (?debug=1) — sobrevive ao redirect ============ */
+  try{
+    var _DK='acs.dbg';
+    function _dlog(s){
+      try{ var a=JSON.parse(localStorage.getItem(_DK)||'[]');
+        a.push(new Date().toTimeString().slice(0,8)+'  '+s);
+        if(a.length>60)a=a.slice(-60);
+        localStorage.setItem(_DK,JSON.stringify(a)); }catch(e){}
+      try{ console.log('[dbg] '+s); }catch(e){}
+    }
+    window._acDlog=_dlog;
+    var _dbgOn=false;
+    try{
+      if(/[?&]debug=1/.test(location.search)) localStorage.setItem('acs.dbgon','1');
+      if(/[?&]debug=0/.test(location.search)) localStorage.removeItem('acs.dbgon');
+      _dbgOn = localStorage.getItem('acs.dbgon')==='1';
+    }catch(e){}
+    if(_dbgOn){
+      /* ambiente */
+      _dlog('--- carregou pagina ---');
+      _dlog('origem: '+location.origin);
+      try{ _dlog('authDomain: '+((firebase.app().options||{}).authDomain||'?')); }catch(e){ _dlog('authDomain: (firebase nao carregou)'); }
+      try{ _dlog('cookies habilitados: '+navigator.cookieEnabled); }catch(e){}
+      try{ localStorage.setItem('acs.t','1'); localStorage.removeItem('acs.t'); _dlog('localStorage: OK'); }catch(e){ _dlog('localStorage: BLOQUEADO'); }
+      try{
+        var rq=indexedDB.open('acs_test_db',1);
+        rq.onsuccess=function(){ _dlog('indexedDB: OK'); try{rq.result.close();}catch(e){} };
+        rq.onerror=function(){ _dlog('indexedDB: ERRO '+((rq.error&&rq.error.name)||'')); };
+        rq.onblocked=function(){ _dlog('indexedDB: BLOQUEADO'); };
+      }catch(e){ _dlog('indexedDB: EXCECAO '+e); }
+
+      function _dpanel(){
+        try{
+          if(document.getElementById('acsDbg')) return;
+          if(!document.body) return;
+          var p=document.createElement('div'); p.id='acsDbg';
+          p.style.cssText='position:fixed;left:4px;top:4px;width:min(96vw,430px);max-height:52vh;overflow:auto;z-index:2147483647;background:rgba(8,10,14,0.96);color:#d6f5d6;font:11px/1.35 monospace;border:1px solid #3a6;border-radius:6px;padding:6px 8px;white-space:pre-wrap;word-break:break-word;';
+          var bar=document.createElement('div');
+          bar.style.cssText='display:flex;gap:6px;margin-bottom:5px;flex-wrap:wrap;';
+          function mkb(t,fn){ var b=document.createElement('button'); b.textContent=t;
+            b.style.cssText='font:11px monospace;padding:3px 7px;background:#1d2733;color:#cfe;border:1px solid #3a6;border-radius:4px;';
+            b.addEventListener('click',fn); return b; }
+          var body=document.createElement('div');
+          function render(){
+            var lines=[]; try{ lines=JSON.parse(localStorage.getItem(_DK)||'[]'); }catch(e){}
+            var u=null; try{ u=window._acFbUser; }catch(e){}
+            body.textContent='LOGADO: '+(u?('SIM  uid='+u.uid):'NAO')+'\n'
+              +'-------------------------------\n'+lines.join('\n');
+          }
+          bar.appendChild(mkb('Atualizar',render));
+          bar.appendChild(mkb('Limpar',function(){ try{localStorage.removeItem(_DK);}catch(e){} render(); }));
+          bar.appendChild(mkb('Fechar',function(){ try{localStorage.removeItem('acs.dbgon');}catch(e){} p.remove(); }));
+          p.appendChild(bar); p.appendChild(body); document.body.appendChild(p);
+          render(); setInterval(render,1500);
+        }catch(e){}
+      }
+      if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_dpanel);
+      else _dpanel();
+      setTimeout(_dpanel,1200);
+    }
+  }catch(e){}
+
+
 
   /* shopqty DESABILITADO: renderShop agora tem abas+stepper nativos */
   (function(){})();
