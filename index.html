@@ -4299,10 +4299,10 @@ function recompute(){
   const a=player.equip.armor?itemById(player.equip.armor):null;
   const h=player.equip.head?itemById(player.equip.head):null;
   const l=player.equip.legs?itemById(player.equip.legs):null;
-  player.atk=(w?w.atk:2)+(o&&o.atkb?o.atkb:0);
-  player.atkspd=(w?w.spd:0.9)+(o&&o.aspd?o.aspd:0)+(h&&h.aspd?h.aspd:0)+(l&&l.aspd?l.aspd:0);
-  player.el=w?w.el:'none'; player.rng=w?w.rng:1; player.wfx=w?(w.fx||null):null;
-  player.def=(w?w.def:0)+(o?o.def:0); player.arm=(a&&a.arm?a.arm:0)+(h&&h.arm?h.arm:0)+(l&&l.arm?l.arm:0);  /* mesma guarda p/ armadura */
+  player.atk=(w&&isFinite(w.atk)?w.atk:2)+(o&&isFinite(o.atkb)?o.atkb:0);
+  player.atkspd=(w&&isFinite(w.spd)?w.spd:0.9)+(o&&isFinite(o.aspd)?o.aspd:0)+(h&&isFinite(h.aspd)?h.aspd:0)+(l&&isFinite(l.aspd)?l.aspd:0);
+  player.el=w?w.el:'none'; player.rng=(w&&isFinite(w.rng))?w.rng:1; player.wfx=w?(w.fx||null):null;
+  /* blindado: um item sem o campo (ou com valor invalido) nao pode mais tornar player.def NaN */ player.def=(w&&isFinite(w.def)?w.def:0)+(o&&isFinite(o.def)?o.def:0); player.arm=(a&&a.arm?a.arm:0)+(h&&h.arm?h.arm:0)+(l&&l.arm?l.arm:0);  /* mesma guarda p/ armadura */
   player.maxhp=C.hp0+player.lvl*C.hpL+(a&&a.hp?a.hp:0)+(h&&h.hp?h.hp:0)+(l&&l.hp?l.hp:0);  /* guarda: item sem campo hp virava NaN (a6/a7) */
   player.cdr=(o&&o.cdr?o.cdr:0)+(h&&h.cdr?h.cdr:0)+(l&&l.cdr?l.cdr:0);
   player.fireRes=(o&&o.fireRes?o.fireRes:0)+(a&&a.fireRes?a.fireRes:0);
@@ -4513,7 +4513,21 @@ function dropLoot(m){const b={gold:0,items:[]};
   })();
   if(b.gold>0||b.items.length)loots.push({id:uid++,tx:m.tx,ty:m.ty,px:m.px,py:m.py,gold:b.gold,items:b.items,t:0,dead:false});
   return b;}
-function addFloater(x,y,txt,col,big=false){floaters.push({x:x+rnd(5,-5),y,txt,col,life:0,max:big?1.1:0.85,big,vy:-40});}
+function addFloater(x,y,txt,col,big=false){
+  /* rede final: nenhum NaN chega a tela. A causa raiz (secundarias sem 'def')
+     foi corrigida na origem; esta rede evita que QUALQUER calculo futuro exiba
+     'NaN' ao jogador. O aviso no console mantem o defeito visivel p/ diagnostico. */
+  try{
+    var _s=String(txt);
+    if(_s.indexOf('NaN')>=0){
+      try{console.warn('[floater] NaN interceptado:',_s,'cor:',col);}catch(_e){}
+      txt=_s.replace(/-?NaN/g,'1');
+    }
+    if(!isFinite(x))x=player&&isFinite(player.px)?player.px:0;
+    if(!isFinite(y))y=player&&isFinite(player.py)?player.py:0;
+  }catch(_e){}
+  floaters.push({x:x+rnd(5,-5),y,txt,col,life:0,max:big?1.1:0.85,big,vy:-40});
+}
 function addParticles(x,y,n,o={}){if(quality===1)n=Math.ceil(n*0.6);
   const col=o.col||'#fff',spd=o.spd||60,life=o.life||0.5,size=o.size||2.5,grav=o.grav||0;
   for(let i=0;i<n;i++){const a=rnd(Math.PI*2),s=rnd(spd,spd*0.3);
@@ -4867,8 +4881,13 @@ function applyPlayerDamage(dmg,src){
      Math.round e OBRIGATORIO: dmgRed e float (0.04*3 = 0.12000000000000001 em JS), entao
      10*(1-0.12000000000000001) = 8.799999999999999 e o numero flutuante aparecia inteiro na tela.
      Math.max(1,...) preserva a regra antiga de que todo golpe que acerta tira ao menos 1. */
-  if(!isFinite(dmg)){try{console.warn('[dano] nao-finito ignorado:',dmg,src&&src.d&&src.d.id);}catch(e){} return;}
+  /* Antes: 'return' silencioso. Isso transformava um defeito de dado em
+     INVULNERABILIDADE (relatado: mago nv108 nao tomava dano no andar 15).
+     Agora o golpe nao-finito vira o minimo de 1: um defeito futuro degrada o
+     equilibrio, mas nunca quebra o jogo. */
+  if(!isFinite(dmg)){try{console.warn('[dano] nao-finito corrigido para 1:',dmg,src&&src.d&&src.d.id);}catch(e){} dmg=1;}
   dmg=Math.max(1,Math.round(dmg*(1-(player.dmgRed||0))));
+  if(!isFinite(dmg))dmg=1;
   player.hp-=dmg; if(!isFinite(player.hp))player.hp=1; /* cura NaN historico no impacto */player.hurtFlash=1;player.invuln=Math.max(player.invuln||0,player.invT||0.15);
   addFloater(player.px,player.py-TILE*0.6,'-'+dmg,'#ff7a6a');SFX.hurt();buzz(24);
   if(player.rng<=1)shake(Math.min(8,3+dmg*0.12));  // ranged não treme a câmera (não atrapalha a mira)
@@ -10247,6 +10266,29 @@ try{(function(){
     if(typeof OFFHANDS!=='undefined'&&typeof ALLO!=='undefined'){for(var cc in NI.O){if(OFFHANDS[cc]){for(var i=0;i<NI.O[cc].length;i++){OFFHANDS[cc].push(NI.O[cc][i]);ALLO.push(NI.O[cc][i]);}}}}
     if(typeof ARMORS!=='undefined'){for(var i=0;i<NI.A.length;i++)ARMORS.push(NI.A[i]);}
     if(typeof GEAR!=='undefined'){for(var i=0;i<NI.G.length;i++)GEAR.push(NI.G[i]);}
+    /* ===== CORRECAO (def ausente nas secundarias estendidas) =====
+       As secundarias estendidas de arqueiro (xor*) e mago (xom*) foram escritas
+       com 'aspd' mas SEM o campo 'def'. Consequencia em cadeia:
+         recompute(): player.def = (w?w.def:0)+(o?o.def:0)  ->  numero + undefined = NaN
+         monsterHitsPlayer(): dmg = ...- player.def*... -> NaN
+         applyPlayerDamage(): !isFinite(dmg) -> return  ->  o heroi NAO tomava dano
+         thorns/veneno: Math.max(1,NaN) = NaN -> floater VERDE mostrando NaN
+       Preenche o def seguindo a progressao ja usada no jogo: escudo de cavaleiro
+       segue 0.6*req+2 (xok60=38, xok100=62, xok300=182); as bases mantem a
+       proporcao arqueiro=50% e mago=43% do cavaleiro (ro6=15 e mo6=13 vs ko6=30). */
+    (function(){ try{
+      var RAZAO={knight:1,ranger:0.50,mage:0.4333};
+      for(var _cc in OFFHANDS){
+        var _lst=OFFHANDS[_cc]||[];
+        for(var _i=0;_i<_lst.length;_i++){
+          var _it=_lst[_i];
+          if(!_it||typeof _it!=='object')continue;
+          if(typeof _it.def==='number'&&isFinite(_it.def))continue;
+          var _rq=(typeof _it.req==='number'&&isFinite(_it.req))?_it.req:1;
+          _it.def=Math.max(1,Math.round((0.6*_rq+2)*(RAZAO[_cc]||0.5)));
+        }
+      }
+    }catch(e){} })();
     /* sprites: itens novos + capacetes/calcas existentes (id.png da raiz) */
     /* sprites LAZY: nao carrega 180 PNGs no boot; cria o Image na 1a vez que o icone e desenhado.
        (tambem corrige a ordem: loadItemPng do boot roda antes deste bloco, entao registrar em
